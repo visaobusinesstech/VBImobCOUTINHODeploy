@@ -1,0 +1,618 @@
+/**
+ * Copyright (c) Visão Business. Todos os direitos reservados.
+ * VB Solution CRM — propriedade intelectual da Visão Business.
+ * Uso conforme LICENSE na raiz do repositório.
+ */
+
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import MainContainer from "../../components/MainContainer";
+import RealtyCrudPage from "../../components/RealtyCrudPage";
+import realtyIntelService from "../../services/realtyIntelService";
+import realtyService from "../../services/realtyService";
+import leadsSalesService from "../../services/leadsSalesService";
+import api from "../../services/api";
+import toastError from "../../errors/toastError";
+import { toast } from "react-toastify";
+import { estimateAvaliacao, formatBRL } from "../../helpers/realtyCrm";
+
+const kindPage = (kind, title, subtitle, extraFields = []) => {
+  const Page = () => (
+    <RealtyCrudPage
+      title={title}
+      subtitle={subtitle}
+      listKey="items"
+      loader={(params) => realtyIntelService.listModulos(kind)}
+      creator={(payload) => realtyIntelService.createModulo({ ...payload, kind })}
+      updater={realtyIntelService.updateModulo}
+      remover={realtyIntelService.deleteModulo}
+      cardTitle={(item) => item.title}
+      cardMeta={(item) => (
+        <>
+          <span className="realty-chip">{item.status || "aberto"}</span>
+          <span>
+            {item.value != null ? formatBRL(item.value) : "—"} · {item.notes || ""}
+          </span>
+        </>
+      )}
+      fields={[
+        { name: "title", label: "Título", required: true },
+        { name: "status", label: "Status", defaultValue: "aberto" },
+        { name: "value", label: "Valor", type: "number", cast: "number" },
+        { name: "dueDate", label: "Data", type: "date" },
+        { name: "notes", label: "Notas", type: "textarea" },
+        ...extraFields,
+      ]}
+    />
+  );
+  Page.displayName = title;
+  return Page;
+};
+
+export const Condominios = kindPage(
+  "condominio",
+  "CRM Condomínios",
+  "Síndicos, unidades e relacionamento condominial."
+);
+export const Relacionamento = kindPage(
+  "relacionamento",
+  "Relacionamento",
+  "Histórico de relacionamento com clientes e proprietários."
+);
+export const Inadimplencia = kindPage(
+  "inadimplencia",
+  "Inadimplência",
+  "Cobranças e contratos em atraso."
+);
+export const Nutricao = kindPage(
+  "nutricao",
+  "Nutrição de leads",
+  "Campanhas e conteúdos para nutrir o funil."
+);
+export const ProspeccaoDiaria = kindPage(
+  "prospeccao",
+  "Prospecção diária",
+  "Lista de contatos e ações do dia."
+);
+export const RelatoriosAgendados = kindPage(
+  "relatorio_agendado",
+  "Relatórios agendados",
+  "Envios periódicos de relatório comercial."
+);
+export const Monitoramento = kindPage(
+  "monitoramento",
+  "Monitoramento",
+  "Alertas de mercado, portais e concorrência."
+);
+export const PipelineCaptacao = kindPage(
+  "pipeline_captacao",
+  "Pipeline de captação",
+  "Funil de captação de imóveis (além do inventário)."
+);
+export const Feed = kindPage("feed", "Feed", "Publicações e conteúdo da operação.");
+export const CuradoriaViral = kindPage(
+  "curadoria",
+  "Curadoria viral",
+  "Peças e criativos para redes."
+);
+export const AutomacoesFollowup = kindPage(
+  "automacao_followup",
+  "Automações de follow-up",
+  "Regras de retorno automático (além da tela Follow-up)."
+);
+export const RadarZapGrupos = kindPage(
+  "radarzap_grupo",
+  "RadarZAP — grupos",
+  "Cadastro de grupos WhatsApp monitorados."
+);
+
+export const Avaliacao = () => {
+  const [imoveis, setImoveis] = useState([]);
+  const [imovelId, setImovelId] = useState("");
+  const [preco, setPreco] = useState("");
+  const [area, setArea] = useState("");
+  const [m2, setM2] = useState("");
+  const [result, setResult] = useState(null);
+
+  useEffect(() => {
+    realtyService.listImoveis({ pageSize: 100 }).then((d) => setImoveis(d.imoveis || [])).catch(toastError);
+  }, []);
+
+  const run = async (e) => {
+    e.preventDefault();
+    try {
+      const data = await realtyIntelService.avaliar({
+        imovelId: imovelId || undefined,
+        preco: preco ? Number(preco) : undefined,
+        area: area ? Number(area) : undefined,
+        precoM2Mercado: m2 ? Number(m2) : undefined,
+      });
+      setResult(data);
+    } catch (err) {
+      const local = estimateAvaliacao(Number(preco), Number(area), Number(m2));
+      setResult(local);
+      toastError(err);
+    }
+  };
+
+  return (
+    <MainContainer>
+      <div className="realty-page">
+        <h1 className="realty-page__title">Avaliação</h1>
+        <p className="realty-page__subtitle">Compara o preço do imóvel com o m² de mercado.</p>
+        <form className="realty-card" onSubmit={run} style={{ maxWidth: 520 }}>
+          <label>
+            Imóvel
+            <select value={imovelId} onChange={(e) => setImovelId(e.target.value)}>
+              <option value="">Manual</option>
+              {imoveis.map((i) => (
+                <option key={i.id} value={i.id}>
+                  {i.title}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Preço
+            <input value={preco} onChange={(e) => setPreco(e.target.value)} type="number" />
+          </label>
+          <label>
+            Área m²
+            <input value={area} onChange={(e) => setArea(e.target.value)} type="number" />
+          </label>
+          <label>
+            m² mercado
+            <input value={m2} onChange={(e) => setM2(e.target.value)} type="number" />
+          </label>
+          <button type="submit" className="realty-page__btn">
+            Avaliar
+          </button>
+        </form>
+        {result && (
+          <div className="realty-card" style={{ marginTop: 16 }}>
+            <p>m² do imóvel: {formatBRL(result.precoM2)}</p>
+            <p>Valor justo: {formatBRL(result.valorJusto)}</p>
+            <p>Desvio: {result.desvio}%</p>
+            <span className="realty-chip">{result.parecer}</span>
+          </div>
+        )}
+      </div>
+    </MainContainer>
+  );
+};
+
+export const ComparativoImoveis = () => {
+  const [imoveis, setImoveis] = useState([]);
+  const [a, setA] = useState("");
+  const [b, setB] = useState("");
+
+  useEffect(() => {
+    realtyService.listImoveis({ pageSize: 200 }).then((d) => setImoveis(d.imoveis || [])).catch(toastError);
+  }, []);
+
+  const ia = imoveis.find((i) => String(i.id) === String(a));
+  const ib = imoveis.find((i) => String(i.id) === String(b));
+  const col = (im) =>
+    im ? (
+      <div className="realty-card">
+        <h3>{im.title}</h3>
+        <p>{im.type} · {im.city} · {im.neighborhood}</p>
+        <p>{im.bedrooms} quartos · {im.areaM2} m²</p>
+        <strong>{formatBRL(im.price)}</strong>
+      </div>
+    ) : (
+      <div className="realty-empty">Selecione um imóvel</div>
+    );
+
+  return (
+    <MainContainer>
+      <div className="realty-page">
+        <h1 className="realty-page__title">Comparativo de imóveis</h1>
+        <div className="realty-page__toolbar">
+          <select className="realty-page__search" value={a} onChange={(e) => setA(e.target.value)}>
+            <option value="">Imóvel A</option>
+            {imoveis.map((i) => (
+              <option key={i.id} value={i.id}>{i.title}</option>
+            ))}
+          </select>
+          <select className="realty-page__search" value={b} onChange={(e) => setB(e.target.value)}>
+            <option value="">Imóvel B</option>
+            {imoveis.map((i) => (
+              <option key={i.id} value={i.id}>{i.title}</option>
+            ))}
+          </select>
+        </div>
+        <div className="realty-page__grid">
+          {col(ia)}
+          {col(ib)}
+        </div>
+      </div>
+    </MainContainer>
+  );
+};
+
+export const JornadaCliente = () => {
+  const [data, setData] = useState({ etapas: {}, timeline: [] });
+  useEffect(() => {
+    realtyIntelService.jornada().then(setData).catch(toastError);
+  }, []);
+  return (
+    <MainContainer>
+      <div className="realty-page">
+        <h1 className="realty-page__title">Jornada do cliente</h1>
+        <p className="realty-page__subtitle">Etapas dos leads de venda (mesmos registros de Leads e Vendas).</p>
+        <div className="realty-page__grid">
+          {Object.entries(data.etapas || {}).map(([k, v]) => (
+            <article key={k} className="realty-card">
+              <h3>{k}</h3>
+              <strong>{v}</strong>
+            </article>
+          ))}
+        </div>
+        {(data.timeline || []).map((row) => (
+          <article key={row.id} className="realty-lead" style={{ marginTop: 8 }}>
+            <strong>{row.name}</strong>
+            <span>{row.status} · ticket {row.ticketId || "—"}</span>
+          </article>
+        ))}
+      </div>
+    </MainContainer>
+  );
+};
+
+export const Inteligencia = () => {
+  const [data, setData] = useState(null);
+  useEffect(() => {
+    realtyIntelService.inteligencia().then(setData).catch(toastError);
+  }, []);
+  if (!data) return <MainContainer><div className="realty-page">Carregando…</div></MainContainer>;
+  return (
+    <MainContainer>
+      <div className="realty-page">
+        <h1 className="realty-page__title">Inteligência</h1>
+        <div className="realty-page__grid">
+          <article className="realty-card"><h3>Leads</h3><strong>{data.leads}</strong></article>
+          <article className="realty-card"><h3>Imóveis</h3><strong>{data.imoveis}</strong></article>
+          <article className="realty-card"><h3>Contratos</h3><strong>{data.contratos}</strong></article>
+          <article className="realty-card"><h3>Mercado</h3><strong>{data.mercado}</strong></article>
+        </div>
+        <h2>Funil</h2>
+        {Object.entries(data.funil || {}).map(([k, v]) => (
+          <p key={k}>{k}: {v}</p>
+        ))}
+      </div>
+    </MainContainer>
+  );
+};
+
+export const Produtividade = () => {
+  const [leads, setLeads] = useState([]);
+  useEffect(() => {
+    leadsSalesService.list({ pageSize: 300 }).then((d) => setLeads(d.leads || [])).catch(toastError);
+  }, []);
+  const byUser = {};
+  leads.forEach((l) => {
+    const k = l.responsibleId || "sem corretor";
+    byUser[k] = (byUser[k] || 0) + 1;
+  });
+  return (
+    <MainContainer>
+      <div className="realty-page">
+        <h1 className="realty-page__title">Produtividade</h1>
+        <p className="realty-page__subtitle">Volume de leads por responsável.</p>
+        {Object.entries(byUser).map(([k, v]) => (
+          <article key={k} className="realty-card" style={{ marginBottom: 8 }}>
+            <h3>Corretor {k}</h3>
+            <strong>{v} leads</strong>
+          </article>
+        ))}
+      </div>
+    </MainContainer>
+  );
+};
+
+export const FilaDistribuicao = () => {
+  const [leads, setLeads] = useState([]);
+  const [users, setUsers] = useState([]);
+  const load = async () => {
+    try {
+      const [l, u] = await Promise.all([
+        leadsSalesService.list({ pageSize: 200 }),
+        api.get("/users", { params: { searchParam: "" } }),
+      ]);
+      setLeads((l.leads || []).filter((x) => !x.responsibleId));
+      setUsers(u.data.users || u.data || []);
+    } catch (err) {
+      toastError(err);
+    }
+  };
+  useEffect(() => {
+    load();
+  }, []);
+  const assign = async (leadId, responsibleId) => {
+    try {
+      await leadsSalesService.update(leadId, { responsibleId: Number(responsibleId) });
+      toast.success("Lead distribuído");
+      await load();
+    } catch (err) {
+      toastError(err);
+    }
+  };
+  return (
+    <MainContainer>
+      <div className="realty-page">
+        <h1 className="realty-page__title">Fila de distribuição</h1>
+        <p className="realty-page__subtitle">Leads sem corretor — atribua para a equipe (os mesmos de Leads e Vendas).</p>
+        {leads.length === 0 && <div className="realty-empty">Fila vazia.</div>}
+        {leads.map((lead) => (
+          <article key={lead.id} className="realty-lead" style={{ marginTop: 8 }}>
+            <strong>{lead.name}</strong>
+            <select defaultValue="" onChange={(e) => e.target.value && assign(lead.id, e.target.value)}>
+              <option value="">Atribuir…</option>
+              {(Array.isArray(users) ? users : []).map((u) => (
+                <option key={u.id} value={u.id}>{u.name}</option>
+              ))}
+            </select>
+          </article>
+        ))}
+      </div>
+    </MainContainer>
+  );
+};
+
+export const AgendaImobiliaria = () => {
+  const [leads, setLeads] = useState([]);
+  const [schedules, setSchedules] = useState([]);
+  useEffect(() => {
+    leadsSalesService.list({ pageSize: 200, followUpDue: "all" }).then((d) => setLeads(d.leads || [])).catch(toastError);
+    api.get("/schedules", { params: { pageNumber: 1 } }).then((r) => {
+      setSchedules(r.data.schedules || r.data || []);
+    }).catch(() => setSchedules([]));
+  }, []);
+  return (
+    <MainContainer>
+      <div className="realty-page">
+        <h1 className="realty-page__title">Agenda imobiliária</h1>
+        <p className="realty-page__subtitle">
+          Visitas e retornos. A agenda geral do VBSolution continua em{" "}
+          <Link to="/schedules">Agendamentos</Link>. Follow-ups também estão em{" "}
+          <Link to="/followups">Follow-up</Link>.
+        </p>
+        <h2>Follow-ups de leads</h2>
+        <div className="realty-page__grid">
+          {leads.map((lead) => (
+            <article key={lead.id} className="realty-card">
+              <h3>{lead.name}</h3>
+              <p>{lead.followUpAt ? new Date(lead.followUpAt).toLocaleString("pt-BR") : "sem data"}</p>
+            </article>
+          ))}
+        </div>
+        <h2>Agendamentos do sistema</h2>
+        {(Array.isArray(schedules) ? schedules : []).slice(0, 30).map((s) => (
+          <article key={s.id} className="realty-lead" style={{ marginTop: 8 }}>
+            <strong>{s.body || s.contact?.name || `Agenda #${s.id}`}</strong>
+            <span>{s.sendAt || s.createdAt}</span>
+          </article>
+        ))}
+      </div>
+    </MainContainer>
+  );
+};
+
+export const Corretores = () => {
+  const [users, setUsers] = useState([]);
+  useEffect(() => {
+    api.get("/users", { params: { searchParam: "" } }).then((r) => {
+      setUsers(r.data.users || r.data || []);
+    }).catch(toastError);
+  }, []);
+  return (
+    <MainContainer>
+      <div className="realty-page">
+        <h1 className="realty-page__title">Corretores</h1>
+        <p className="realty-page__subtitle">
+          Equipe comercial. Cadastro completo de usuários permanece em <Link to="/users">Usuários</Link>.
+        </p>
+        {(Array.isArray(users) ? users : []).map((u) => (
+          <article key={u.id} className="realty-card" style={{ marginBottom: 8 }}>
+            <h3>{u.name}</h3>
+            <p>{u.email} · {u.profile}</p>
+          </article>
+        ))}
+      </div>
+    </MainContainer>
+  );
+};
+
+export const Automacoes = kindPage(
+  "automacao",
+  "Automações",
+  "Regras gerais de automação da operação imobiliária."
+);
+export const Seguranca = kindPage(
+  "seguranca",
+  "Segurança",
+  "Políticas, acessos e incidentes de segurança."
+);
+export const AuditoriaExtracao = kindPage(
+  "auditoria_extracao",
+  "Auditoria de extração",
+  "Logs da extração de anúncios e RadarZAP."
+);
+export const MetricasExtracao = kindPage(
+  "metricas_extracao",
+  "Métricas de extração",
+  "Volume e qualidade das extrações."
+);
+export const AuditoriaRequests = kindPage(
+  "auditoria_requests",
+  "Auditoria de requests",
+  "Requisições de API e webhooks."
+);
+export const AuditoriaMonitoramento = kindPage(
+  "auditoria_monitoramento",
+  "Auditoria de monitoramento",
+  "Histórico de alertas de mercado."
+);
+export const AuditoriaLeads = kindPage(
+  "auditoria_leads",
+  "Auditoria de leads",
+  "Trilha de alterações nos leads."
+);
+export const ConfigurarIA = kindPage(
+  "config_ia",
+  "Configuração da IA",
+  "Parâmetros da IA imobiliária. Chaves globais ficam em Configurações / Brain.AI."
+);
+export const DiagnosticoAvaliacao = kindPage(
+  "diagnostico_avaliacao",
+  "Diagnóstico de avaliação",
+  "Casos e conferência do motor de avaliação."
+);
+export const LeadsLanding = kindPage(
+  "leads_landing",
+  "CRM Landing",
+  "Leads capturados em landing pages."
+);
+export const WebhookMetrics = kindPage(
+  "webhook_metrics",
+  "Métricas de webhook",
+  "Sucesso/falha de webhooks de captação."
+);
+export const WebhookAlerts = kindPage(
+  "webhook_alerts",
+  "Alertas de webhook",
+  "Alertas operacionais de integração."
+);
+export const WhatsappTemplatesCaptacao = kindPage(
+  "wa_templates_captacao",
+  "Templates WhatsApp captação",
+  "Modelos de mensagem para captação (além das respostas rápidas)."
+);
+export const WhatsappConsentimentos = kindPage(
+  "wa_consentimentos",
+  "Consentimentos WhatsApp",
+  "Opt-in / opt-out de disparos."
+);
+export const LgpdSolicitacoes = kindPage(
+  "lgpd",
+  "Solicitações LGPD",
+  "Pedidos de titulares (acesso, exclusão, portabilidade)."
+);
+export const BuscaAvancadaCaptacao = kindPage(
+  "busca_captacao",
+  "Busca avançada de captação",
+  "Filtros avançados da carteira de captação."
+);
+export const SeoAuditoria = kindPage(
+  "seo_auditoria",
+  "Auditoria SEO",
+  "Checklist SEO dos imóveis e conteúdos."
+);
+export const CaptacaoAllowlist = kindPage(
+  "captacao_allowlist",
+  "Allowlist de captação",
+  "Fontes e portais autorizados para scrape."
+);
+export const ConsultaCPF = kindPage(
+  "consulta_cpf",
+  "Consulta CPF",
+  "Consultas cadastrais vinculadas a proprietários/leads."
+);
+export const RadarZapScoring = kindPage(
+  "radarzap_scoring",
+  "RadarZAP — scoring",
+  "Regras de pontuação das mensagens de grupos."
+);
+export const RadarZapOnboarding = kindPage(
+  "radarzap_onboarding",
+  "RadarZAP — onboarding",
+  "Passo a passo para conectar grupos."
+);
+export const RadarZapStatusPage = kindPage(
+  "radarzap_status",
+  "RadarZAP — status",
+  "Saúde da coleta e fila de mensagens."
+);
+export const RadarZapAcessos = kindPage(
+  "radarzap_acessos",
+  "RadarZAP — logs de acesso",
+  "Quem acessou extrações e leads do RadarZAP."
+);
+export const DiagnosticoCaptacao = kindPage(
+  "diagnostico_captacao",
+  "Diagnóstico de captação",
+  "Diagnóstico da origem e qualidade da captação."
+);
+export const CaptacaoAvaliacaoLp = kindPage(
+  "lp_captacao_avaliacao",
+  "LP Captação / Avaliação",
+  "Landing de captação com avaliação (conteúdo e leads)."
+);
+export const VendaCrmLp = kindPage(
+  "lp_venda_crm",
+  "LP Venda CRM",
+  "Landing comercial do CRM imobiliário."
+);
+export const PortalImoveisPublico = kindPage(
+  "portal_imoveis",
+  "Portal de imóveis",
+  "Vitrine pública (anúncios publicados a partir do inventário)."
+);
+export const BlogImobiliario = kindPage(
+  "blog",
+  "Blog",
+  "Posts do blog imobiliário (além do Conteúdo SEO)."
+);
+export const AnunciarImovel = kindPage(
+  "anunciar_imovel",
+  "Anunciar imóvel",
+  "Hub de anúncio em portais e redes."
+);
+export const LgpdPortalTitular = kindPage(
+  "lgpd_portal",
+  "Portal do titular (LGPD)",
+  "Atendimento a solicitações do titular."
+);
+export const Consentimentos = kindPage(
+  "consentimento",
+  "Consentimentos",
+  "Tokens e confirmações de consentimento."
+);
+export const PagamentosPublicos = kindPage(
+  "pagamento_publico",
+  "Pagamento público",
+  "Links de pagamento enviados a clientes."
+);
+export const RadarOportunidades = kindPage(
+  "radar_oportunidades",
+  "Radar de oportunidades",
+  "Oportunidades de mercado (Q-Capture + Inteligência)."
+);
+export const ConfiguracoesImobiliaria = kindPage(
+  "config_imobiliaria",
+  "Configurações da imobiliária",
+  "Marca, cidade padrão e módulos. Configurações gerais do sistema: /settings."
+);
+export const WhatsappImobiliario = () => (
+  <MainContainer>
+    <div className="realty-page">
+      <h1 className="realty-page__title">WhatsApp imobiliário</h1>
+      <p className="realty-page__subtitle">
+        O atendimento WhatsApp do VBSolution está em <Link to="/tickets">Atendimento</Link>. RadarZAP em{" "}
+        <Link to="/radarzap">RadarZAP</Link>. Conexões em <Link to="/connections">Conexões</Link>.
+      </p>
+    </div>
+  </MainContainer>
+);
+export const RealtyDashboard = () => (
+  <MainContainer>
+    <div className="realty-page">
+      <h1 className="realty-page__title">Dashboard imobiliário</h1>
+      <p className="realty-page__subtitle">
+        Visão Radar. O início do VBSolution continua em <Link to="/">Início</Link>. Inteligência em{" "}
+        <Link to="/inteligencia">Inteligência</Link>, funil em <Link to="/pipeline">CRM Pipeline</Link>.
+      </p>
+    </div>
+  </MainContainer>
+);
