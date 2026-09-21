@@ -1,0 +1,1623 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Treinamento · Hospedagem Frontend Vercel · VB Solution CRM</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles-extra.css" />
+  <link rel="stylesheet" href="styles-dense.css" />
+</head>
+<body>
+
+<section class="page cover">
+  <div class="cover-top">
+    <img class="cover-logo" src="../assets/vbsolution-logo-nome-branca.png" alt="VB Solution" />
+    <div class="badge">Material de treinamento · Código-Fonte · 50 páginas</div>
+  </div>
+  <p class="series">SÉRIE CÓDIGO-FONTE · FRONTEND · 50 PÁGINAS</p>
+  <h1>Hospedagem do Frontend · Vercel e alternativas</h1>
+  <p class="subtitle">Manual passo a passo para publicar o painel React do VB Solution CRM na Vercel (e alternativas), com variáveis, CORS, domínio, checklist e prompts para Claude Code. Linguagem direta, para leigo acompanhar e executar.</p>
+  <div class="cover-grid"><div class="cover-card"><span>Público</span><strong>Compradores do código-fonte</strong></div><div class="cover-card"><span>Foco</span><strong>Painel React</strong></div><div class="cover-card"><span>Plataforma</span><strong>Vercel (+ Netlify/CF/Nginx)</strong></div><div class="cover-card"><span>Formato</span><strong>50 páginas densas</strong></div></div>
+  <div class="cover-bottom">
+    <div>Visão Business · VB Solution CRM<br />Manual técnico · © Visão Business</div>
+    <img src="../assets/vbsolution-logo-square.png" alt="VB" />
+  </div>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Mapa</p>
+    <h2>Sumário · o que este manual resolve</h2>
+    <p class="lead">Aqui você publica só o painel React. A API continua na Railway/VPS.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Colocar o CRM no ar com URL pública para o time usar.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Build na Vercel com REACT_APP_BACKEND_URL apontando para a API.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Sem isso o time só acessa localhost. API na Vercel quebra WhatsApp.</p></div>
+    </div>
+    
+<table class="compact"><thead><tr><th>Bloco</th><th>Páginas</th></tr></thead><tbody><tr><td>Conceito e build local</td><td>3–10</td></tr><tr><td>Vercel passo a passo</td><td>11–22</td></tr><tr><td>CORS e domínio</td><td>23–30</td></tr><tr><td>Alternativas</td><td>31–36</td></tr><tr><td>Prompts e go-live</td><td>37–50</td></tr></tbody></table>
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Entenda a regra: Vercel = painel.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Prepare a URL da API (Railway/VPS) antes do build.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Siga conta → import → Root Directory → env → deploy.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Alinhe FRONTEND_URL na API e teste login.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Só então domínio próprio.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Use o checklist go-live no fim.</p></div></div>
+<div class="link-box"><strong>Vercel</strong><div class="url"><a href="https://vercel.com" target="_blank">https://vercel.com</a></div></div>
+<div class="callout"><strong>Regra de ouro</strong><br/>Nunca Root Directory = backend na Vercel.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">2 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Regra</p>
+    <h2>Regra de ouro · Vercel não hospeda a API</h2>
+    <p class="lead">A Vercel é ótima para front estático/SPA. Não é lugar de Baileys, Bull e Socket 24h.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Evitar arquitetura errada no primeiro deploy.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Painel chama REACT_APP_BACKEND_URL. Processos longos ficam na API.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>API na Vercel = timeout, frio, WhatsApp instável.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Escreva no papel: painel = Vercel · API = Railway/VPS.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Confirme que já tem BACKEND_URL HTTPS da API.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Se ainda não tem API, pause e abra o PDF VPS/Railway.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Não crie projeto Vercel com root na pasta backend.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Não cole JWT, DATABASE_URL ou Redis na Vercel.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Siga para o build local de teste.</p></div></div>
+<div class="callout warn"><strong>Onde acarreta</strong><br/>Time pergunta “por que o WhatsApp cai” → quase sempre API no lugar errado.</div>
+<ul class="checklist"><li>Sei a URL da API</li><li>Não vou colocar backend na Vercel</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">3 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Peças</p>
+    <h2>O que é frontend neste CRM</h2>
+    <p class="lead">Frontend é a pasta frontend: React (Create React App) com telas de login, tickets e menus.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Entregar a interface que o corretor usa no Chrome.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>npm run build gera a pasta build. A Vercel serve esses arquivos e faz rewrite SPA.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Build com localhost = produção ainda tenta falar com seu PC.</p></div>
+    </div>
+    
+<table class="compact"><thead><tr><th>Item</th><th>Valor</th></tr></thead><tbody><tr><td>Pasta</td><td>frontend</td></tr><tr><td>Build</td><td>npm run build</td></tr><tr><td>Saída</td><td>build</td></tr><tr><td>Node</td><td>20.x</td></tr></tbody></table>
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra VBSOLUTIONCRMCodigoFonte-main/frontend no explorer.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Confira package.json e script build.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Localize .env.example ou .env.development.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Anote: Output Directory = build.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Anote: Framework = Create React App.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Root Directory no deploy = VBSOLUTIONCRMCodigoFonte-main/frontend.</p></div></div>
+<div class="link-box"><strong>Repo</strong><div class="url"><a href="https://github.com/visaobusinesstech/codigo-fonte-COUTINHO" target="_blank">https://github.com/visaobusinesstech/codigo-fonte-COUTINHO</a></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">4 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Build local</p>
+    <h2>Build local · ensaiar antes da Vercel</h2>
+    <p class="lead">Rodar o build no PC mostra erro de lint/env antes de queimar minuto de deploy.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Validar que o pacote nasce com a URL certa da API.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>REACT_APP_* são gravados no JS no momento do build.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Errar aqui e só descobrir na Vercel atrasa o go-live.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>cd VBSOLUTIONCRMCodigoFonte-main/frontend</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>copy .env.example .env  (ou edite .env.production.local)</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Defina REACT_APP_BACKEND_URL=https://SUA-API sem barra final</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>npm install</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>npm run build</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Se falhar, leia o erro (CI/eslint) antes de ir à Vercel</p></div></div>
+<code>REACT_APP_BACKEND_URL=https://SEU-SERVICO.up.railway.app
+DISABLE_ESLINT_PLUGIN=true
+CI=false
+GENERATE_SOURCEMAP=false</code>
+<ul class="checklist"><li>build terminou</li><li>pasta build existe</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">5 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">REACT_APP</p>
+    <h2>REACT_APP_BACKEND_URL · para que serve</h2>
+    <p class="lead">É o endereço que o painel usa em toda chamada de API.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Ligar o browser à API pública correta.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>CRA embute a variável no bundle. Runtime da Vercel não relê sozinho sem rebuild.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Valor localhost em Production = Network no F12 mostra localhost e login falha fora do seu PC.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Copie a URL HTTPS da API (Railway/VPS).</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Remova barra no final se houver.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Cole em REACT_APP_BACKEND_URL na Vercel (Production e Preview).</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Dispare Redeploy depois de mudar.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Abra o site → F12 → Network → confira o host das chamadas.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Se ainda for localhost, o build antigo está no ar: redeploy de novo.</p></div></div>
+<div class="callout warn"><strong>Como funciona</strong><br/>Mudar Variable sem Redeploy não reescreve o JS já publicado.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">6 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Conta</p>
+    <h2>Criar conta Vercel e conectar GitHub</h2>
+    <p class="lead">A Vercel puxa o código do GitHub e builda a cada push (se habilitado).</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Ter um lugar oficial para o painel.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>OAuth GitHub autoriza o import do repo.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Sem autorização o repo privado não aparece na lista.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra https://vercel.com e Continue with GitHub.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Autorize o acesso à organização/repo do código-fonte.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Confirme o e-mail se pedir.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Entre no Dashboard.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Deixe o cartão/plano conforme a conta (Hobby serve para começar).</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Siga para Import Project.</p></div></div>
+<div class="link-box"><strong>Vercel</strong><div class="url"><a href="https://vercel.com" target="_blank">https://vercel.com</a></div></div>
+<div class="link-box"><strong>GitHub repo</strong><div class="url"><a href="https://github.com/visaobusinesstech/codigo-fonte-COUTINHO" target="_blank">https://github.com/visaobusinesstech/codigo-fonte-COUTINHO</a></div></div>
+<ul class="checklist"><li>Login ok</li><li>Repo visível ou ZIP/upload alternativo combinado</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">7 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Import</p>
+    <h2>Importar o repositório na Vercel</h2>
+    <p class="lead">New Project → Import lista os repos que o GitHub liberou.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Criar o projeto ligado ao código certo.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Cada import vira um Project com deploys.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Importar o repo errado builda outra coisa.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Dashboard → Add New → Project.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Ache codigo-fonte-COUTINHO (ou o nome do fork/cliente).</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Clique Import.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Ainda não aperte Deploy: configure Root e Env antes.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Se não aparece, GitHub → Settings → Applications → Vercel → Repository access.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Volte e atualize a lista.</p></div></div>
+<div class="callout"><strong>Onde acarreta</strong><br/>Repo sem acesso = tela vazia e sensação de “sumiu o código”.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">8 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Root</p>
+    <h2>Root Directory do frontend</h2>
+    <p class="lead">No monorepo a Vercel precisa saber qual pasta buildar.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Apontar para o package.json do painel.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Root Directory = VBSOLUTIONCRMCodigoFonte-main/frontend</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Root na raiz ou no backend = Cannot find package.json / build errado.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Em Configure Project, abra Root Directory.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Edit → navegue até VBSOLUTIONCRMCodigoFonte-main/frontend.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Salve.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Framework Preset: Create React App (ou Other).</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Build Command: npm run build</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Output Directory: build · Install: npm install</p></div></div>
+<code>Root Directory: VBSOLUTIONCRMCodigoFonte-main/frontend
+Build: npm run build
+Output: build</code>
+<ul class="checklist"><li>Root = frontend</li><li>Output = build</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">9 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Node20</p>
+    <h2>Node 20 na Vercel</h2>
+    <p class="lead">O CRM espera Node 20. Versão antiga quebra dependências.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Build previsível igual ao local.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Settings → General → Node.js Version = 20.x</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Node 18/16 pode falhar em pacotes novos.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Project → Settings → General.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Node.js Version → 20.x</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Salve.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Faça Redeploy do último deployment.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Nos logs, confirme versão do Node no início do build.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Alinhe com o node -v do seu PC (v20).</p></div></div>
+<div class="link-box"><strong>Node.js</strong><div class="url"><a href="https://nodejs.org" target="_blank">https://nodejs.org</a></div></div>
+<div class="callout"><strong>Como funciona</strong><br/>A Vercel usa a versão configurada no projeto, não a do seu notebook, no build da nuvem.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">10 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Env Vercel</p>
+    <h2>Environment Variables na Vercel · o pacote certo</h2>
+    <p class="lead">Só variáveis que o React pode ver (REACT_APP_*) e flags de build.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Build sem surpresa de eslint/CI e API apontada.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Production e Preview devem ter as mesmas chaves críticas.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Colocar segredo de banco aqui vaza no browser se prefixado errado.</p></div>
+    </div>
+    
+<table class="compact"><thead><tr><th>Nome</th><th>Valor</th><th>Por quê</th></tr></thead><tbody><tr><td>REACT_APP_BACKEND_URL</td><td>https://api...</td><td>Chamadas do painel</td></tr><tr><td>DISABLE_ESLINT_PLUGIN</td><td>true</td><td>Lint não derruba build</td></tr><tr><td>CI</td><td>false</td><td>Warning não vira erro</td></tr><tr><td>GENERATE_SOURCEMAP</td><td>false</td><td>Build menor</td></tr></tbody></table>
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Settings → Environment Variables.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>REACT_APP_BACKEND_URL = https://SUA-API</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>DISABLE_ESLINT_PLUGIN = true</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>CI = false</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>GENERATE_SOURCEMAP = false</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Marque Production e Preview · Save · Redeploy</p></div></div>
+<div class="callout danger"><strong>Não coloque</strong><br/>JWT, DATABASE_URL, REDIS_*, STRIPE_SECRET.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">11 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Proibido</p>
+    <h2>O que nunca vai na Vercel</h2>
+    <p class="lead">Segredos de servidor não pertencem ao front.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Reduzir vazamento e confusão de arquitetura.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Browser baixa o JS. Tudo que for REACT_APP_ pode vazar.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Segredo na Vercel “porque era mais fácil” = incidente de segurança.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Revise a lista de Variables.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Apague qualquer DB_*, JWT_*, REDIS_*, STRIPE_SECRET.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Mantenha só REACT_APP_* e flags de build.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Segredos ficam na Railway/VPS.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Se já vazou, rode chaves novas na API.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Avise o time para não recolocar.</p></div></div>
+<ul class="checklist"><li>Nenhum segredo de servidor na Vercel</li><li>API tem os segredos</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">12 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">vercel.json</p>
+    <h2>vercel.json e rewrite SPA</h2>
+    <p class="lead">Rotas como /tickets/123 precisam voltar para index.html.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>F5 em rota interna não dar 404.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Rewrites mandam tudo para index.html; o React Router resolve.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Sem rewrite: link direto e refresh quebram em produção.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra frontend/vercel.json no código.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Confirme o rewrite abaixo.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Se não existir, crie o arquivo e faça commit.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Deploy de novo.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Teste: entre numa rota interna e aperte F5.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>404 = rewrite ausente ou Output Directory errado.</p></div></div>
+<code>{
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}</code>
+<div class="callout"><strong>Como funciona</strong><br/>CDN entrega index.html; o JS lê a URL e mostra a tela certa.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">13 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Deploy</p>
+    <h2>Primeiro Deploy · ler logs</h2>
+    <p class="lead">Deploy gera URL *.vercel.app. Logs mostram se o build passou.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Sair do “configurado” para “no ar”.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Install → build → upload da pasta build.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Erro de Root/env aparece aqui, não no Chrome ainda.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Clique Deploy (ou Redeploy).</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Abra Building e acompanhe.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Se falhar em eslint/CI, confira Variables CI=false.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Se falhar package.json, confira Root Directory.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Sucesso: copie a URL Production.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Abra a URL e vá para o teste de login (depois do CORS).</p></div></div>
+<ul class="checklist"><li>Deploy Ready</li><li>URL anotada</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">14 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">CORS</p>
+    <h2>CORS · FRONTEND_URL na API</h2>
+    <p class="lead">O browser bloqueia chamada se a API não reconhecer a origem do painel.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Login e menus falando com a API sem erro de CORS.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>API compara Origin com FRONTEND_URL (e às vezes WEB_ORIGIN).</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>URL com barra, http vs https ou preview diferente = bloqueio.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Copie a URL do painel exatamente como o Chrome mostra.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Na API: FRONTEND_URL=essa URL sem / final.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Se precisar, WEB_ORIGIN com o mesmo valor.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Redeploy/pm2 restart na API.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>No painel, F12 → Console: sumiu o erro CORS?</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Teste login de novo.</p></div></div>
+<div class="callout warn"><strong>Onde acarreta</strong><br/>Painel “abre” mas botões não salvam: quase sempre CORS ou REACT_APP errado.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">15 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Teste login</p>
+    <h2>Testar login e Network no F12</h2>
+    <p class="lead">Prova real: usuário entra e as requests vão para a API certa.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Validar build + CORS + usuário admin.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Network mostra host, status e payload.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Achar “bonito mas morto” sem F12 perde tempo.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra o painel na URL Vercel.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>F12 → Network → preserve log.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Faça login com o admin do banco/seed.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Ache a request de auth: host deve ser a API.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Status 200/201 e redirecionamento ao dashboard.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Se host for localhost, volte à Variable e Redeploy.</p></div></div>
+<ul class="checklist"><li>Login ok</li><li>Host da API correto</li><li>Sem CORS no Console</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">16 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Preview</p>
+    <h2>Preview vs Production</h2>
+    <p class="lead">Cada branch/PR pode ter URL preview. Production é a principal.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Testar mudança sem derrubar o link do cliente.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Variables podem divergir por ambiente se você marcar só um.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Preview com API de produção mistura teste e dado real.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Marque Variables críticas em Production e Preview.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Ideal: API de homolog para Preview.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>FRONTEND_URL da API de homolog = URL preview.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Não teste WhatsApp real no preview sem querer.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Promova para Production só após checklist.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Documente qual URL o cliente usa.</p></div></div>
+<div class="callout"><strong>Como funciona</strong><br/>Mesmo código, URLs diferentes. O perigo é Variable pela metade.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">17 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Redeploy</p>
+    <h2>Quando mudar variável · Redeploy obrigatório</h2>
+    <p class="lead">REACT_APP_* não é lida a cada request; entra no build.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Aplicar URL nova da API de verdade.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Redeploy roda install/build de novo com Variables atuais.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Só Save na Variable = site antigo continua no ar.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Altere REACT_APP_BACKEND_URL.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Deployments → ⋮ → Redeploy.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Espere Ready.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Hard refresh no Chrome (Ctrl+F5).</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>F12 Network de novo.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Atualize FRONTEND_URL na API se a URL do painel mudou.</p></div></div>
+<ul class="checklist"><li>Redeploy feito</li><li>Network mostra host novo</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">18 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Domínio</p>
+    <h2>Domínio próprio na Vercel</h2>
+    <p class="lead">Trocar *.vercel.app por crm.suaempresa.com.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Marca própria no Chrome do cliente.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>DNS CNAME para cname.vercel-dns.com + Domain na Vercel.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Esquecer FRONTEND_URL = CORS no dia da virada.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Project → Settings → Domains → Add.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Digite crm.suaempresa.com.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>No DNS, CNAME conforme a Vercel mostrar.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Espere Valid.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Atualize FRONTEND_URL na API para o domínio novo.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Teste login e F5 em rota interna.</p></div></div>
+<div class="link-box"><strong>Docs Domains Vercel</strong><div class="url"><a href="https://vercel.com/docs/domains" target="_blank">https://vercel.com/docs/domains</a></div></div>
+<div class="callout"><strong>Onde acarreta</strong><br/>Webhook Meta não usa o domínio do painel; usa o da API. Mas CORS sim usa o do painel.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">19 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Quatro URLs</p>
+    <h2>As 4 URLs que precisam bater</h2>
+    <p class="lead">Um desenho mental evita 90% dos bugs de “não conecta”.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Alinhar front e API depois de qualquer mudança de domínio.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Quatro variáveis em dois mundos.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Uma desatualizada quebra login ou webhook.</p></div>
+    </div>
+    
+<table class="compact"><thead><tr><th>Variável</th><th>Onde</th></tr></thead><tbody><tr><td>REACT_APP_BACKEND_URL</td><td>Vercel</td></tr><tr><td>BACKEND_URL</td><td>API</td></tr><tr><td>PUBLIC_BACKEND_URL</td><td>API</td></tr><tr><td>FRONTEND_URL</td><td>API</td></tr></tbody></table>
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Anote REACT_APP_BACKEND_URL (Vercel).</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Anote BACKEND_URL (API).</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Anote PUBLIC_BACKEND_URL (API/Meta).</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Anote FRONTEND_URL (API/CORS).</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Compare no Bloco de Notas: sem / final, https certo.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Redeploy front e API após correção.</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">20 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Netlify</p>
+    <h2>Alternativa · Netlify</h2>
+    <p class="lead">Mesma ideia: build do frontend e publish da pasta build.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Opção se o time já usa Netlify.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Base directory frontend + redirects SPA.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Esquecer redirect = 404 no F5.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>New site from Git · mesmo repo.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Base: VBSOLUTIONCRMCodigoFonte-main/frontend</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Build: npm run build · Publish: build</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Env: REACT_APP_BACKEND_URL</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>public/_redirects com /* /index.html 200</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Atualize FRONTEND_URL na API</p></div></div>
+<code>/*    /index.html   200</code>
+<div class="link-box"><strong>Netlify</strong><div class="url"><a href="https://www.netlify.com" target="_blank">https://www.netlify.com</a></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">21 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Cloudflare</p>
+    <h2>Alternativa · Cloudflare Pages</h2>
+    <p class="lead">CDN forte, build similar ao da Vercel.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Publicar painel com boa performance global.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Root frontend + variável REACT_APP_BACKEND_URL + SPA fallback.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Fallback errado = rotas quebradas.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Workers & Pages → Create → Pages.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Conecte o GitHub.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Root: VBSOLUTIONCRMCodigoFonte-main/frontend</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Build npm run build · Output build</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Variable REACT_APP_BACKEND_URL + Node 20</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Configure SPA e FRONTEND_URL na API</p></div></div>
+<div class="link-box"><strong>Cloudflare Pages</strong><div class="url"><a href="https://pages.cloudflare.com" target="_blank">https://pages.cloudflare.com</a></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">22 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Nginx FE</p>
+    <h2>Alternativa · Nginx na VPS servindo o build</h2>
+    <p class="lead">Útil se quiser painel e API no mesmo servidor.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Servir arquivos estáticos com try_files SPA.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>npm run build local/CI → copia para root do Nginx.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Sem try_files = 404 em rota profunda.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>No PC: npm run build com REACT_APP_BACKEND_URL da API.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Envie a pasta build para a VPS.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Aponte root do server Nginx para essa pasta.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>try_files $uri /index.html;</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Certbot no domínio do painel.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>FRONTEND_URL = https do painel · restart API</p></div></div>
+<code>server {
+  listen 80;
+  server_name crm.suaempresa.com;
+  root /var/www/.../frontend/build;
+  index index.html;
+  location / { try_files $uri /index.html; }
+}</code>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">23 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Estático</p>
+    <h2>Qualquer host estático</h2>
+    <p class="lead">Hostgator compartilhada, S3+CloudFront, etc.: sobe o conteúdo de build.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Flexibilidade quando Vercel não for opção.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Upload dos arquivos + regra 404→index.html.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Subir a pasta build inteira errada (com o wrapper) quebra paths.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Gere build local com a URL da API.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Envie o conteúdo interno de build/.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Configure fallback SPA.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Force HTTPS.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Atualize FRONTEND_URL.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Teste F5 em rota interna.</p></div></div>
+<div class="callout"><strong>Como funciona</strong><br/>Depois do build não existe mais Node no painel. Só arquivos.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">24 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Erros</p>
+    <h2>Erros comuns do frontend em produção</h2>
+    <p class="lead">Tabela para não chutar.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Triagem rápida.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Case sintoma → causa → ação.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Ação errada (apagar projeto) perde domínio.</p></div>
+    </div>
+    
+<table class="compact"><thead><tr><th>Sintoma</th><th>Causa</th><th>Ação</th></tr></thead><tbody><tr><td>Network localhost</td><td>build antigo/env</td><td>Variable + Redeploy</td></tr><tr><td>CORS</td><td>FRONTEND_URL</td><td>URL idêntica + restart API</td></tr><tr><td>404 no F5</td><td>rewrite</td><td>vercel.json / redirects</td></tr><tr><td>Cannot find package.json</td><td>Root</td><td>apontar frontend</td></tr><tr><td>Build eslint</td><td>CI</td><td>CI=false</td></tr></tbody></table>
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Reproduza o erro e abra F12.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Case na tabela.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Mude só aquilo.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Redeploy se for REACT_APP.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Reteste login.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Documente a correção.</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">25 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Segurança FE</p>
+    <h2>Segurança do painel</h2>
+    <p class="lead">Front não guarda segredo de banco. Mesmo assim há higiene.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Reduzir vazamento e phishing de login.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>HTTPS, cookies/token no fluxo da API, não expor source map.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>GENERATE_SOURCEMAP=true facilita engenharia reversa.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>GENERATE_SOURCEMAP=false</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>HTTPS sempre no domínio.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Não publique .env no repo.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Admin com senha forte.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Revise Variables periodicamente.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Logout em computadores compartilhados.</p></div></div>
+<ul class="checklist"><li>Sem sourcemap</li><li>HTTPS</li><li>.env fora do Git</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">26 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Prompt 1</p>
+    <h2>Prompt Claude Code · configurar Vercel</h2>
+    <p class="lead">Use no VS Code com o repo aberto.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Acelerar checklist sem inventar pastas.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Assistente lista settings; você clica no painel Vercel.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Prompt vago gera Root Directory inventado.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra o terminal na raiz do download.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Cole o prompt da bolha.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Revise Root e env sugeridos.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Aplique na Vercel.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Deploy e valide Network.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Guarde a URL no cofre do cliente.</p></div></div>
+<div class="script-bubble"><span class="label">Prompt</span>Configure o projeto Vercel para Root Directory VBSOLUTIONCRMCodigoFonte-main/frontend, CRA, Node 20, variáveis REACT_APP_BACKEND_URL (vou informar), DISABLE_ESLINT_PLUGIN=true, CI=false, GENERATE_SOURCEMAP=false, e confirme vercel.json com rewrite SPA. Não sugira hospedar o backend na Vercel.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">27 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Prompt 2</p>
+    <h2>Prompt Claude Code · CORS e quatro URLs</h2>
+    <p class="lead">Quando o login falha com CORS, este prompt encurta.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Alinhar mundos front/API.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Assistente compara URLs que você cola.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Sem colar URL real o diagnóstico fica genérico.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Copie URL do painel, URL da API e FRONTEND_URL atual.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Cole o prompt com esses valores.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Aplique as correções.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Redeploy necessários.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Reteste F12.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Marque o checklist.</p></div></div>
+<div class="script-bubble"><span class="label">Prompt</span>Painel=[URL] API=[URL] FRONTEND_URL=[valor]. Monte a tabela das 4 variáveis (REACT_APP_BACKEND_URL, BACKEND_URL, PUBLIC_BACKEND_URL, FRONTEND_URL) sem barra final e diga exatamente o que mudar na Vercel e na API para acabar o CORS.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">28 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Passo a passo</p>
+    <h2>Do zero ao login · roteiro contínuo</h2>
+    <p class="lead">Uma página que amarra o fluxo inteiro sem pular PDF.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Executar em sequência no dia do deploy.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Conta → Root → Env → Deploy → CORS → teste.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Pular CORS vira “deploy ok, login morto”.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>API HTTPS no ar (PDF VPS/Railway).</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Conta Vercel + import repo.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Root frontend + Node 20.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Variables do pacote.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Deploy + anotar URL.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>FRONTEND_URL na API + login F12.</p></div></div>
+<ul class="checklist"><li>Roteiro completo</li><li>Cliente consegue logar</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">29 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Checklist</p>
+    <h2>Checklist publicação do painel</h2>
+    <p class="lead">Porteiro do “pode mandar o link”.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Não anunciar URL pela metade.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Itens binários ok/não.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Item aberto = risco de suporte no mesmo dia.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Leia a lista em voz alta.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Marque só o que está feito de verdade.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Transforme não em tarefa.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Reteste login.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Envie o link por canal seguro.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Guarde print do checklist.</p></div></div>
+<ul class="checklist"><li>Root frontend</li><li>Node 20</li><li>REACT_APP_BACKEND_URL HTTPS</li><li>CI=false</li><li>vercel.json</li><li>Deploy Ready</li><li>CORS ok</li><li>F5 em rota ok</li><li>Sem segredo na Vercel</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">30 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">FAQ</p>
+    <h2>FAQ frontend e Vercel</h2>
+    <p class="lead">Dúvidas curtas do dia a dia.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Destravar sem reabrir tudo.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Pergunta → resposta.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>FAQ não substitui Network F12.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Ache sua dúvida abaixo.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Aplique a resposta.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Se não couber, volte à tabela de erros.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Documente o caso novo.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Atualize FRONTEND_URL se mudou URL.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Siga ao go-live.</p></div></div>
+
+          <div class="qa"><div class="q">Posso só arrastar a pasta build?</div><div class="a">Sim em host estático. Na Vercel o fluxo Git é melhor para update.</div></div>
+          <div class="qa"><div class="q">Preview precisa de CORS?</div><div class="a">Sim. FRONTEND_URL deve incluir a origem que o Chrome usa, ou use API de homolog.</div></div>
+          <div class="qa"><div class="q">Mudança de texto na tela?</div><div class="a">Commit + deploy. Não edite JS minificado na mão.</div></div>
+          <div class="qa"><div class="q">API e front no mesmo domínio?</div><div class="a">Dá com proxy, mas este manual separa Vercel + API para WhatsApp estável.</div></div>
+          
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">31 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Go-live</p>
+    <h2>Go-live do painel com a API</h2>
+    <p class="lead">Dia D: link no ar, time logando, API respondendo.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Entrar em operação.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Checklist front + API + um usuário real.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Anunciar sem teste = primeiro ticket é o seu telefone.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Checklist desta página e do PDF da API.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Login com usuário do cliente.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Abrir um ticket/menu crítico.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Confirmar Network na API certa.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Enviar URL e credenciais por canal seguro.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Agendar o PDF WhatsApp se o canal ainda não estiver vivo.</p></div></div>
+<div class="callout"><strong>Recado</strong><br/>Desligar a API derruba o painel funcional mesmo com a Vercel no ar.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">32 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Monitor</p>
+    <h2>Depois do ar · o que olhar toda semana</h2>
+    <p class="lead">Deploy não é fim. É começo da operação.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Pegar drift de Variable e domínio expirando.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Olhar Deployments, Domains e um login teste.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Ignorar até quebrar custa mais caro.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Uma vez por semana: login teste.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Confira Domains Valid.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Veja se alguém mudou Variable sem Redeploy.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Confira se a API ainda é a mesma URL.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Revise usuários admin.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Anote no runbook.</p></div></div>
+<ul class="checklist"><li>Login semanal ok</li><li>Domínio ok</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">33 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Rollback</p>
+    <h2>Rollback na Vercel · voltar deploy anterior</h2>
+    <p class="lead">Se um deploy quebrou a tela, volte o anterior.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Restaurar painel rápido.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Deployments → Promote / Redeploy do build bom.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Rollback do front não desfaz migrate do banco.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Identifique o último Ready bom.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Promote to Production ou Redeploy dele.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Hard refresh.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Confirme login.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Corrija a branch com calma.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Se o bug era Variable, corrija Variable e redeploy consciente.</p></div></div>
+<div class="callout warn"><strong>Onde acarreta</strong><br/>Rollback de front com API incompatível ainda falha: alinhe versões.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">34 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">CI</p>
+    <h2>Por que CI=false e DISABLE_ESLINT_PLUGIN</h2>
+    <p class="lead">CRA em CI trata warning como erro. Eslint no build pode matar deploy.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Priorizar ir ao ar com código já validado no PC.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Flags relaxam o pipeline da Vercel.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Sem flags, deploy fica vermelho por warning cosmético.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Adicione CI=false</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Adicione DISABLE_ESLINT_PLUGIN=true</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Redeploy</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Continue lintando no PC (npm run lint se existir)</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Não use isso como desculpa para ignore eterno de bug real</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Se o time quiser CI rígido depois, prepare o código antes</p></div></div>
+<div class="callout"><strong>Como funciona</strong><br/>CI=true é padrão em muitos ambientes de nuvem. Aqui false evita falso negativo.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">35 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Prints</p>
+    <h2>O que pedir em print quando der erro</h2>
+    <p class="lead">Suporte bom nasce de evidência, não de “não abre”.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Acelerar diagnóstico.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>URL, Network, Console, Variable names sem segredo.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Print sem URL perde contexto de CORS.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Print da URL completa do Chrome.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Print do Console com o erro.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Print do Network com a request falha.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Lista de nomes de Variables (sem valores secretos).</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Horário aproximado do erro.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Se API, anexe 20 linhas de log.</p></div></div>
+<ul class="checklist"><li>Kit de print montado</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">36 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Cliente</p>
+    <h2>Como entregar o painel ao cliente</h2>
+    <p class="lead">Pacote mínimo para o cliente não ficar dependente de você a cada clique.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Handoff claro.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>URL, usuários, aviso sobre API e .env.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Entregar só o link sem aviso da API = surpresa quando alguém “desliga o servidor”.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Envie URL do painel.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Envie login admin por canal seguro.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Explique: painel na Vercel, API em X, banco em Y.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Avise que .env não está no GitHub.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Passe o PDF WhatsApp se for o próximo passo.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Combine canal de suporte e horário.</p></div></div>
+<div class="callout"><strong>Recado</strong><br/>Cliente feliz é cliente que sabe o que não pode desligar.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">37 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Fim</p>
+    <h2>Encerramento · links e próximo PDF</h2>
+    <p class="lead">Painel no ar. Próximo: banco bem documentado (Supabase) e canal WhatsApp.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Fechar o módulo frontend.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Ordem sugerida de leitura/execução.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Pular WhatsApp com painel ok ainda deixa operação muda.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Marque o checklist de publicação.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Confirme as 4 URLs.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Abra o PDF Supabase se o banco ainda não estiver redondo.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Abra o PDF WhatsApp para Redis e canal.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Guarde URLs no cofre.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Arquive prints do go-live.</p></div></div>
+<div class="link-box"><strong>Vercel</strong><div class="url"><a href="https://vercel.com" target="_blank">https://vercel.com</a></div></div>
+<div class="link-box"><strong>Repo</strong><div class="url"><a href="https://github.com/visaobusinesstech/codigo-fonte-COUTINHO" target="_blank">https://github.com/visaobusinesstech/codigo-fonte-COUTINHO</a></div></div>
+<div class="link-box"><strong>Node</strong><div class="url"><a href="https://nodejs.org" target="_blank">https://nodejs.org</a></div></div>
+<div class="callout"><strong>Visão Business · VB Solution CRM</strong><br/>Treinamento · Hospedagem Frontend Vercel · 50 páginas · © Visão Business</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">38 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Cache</p>
+    <h2>Cache do Chrome e hard refresh</h2>
+    <p class="lead">Às vezes o deploy novo existe e o Chrome mostra o JS velho.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Ver a versão nova de verdade.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Ctrl+F5 ou limpar cache do site.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Diagnóstico errado de “variable não pegou”.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Ctrl+F5 após cada redeploy.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Se possível, janela anônima.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Confira Network → Disable cache com F12 aberto.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Compare hash dos arquivos estáticos.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Só então mexa de novo em Variable.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Documente se o time usa proxy corporativo com cache.</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">39 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Branches</p>
+    <h2>Branch main e deploys acidentais</h2>
+    <p class="lead">Push em main pode publicar Production sem querer.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Controlar o que vai ao cliente.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Production Branch nas settings.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Feature crua no ar = vergonha pública.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Settings → Git → Production Branch = main (ou a combinada).</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Trabalhe features em branch.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Use Preview para teste.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Merge só após checklist.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Avise o time do fluxo.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Proteja main no GitHub se possível.</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">40 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Env Preview</p>
+    <h2>Separar Variable de Preview</h2>
+    <p class="lead">Preview pode apontar para API de homolog.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Não misturar dado real em teste.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Variables por Environment na Vercel.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Preview em produção sem querer suja dado.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Crie API homolog.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>REACT_APP_BACKEND_URL de Preview = API homolog.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Production aponta para API real.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>FRONTEND_URL correspondente em cada API.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Teste preview com usuário fake.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Nunca use número WhatsApp real no preview.</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">41 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Auditoria</p>
+    <h2>Auditoria rápida de 10 minutos</h2>
+    <p class="lead">Rotina curta para manager não técnico.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Pegar drift.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Lista fixa de cliques.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Sem rotina o sistema apodrece em silêncio.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abrir painel e logar.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Abrir Deployments: último Ready quando?</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Domains: status Valid?</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Variables: nomes esperados existem?</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>F12 Network: host da API.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Anotar no runbook.</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">42 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Integração</p>
+    <h2>Encaixe com o PDF da API</h2>
+    <p class="lead">Os dois manuais se encontram nas URLs.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Operar como um sistema só.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Front publica origem; API libera CORS e atende REST.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Time que lê só um PDF deixa buraco.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Tenha o PDF VPS/Railway ao lado.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Copie BACKEND_URL de lá.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Cole em REACT_APP_BACKEND_URL.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Devolva a URL Vercel para FRONTEND_URL.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Redeploy dos dois lados se precisar.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Teste ponta a ponta.</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">43 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Performance</p>
+    <h2>Build menor e sourcemap</h2>
+    <p class="lead">GENERATE_SOURCEMAP=false reduz artefato.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Deploy mais leve e menos exposição.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>CRA deixa de emitir .map.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Sourcemap em produção ajuda atacante a ler seu código.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Variable GENERATE_SOURCEMAP=false</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Redeploy</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Confirme ausência de .map grandes</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Mantenha sourcemap só em ambiente interno se precisar</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Monitore tempo de build</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Se build lento, revise dependências com o time dev</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">44 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Acessos</p>
+    <h2>Quem pode deployar</h2>
+    <p class="lead">Poucas pessoas com acesso de produção.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Evitar deploy acidental.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Time Vercel + proteção de branch.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Estagiário com acesso Production vira risco.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Liste quem tem acesso ao projeto Vercel.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Remova contas antigas.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Use SSO/GitHub org se houver.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Combine que só lead promove Production.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Registre no runbook.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Revise a cada trimestre.</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">45 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">HTTP</p>
+    <h2>Nunca publicar o painel em HTTP puro</h2>
+    <p class="lead">Login e token em HTTP são abdução fácil.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Proteger credencial em trânsito.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Vercel já entrega HTTPS; domínio próprio precisa SSL ok.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Aviso de site inseguro derruba confiança do cliente.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Confira cadeado na URL.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Force HTTPS no domínio.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>API também HTTPS.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Evite mixed content (http dentro de https).</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Reteste login.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Eduque o time a não aceitar “avançar mesmo assim”.</p></div></div>
+<div class="callout danger"><strong>Segurança</strong><br/>HTTP em produção é inaceitável para CRM com dados de cliente.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">46 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Suporte</p>
+    <h2>Roteiro de suporte nível 1</h2>
+    <p class="lead">Para quem atende o telefone do cliente.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Triagem sem acesso root.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Perguntas fixas.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Escalar cedo com print certo.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Qual URL exatamente?</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Consegue ver a tela de login?</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Erro no Chrome? Peça print.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Começou depois de algum deploy?</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Outro usuário/rede funciona?</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Escale com kit de print se for CORS/API.</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">47 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Encerramento prático</p>
+    <h2>Simulado final de 20 minutos</h2>
+    <p class="lead">Treino antes do go-live real.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Provar que o time executa sem você.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Cronômetro + checklist.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Descobrir buraco com calma.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Apague Variable de propósito em preview e corrija.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Faça Redeploy consciente.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Quebre FRONTEND_URL em homolog e corrija CORS.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Teste F5 em rota.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Faça rollback de um deploy preview.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Registre o tempo e as falhas humanas.</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">48 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Extra 1</p>
+    <h2>Revisão prática · bloco 1</h2>
+    <p class="lead">Página de reforço do módulo Frontend · Vercel: revise o que já fez e confirme no ambiente real.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Fechar lacunas antes do go-live.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Você revisita variáveis, URLs e um teste mínimo.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Item esquecido vira incidente depois do anúncio.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra o .env ou Variables e confira DEV_NO_DB, URLs e Redis.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Confira logs da API (Railway ou pm2).</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Teste login no painel.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Teste uma ação simples (abrir ticket ou salvar cadastro).</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Anote o resultado e só então avance.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Se falhou, volte à página do tema correspondente neste PDF.</p></div></div>
+<div class="callout"><strong>Reforço</strong><br/>Esta página existe para encher o checklist com prática, não com teoria solta.</div>
+<ul class="checklist"><li>Revisão feita</li><li>Erro anotado ou tudo ok</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">49 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Frontend · Vercel</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Extra 2</p>
+    <h2>Revisão prática · bloco 2</h2>
+    <p class="lead">Página de reforço do módulo Frontend · Vercel: revise o que já fez e confirme no ambiente real.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Fechar lacunas antes do go-live.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Você revisita variáveis, URLs e um teste mínimo.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Item esquecido vira incidente depois do anúncio.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra o .env ou Variables e confira DEV_NO_DB, URLs e Redis.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Confira logs da API (Railway ou pm2).</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Teste login no painel.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Teste uma ação simples (abrir ticket ou salvar cadastro).</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Anote o resultado e só então avance.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Se falhou, volte à página do tema correspondente neste PDF.</p></div></div>
+<div class="callout"><strong>Reforço</strong><br/>Esta página existe para encher o checklist com prática, não com teoria solta.</div>
+<ul class="checklist"><li>Revisão feita</li><li>Erro anotado ou tudo ok</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">50 / 50</span>
+  </footer>
+</section>
+
+</body>
+</html>

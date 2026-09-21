@@ -1,0 +1,146 @@
+/* Extensões para materiais comerciais Visão Business */
+.qa {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 9px 11px;
+  margin-bottom: 8px;
+  background: var(--white);
+}
+
+.qa .q {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 3px;
+}
+
+.qa .a {
+  font-size: 10.5px;
+  color: #334155;
+  margin: 0;
+}
+
+.script-bubble {
+  border: 1px solid #bfdbfe;
+  background: var(--blue-soft);
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin: 6px 0 10px;
+  font-size: 10.8px;
+  color: #0f172a;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.script-bubble .label {
+  display: block;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--blue-mid);
+  margin-bottom: 5px;
+}
+
+.pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0 10px;
+}
+
+.pill {
+  display: inline-block;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--navy);
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 9.5px;
+  font-weight: 600;
+}
+
+.pill.accent {
+  background: var(--blue-soft);
+  border-color: #bfdbfe;
+  color: var(--blue);
+}
+
+.internal {
+  border: 1px dashed #f59e0b;
+  background: #fffbeb;
+  border-radius: var(--radius);
+  padding: 9px 11px;
+  margin: 8px 0;
+}
+
+.internal strong {
+  color: var(--warn);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 3px;
+}
+
+.internal p {
+  font-size: 10.5px;
+  color: #78350f;
+  margin: 0;
+}
+
+.module-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+  margin: 8px 0 10px;
+}
+
+.module-item {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: var(--bg);
+}
+
+.module-item strong {
+  display: block;
+  font-size: 11px;
+  color: var(--navy);
+  margin-bottom: 2px;
+}
+
+.module-item span {
+  font-size: 10px;
+  color: #475569;
+  line-height: 1.35;
+}
+
+.link-box {
+  border: 1px solid #93c5fd;
+  background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 8px 0;
+}
+
+.link-box .url {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--blue);
+  word-break: break-all;
+}
+
+.checklist li {
+  font-size: 10.5px;
+}
+
+.tiny {
+  font-size: 9.5px;
+  color: var(--muted);
+}
+
+table.compact th, table.compact td {
+  padding: 5px 7px;
+  font-size: 10px;
+}

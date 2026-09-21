@@ -1,0 +1,48 @@
+/**
+ * Tokens alinhados ao CRM imobiliário (Radar) — azul 220/70/50, sidebar clara, radius 0.75rem.
+ */
+:root {
+  --vb-ink: #2b3340;
+  --vb-ink-soft: #1e4bb8;
+  --vb-crm-blue: #2673d9;
+  --vb-border: #e2e6ee;
+  --vb-muted: #737d8c;
+  --vb-overcast: #8f99a8;
+  --vb-ash: #f7f9fc;
+  --vb-surface: #ffffff;
+
+  --font-display: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
+  --font-ui: "Inter", "Plus Jakarta Sans", system-ui, sans-serif;
+
+  --background: 210 20% 98%;
+  --foreground: 220 20% 20%;
+  --primary: 220 70% 50%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 220 14% 96%;
+  --secondary-foreground: 220 20% 25%;
+  --muted: 220 14% 96%;
+  --muted-foreground: 220 10% 50%;
+  --accent: 220 70% 96%;
+  --accent-foreground: 220 70% 40%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --card: 0 0% 100%;
+  --card-foreground: 220 20% 20%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 220 20% 20%;
+  --border: 220 13% 90%;
+  --input: 220 13% 90%;
+  --ring: 220 70% 50%;
+  --radius: 0.75rem;
+}
+
+.dark,
+[data-theme="dark"],
+:root[style*="color-scheme: dark"] {
+  --vb-ink: #f8fafc;
+  --vb-muted: #94a3b8;
+  --vb-overcast: #64748b;
+  --vb-border: rgba(255, 255, 255, 0.1);
+  --vb-ash: #0f172a;
+  --vb-surface: #1e293b;
+}

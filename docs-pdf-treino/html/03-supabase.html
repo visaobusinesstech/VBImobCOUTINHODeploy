@@ -1,0 +1,1622 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Treinamento · Supabase Banco de Dados · VB Solution CRM</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles-extra.css" />
+  <link rel="stylesheet" href="styles-dense.css" />
+</head>
+<body>
+
+<section class="page cover">
+  <div class="cover-top">
+    <img class="cover-logo" src="../assets/vbsolution-logo-nome-branca.png" alt="VB Solution" />
+    <div class="badge">Material de treinamento · Código-Fonte · 50 páginas</div>
+  </div>
+  <p class="series">SÉRIE CÓDIGO-FONTE · BANCO DE DADOS · 50 PÁGINAS</p>
+  <h1>Supabase · Banco de Dados do CRM</h1>
+  <p class="subtitle">Manual passo a passo para criar o PostgreSQL do VB Solution no Supabase, colar a URI no backend, rodar migrações, validar Table Editor e usar prompts Claude Code. Linguagem direta, para leigo acompanhar e executar.</p>
+  <div class="cover-grid"><div class="cover-card"><span>Público</span><strong>Compradores do código-fonte</strong></div><div class="cover-card"><span>Foco</span><strong>Postgres hospedado</strong></div><div class="cover-card"><span>Ferramenta</span><strong>Claude Code + VS Code</strong></div><div class="cover-card"><span>Formato</span><strong>50 páginas densas</strong></div></div>
+  <div class="cover-bottom">
+    <div>Visão Business · VB Solution CRM<br />Manual técnico · © Visão Business</div>
+    <img src="../assets/vbsolution-logo-square.png" alt="VB" />
+  </div>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Mapa</p>
+    <h2>Sumário · o que este manual resolve</h2>
+    <p class="lead">Aqui você sobe o PostgreSQL do CRM no Supabase, cola a URI no backend e migra as tabelas.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Ter banco real na nuvem sem instalar Postgres no notebook.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Projeto Healthy → URI Session 5432 → .env → migrate → Table Editor → admin.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Sem isso login, tickets e imóveis não gravam de verdade.</p></div>
+    </div>
+    
+<table class="compact"><thead><tr><th>Bloco</th><th>Páginas</th></tr></thead><tbody><tr><td>Conta e URI</td><td>3–12</td></tr><tr><td>.env e migrate</td><td>13–20</td></tr><tr><td>RLS, backup, Railway</td><td>21–28</td></tr><tr><td>Prompts e FAQ</td><td>29–50</td></tr></tbody></table>
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Crie conta e projeto no Supabase.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Aguarde Healthy e copie URI porta 5432.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Monte backend/.env (DEV_NO_DB=false, DB_SSL=true).</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Rode npm run db:migrate.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Valide Table Editor e crie admin.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Use prompts Claude Code e o checklist go-live.</p></div></div>
+<div class="link-box"><strong>Supabase</strong><div class="url"><a href="https://supabase.com" target="_blank">https://supabase.com</a></div></div>
+<div class="link-box"><strong>Repo</strong><div class="url"><a href="https://github.com/visaobusinesstech/codigo-fonte-COUTINHO" target="_blank">https://github.com/visaobusinesstech/codigo-fonte-COUTINHO</a></div></div>
+<div class="callout"><strong>Regra</strong><br/>Supabase neste CRM é só Postgres. Auth e anon key no React ficam de fora.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">2 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Conceito</p>
+    <h2>O que é Supabase neste CRM</h2>
+    <p class="lead">Supabase parece “backend pronto”. Aqui ele é o HD organizado em tabelas.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Guardar leads, tickets, usuários e imóveis com Postgres gerenciado.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>A API Node (pasta backend) autentica com JWT e grava via Sequelize + DATABASE_URL.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Usar Auth do Supabase no painel mistura produto e quebra o fluxo oficial.</p></div>
+    </div>
+    
+<table class="compact"><thead><tr><th>Peça</th><th>Quem faz</th></tr></thead><tbody><tr><td>Login / JWT</td><td>API Node</td></tr><tr><td>WhatsApp e filas</td><td>API + Redis</td></tr><tr><td>Persistência</td><td>Postgres no Supabase</td></tr><tr><td>Telas</td><td>Frontend (Vercel ou local)</td></tr></tbody></table>
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Anote: painel = frontend · lógica = backend · dados = Supabase.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Ignore telas de Auth social no dia 1.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Não cole anon key no React deste CRM.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Confirme que a pasta oficial do painel é frontend/.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Fluxo: browser → REACT_APP_BACKEND_URL → API → DATABASE_URL.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Siga para o que não usar.</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">3 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Não usar</p>
+    <h2>O que você NÃO usa no dia 1</h2>
+    <p class="lead">Ignorar estas telas evita instalação quebrada e confusão com o Radar antigo.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Manter o caminho oficial do VB Solution.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Só URI no backend/.env; frontend nunca fala com Postgres.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>anon key ou VITE_SUPABASE_URL no painel atual = arquitetura errada.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Pule Auth do Supabase (magic link, social).</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Não cole anon key no React.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Ignore VITE_SUPABASE_URL (era do Radar Vite).</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Storage e Edge Functions ficam para depois.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Não ligue RLS agressivo sem política clara.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Se existir pasta project/, trate como legado.</p></div></div>
+<div class="callout warn"><strong>Onde acarreta</strong><br/>Misturar Radar antigo com migrations novas gera tabela fantasma.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">4 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Conta</p>
+    <h2>Criar conta no Supabase</h2>
+    <p class="lead">Conta gratuita basta para estudar. Produção séria avalia Pro depois.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Ter dashboard para criar o projeto Postgres.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Login GitHub ou e-mail no portal supabase.com.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Sem conta você não gera URI nem senha de Database.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra https://supabase.com</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Start project ou Sign in.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Entre com GitHub (recomendado) ou e-mail.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Confirme o e-mail se pedir.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Entre no Dashboard de projetos.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Siga para New project.</p></div></div>
+<div class="link-box"><strong>Supabase</strong><div class="url"><a href="https://supabase.com" target="_blank">https://supabase.com</a></div></div>
+<ul class="checklist"><li>Login ok</li><li>Dashboard aberto</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">5 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Projeto</p>
+    <h2>Organização e New project</h2>
+    <p class="lead">Nome claro evita misturar cliente A com cliente B.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Criar o container do Postgres deste CRM.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>New project → Name → Organization → Create.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Projeto errado = migrate no banco de outro produto.</p></div>
+    </div>
+    
+<table class="compact"><thead><tr><th>Campo</th><th>Sugestão</th></tr></thead><tbody><tr><td>Name</td><td>crm-coutinho</td></tr><tr><td>Organization</td><td>Nome do cliente</td></tr><tr><td>Plano</td><td>Free para estudar · Pro em produção</td></tr></tbody></table>
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Clique New project.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Crie ou escolha a organização (nome da empresa).</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Name: crm-empresa (sem espaços estranhos).</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Confirme a organização certa.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Ainda não copie URI.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Avance para senha e região.</p></div></div>
+<div class="callout"><strong>Como funciona</strong><br/>Só copie a Connection string depois do status Healthy.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">6 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Senha</p>
+    <h2>Senha do banco e região</h2>
+    <p class="lead">A Database password é o segredo mais importante deste capítulo.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Proteger o Postgres e montar a URI depois.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Você define a senha na criação; ela entra na DATABASE_URL.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Perder a senha obriga reset e atualizar .env em todos os ambientes.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Invente senha forte e grave no gerenciador.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Prefira A-Z, a-z e 0-9 para evitar encode.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Escolha região perto dos usuários (SP / South America se aparecer).</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Clique Create project.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Aguarde o provisionamento.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Não compartilhe a senha em grupo de WhatsApp.</p></div></div>
+<div class="callout danger"><strong>Segurança</strong><br/>Senha com @ # % / exige URL-encode na URI.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">7 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Healthy</p>
+    <h2>Esperar o status Healthy</h2>
+    <p class="lead">O Postgres ainda não está pronto no segundo em que você clica Create.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Copiar URI só quando o banco aceita conexão.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Status Healthy/Active e menus Settings/Table Editor liberados.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>URI no meio do Setting up costuma falhar com timeout.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Olhe o status do projeto no dashboard.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Espere Healthy / Active.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Abra Settings → Database.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Confirme que Table Editor abre.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Localize .env.example em VBSOLUTIONCRMCodigoFonte-main/backend.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Só então copie a Connection string.</p></div></div>
+<ul class="checklist"><li>Status Healthy</li><li>Settings Database abre</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">8 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">URI 5432</p>
+    <h2>Connection string · Session porta 5432</h2>
+    <p class="lead">A URI é o endereço completo do Postgres para o Sequelize.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Colar no backend/.env como DATABASE_URL.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Session mode ou Direct, porta 5432, trocando SUA_SENHA.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Porta errada ou senha crua com símbolo = migrate vermelho.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Project Settings → Database.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Role até Connection string / URI.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Escolha Session ou Direct, porta 5432.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Substitua a senha placeholder pela real.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Cole no Bloco de Notas (não em chat público).</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Confira se termina em /postgres e porta 5432.</p></div></div>
+<code>postgresql://postgres.xxxxx:SENHA@aws-0-....pooler.supabase.com:5432/postgres
+# ou direct:
+postgresql://postgres:SENHA@db.xxxxx.supabase.co:5432/postgres</code>
+<div class="link-box"><strong>Supabase</strong><div class="url"><a href="https://supabase.com" target="_blank">https://supabase.com</a></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">9 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">6543</p>
+    <h2>Direct vs Pooler 6543 (evite no início)</h2>
+    <p class="lead">Transaction pooler na 6543 briga com prepared statements do Sequelize.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Migrate e runtime estáveis no dia 1.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Use Session/Direct 5432. 6543 só com critério avançado.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Erro prepared statement already exists quase sempre é 6543.</p></div>
+    </div>
+    
+<table class="compact"><thead><tr><th>Modo</th><th>Porta</th><th>Usar?</th></tr></thead><tbody><tr><td>Session / Direct</td><td>5432</td><td>Sim</td></tr><tr><td>Transaction pooler</td><td>6543</td><td>Não no migrate inicial</td></tr></tbody></table>
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Olhe a porta na URI.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Se for 6543, troque para Session 5432.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Salve no .env e reinicie a API.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Rode migrate de novo.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Se 5432 falhar por IPv6, use pooler session ainda em 5432.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Não “tente 6543 porque alguém sugeriu” no primeiro dia.</p></div></div>
+<div class="callout danger"><strong>Erro típico</strong><br/>prepared statement already exists → volte para 5432.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">10 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Encode</p>
+    <h2>URL-encode na senha especial</h2>
+    <p class="lead">Caractere especial na senha quebra o parsing da URI no meio.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>URI válida mesmo com senha complexa.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Codifique @ # % / ou troque a senha por alfanumérica.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>password authentication failed mesmo “lembrando” a senha = encode esquecido.</p></div>
+    </div>
+    
+<table class="compact"><thead><tr><th>Caractere</th><th>Na URL</th></tr></thead><tbody><tr><td>@</td><td>%40</td></tr><tr><td>#</td><td>%23</td></tr><tr><td>%</td><td>%25</td></tr><tr><td>/</td><td>%2F</td></tr></tbody></table>
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Veja se a senha tem @ # % / + espaço.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Encode: @→%40 · #→%23 · %→%25 · /→%2F.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Ou reset a senha no painel para só letras e números.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Atualize DATABASE_URL.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Reinicie API / rode migrate.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Guarde a nova senha no cofre.</p></div></div>
+<code># senha a@b#1 vira a%40b%231 dentro da URI</code>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">11 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Rede</p>
+    <h2>Network restrictions e IPv4</h2>
+    <p class="lead">Firewall do Supabase pode bloquear seu PC ou a Railway.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Permitir quem precisa falar com o banco.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Network restrictions: seu IP, IP da VPS ou range da nuvem.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Timeout / ENETUNREACH em Free às vezes é IPv6: use URI IPv4.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Settings → Database → Network restrictions.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>No PC: Add my IP (ou 0.0.0.0/0 só em estudo).</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Em produção: IP da VPS ou range da Railway.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Se der ENETUNREACH, teste URI pooler IPv4.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Confirme DB_SSL=true.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Anote o IP liberado no runbook.</p></div></div>
+<div class="callout warn"><strong>Produção</strong><br/>0.0.0.0/0 aberto para sempre é risco. Feche depois do teste.</div>
+<ul class="checklist"><li>IP liberado</li><li>URI 5432</li><li>SSL ligado</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">12 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Env</p>
+    <h2>Colar DATABASE_URL no backend/.env</h2>
+    <p class="lead">O .env é o contrato entre a API e o Supabase.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>API real grava no Postgres da nuvem.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>DEV_NO_DB=false · DB_SSL=true · DATABASE_URL na 5432.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>DEV_NO_DB=true ignora o Supabase e finge banco.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>cd VBSOLUTIONCRMCodigoFonte-main/backend</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>copy .env.example .env (ou cp no Mac/Linux)</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>DEV_NO_DB=false</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>DB_DIALECT=postgres e DB_SSL=true</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Cole DATABASE_URL completa</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Salve e não commit o .env</p></div></div>
+<code>DEV_NO_DB=false
+DB_DIALECT=postgres
+DB_SSL=true
+DATABASE_URL=postgresql://...:5432/postgres</code>
+<div class="callout danger"><strong>Produção</strong><br/>DEV_NO_DB sempre false quando o banco for real.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">13 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">SSL e flags</p>
+    <h2>DB_SSL, DEV_NO_DB e pool</h2>
+    <p class="lead">Supabase exige SSL. Pool alto no Free esgota conexões.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Conexão segura e estável.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Flags no .env + DB_POOL_MAX comedido.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>SSL off = erro de certificado. Pool 50 no Free = too many connections.</p></div>
+    </div>
+    
+<table class="compact"><thead><tr><th>Variável</th><th>Valor nuvem</th><th>Por quê</th></tr></thead><tbody><tr><td>DEV_NO_DB</td><td>false</td><td>Grava de verdade</td></tr><tr><td>DB_SSL</td><td>true</td><td>Supabase exige</td></tr><tr><td>DATABASE_URL</td><td>URI 5432</td><td>Conexão</td></tr><tr><td>DB_POOL_MAX</td><td>8</td><td>Limite Free</td></tr></tbody></table>
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Confirme DB_SSL=true</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Confirme DEV_NO_DB=false</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Defina DB_POOL_MAX=8 no Free</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Opcional: DB_HOST/PORT/USER/PASS/NAME alinhados</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Reinicie npm run dev, pm2 ou Railway</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Teste conexão com migrate</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">14 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Migrate</p>
+    <h2>npm install e db:migrate</h2>
+    <p class="lead">Migrate é o pedreiro: cria as tabelas a partir das migrations.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Schema do CRM no Postgres vazio.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>npm install depois npm run db:migrate na pasta backend.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Nunca rode db:migrate:undo em produção sem backup e critério.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>cd VBSOLUTIONCRMCodigoFonte-main/backend</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>npm install</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Confira .env (5432, SSL, DEV_NO_DB=false)</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>npm run db:migrate</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Leia o terminal: migrated ok ou stack de erro</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Se falhar, use a página de erros antes de insistir</p></div></div>
+<code>cd VBSOLUTIONCRMCodigoFonte-main/backend
+npm install
+npm run db:migrate</code>
+<ul class="checklist"><li>install ok</li><li>migrate sem stack fatal</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">15 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Tabelas</p>
+    <h2>Validar no Table Editor</h2>
+    <p class="lead">Olho humano confirma que o migrate apontou para o projeto certo.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Ver Users, Companies, Tickets e o resto.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Supabase → Table Editor lista as tabelas criadas.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Editor vazio = URI de outro projeto ou DEV_NO_DB ainda true.</p></div>
+    </div>
+    
+<table class="compact"><thead><tr><th>Tabela</th><th>Para quê</th></tr></thead><tbody><tr><td>Users / Companies</td><td>Login e multiempresa</td></tr><tr><td>Tickets / Messages</td><td>WhatsApp</td></tr><tr><td>leads / pipelines</td><td>Funil</td></tr><tr><td>imoveis / contratos</td><td>Módulo imobiliário</td></tr></tbody></table>
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra Table Editor no projeto Healthy.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Procure Users e Companies.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Procure Tickets e Messages.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Procure leads/pipelines e imóveis se existirem.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Se vazio, confira DATABASE_URL e rode migrate de novo.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Anote ok no checklist.</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">16 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Admin</p>
+    <h2>Criar usuário admin</h2>
+    <p class="lead">Com tabelas no ar, alguém precisa entrar no painel.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Primeiro administrador operacional.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>npm run admin:local-dev (se existir) ou seed do projeto.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Admin com senha fraca em produção = porta aberta.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>cd backend</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Veja se admin:local-dev existe no package.json</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>npm run admin:local-dev</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Anote e-mail e senha do terminal</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Troque a senha assim que o painel abrir em produção</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Se não houver script, use o Prompt 4 do Claude Code</p></div></div>
+<code>cd VBSOLUTIONCRMCodigoFonte-main/backend
+npm run admin:local-dev</code>
+<div class="callout warn"><strong>Produção</strong><br/>Não deixe a senha de demo no ar depois do handoff.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">17 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">RLS</p>
+    <h2>RLS · o CRM não depende disso no painel</h2>
+    <p class="lead">Row Level Security trava linha por política no Postgres.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Não quebrar a API no dia 1.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Browser não acessa o banco; a API usa a role da connection string.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>RLS agressivo sem política = migrate ou runtime morto.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Entenda: autorização do usuário é JWT na API.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Deixe RLS como veio na instalação padrão.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Foque em .env seguro e IP liberado.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Só mexa em RLS com DBA e backup.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Nunca “ligar tudo” sem política.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Documente se o time exigir RLS depois.</p></div></div>
+<ul class="checklist"><li>RLS não alterado sem critério</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">18 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Backup</p>
+    <h2>Backup com pg_dump</h2>
+    <p class="lead">Free tem backup limitado. Dump manual salva o go-live.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Recuperar depois de migrate ruim ou senha resetada.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>pg_dump da DATABASE_URL com sslmode=require.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Sem backup, um undo ou restore errado apaga o cliente.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Instale cliente Postgres (psql/pg_dump) se precisar.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Rode pg_dump com a URI e sslmode=require.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Guarde o arquivo fora do PC único.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Teste restore em projeto de homolog.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Faça dump antes de migrate grande.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>No Pro, confira também o backup automático.</p></div></div>
+<code>pg_dump "SUA_DATABASE_URL?sslmode=require" -F c -f backup-crm.dump</code>
+<ul class="checklist"><li>Dump feito</li><li>Arquivo em local seguro</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">19 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Pool</p>
+    <h2>Pool de conexões no plano Free</h2>
+    <p class="lead">Free tem teto baixo de conexões simultâneas.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Evitar too many connections.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>DB_POOL_MAX baixo; somar API + workers com cuidado.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Vários deploys e pool alto derrubam o banco inteiro.</p></div>
+    </div>
+    
+<table class="compact"><thead><tr><th>Sintoma</th><th>Ação</th></tr></thead><tbody><tr><td>too many connections</td><td>Baixar pool · matar extras</td></tr><tr><td>API lenta sob carga</td><td>Pro + pooler session</td></tr><tr><td>Vários workers</td><td>Somar pools no papel</td></tr></tbody></table>
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>DB_POOL_MAX=8 no Free</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Não suba vários workers sem necessidade</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Feche deploys de teste órfãos</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Se crescer, avalie Pro + session 5432</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Monitore erro de conexão nos logs</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Anote o limite no runbook</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">20 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Railway</p>
+    <h2>Ligar Supabase na Railway ou VPS</h2>
+    <p class="lead">A URI mora nas Variables da API, não no frontend.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>API na nuvem gravando no mesmo Postgres.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Railway Variables ou backend/.env na VPS com os mesmos flags.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Duas URIs “pela metade” = dado em lugar nenhum.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Copie DATABASE_URL, DB_SSL=true, DEV_NO_DB=false</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Railway: cole em Variables do serviço backend</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>VPS: mesmo bloco no .env</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Rode migrate uma vez (local→nuvem ou no start)</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Não misture Postgres Railway + Supabase sem critério</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Reinicie o serviço e teste login</p></div></div>
+<div class="link-box"><strong>Railway</strong><div class="url"><a href="https://railway.app" target="_blank">https://railway.app</a></div></div>
+<div class="link-box"><strong>Repo</strong><div class="url"><a href="https://github.com/visaobusinesstech/codigo-fonte-COUTINHO" target="_blank">https://github.com/visaobusinesstech/codigo-fonte-COUTINHO</a></div></div>
+<div class="callout"><strong>Uma URI ativa por ambiente</strong><br/>Homolog e produção separados.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">21 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Erros</p>
+    <h2>Erros comuns de conexão</h2>
+    <p class="lead">Tabela de sintomas acelera o conserto sem chute.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Destravar migrate e boot da API.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Ler o erro → causa → correção nesta lista.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Insistir no mesmo .env errado só gasta tempo.</p></div>
+    </div>
+    
+<table class="compact"><thead><tr><th>Sintoma</th><th>Causa</th><th>Correção</th></tr></thead><tbody><tr><td>password authentication failed</td><td>Senha/encode</td><td>Conferir URI</td></tr><tr><td>SSL / self signed</td><td>DB_SSL off</td><td>DB_SSL=true</td></tr><tr><td>prepared statement</td><td>Porta 6543</td><td>5432 Session</td></tr><tr><td>ENOTFOUND / timeout</td><td>IPv6/firewall</td><td>IPv4 + liberar IP</td></tr><tr><td>Tabelas vazias</td><td>DEV_NO_DB</td><td>false + migrate</td></tr></tbody></table>
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Copie a mensagem exata do terminal.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Ache a linha na tabela.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Aplique a correção.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Reinicie e teste de novo.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Se for IPv6, troque URI.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Use o Prompt 3 se ainda falhar.</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">22 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Fluxo</p>
+    <h2>Browser → API → Supabase</h2>
+    <p class="lead">Entender o caminho evita pedir anon key no front.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Achar o elo quebrado quando “não salva”.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Chrome → React → Express → Sequelize → Postgres.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Front falando direto com Supabase neste produto = caminho errado.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Usuário abre o painel.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>React chama REACT_APP_BACKEND_URL.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>API valida JWT.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Sequelize usa DATABASE_URL com SSL.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Postgres grava/lê.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>JSON volta ao painel.</p></div></div>
+<div class="callout"><strong>Por isso</strong><br/>anon key no frontend não faz sentido neste CRM.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">23 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Radar</p>
+    <h2>Projeto novo vs misturar Radar antigo</h2>
+    <p class="lead">Supabase do Radar Vite (pasta project/) não é o mesmo schema.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Começar limpo no VB Solution.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Projeto novo + migrate limpo.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Misturar tabelas antigas com migrations novas = conflito de nomes.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Crie projeto Supabase novo para este CRM.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Não apague dados de outro produto sem backup.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Rode migrate limpo.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Aponte só esta URI no .env do backend.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Trate project/ como legado se existir.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Documente qual projeto é de qual produto.</p></div></div>
+<div class="callout warn"><strong>Onde acarreta</strong><br/>Dado fantasma e migrate vermelho por tabela que já existia.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">24 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Prompt 1</p>
+    <h2>Prompt Claude Code · checklist Supabase</h2>
+    <p class="lead">Checklist clique a clique gerado no VS Code.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Não esquecer porta 5432 e o que não usar.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Cole o prompt na extensão Claude Code.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Prompt sem revisar ação = risco de inventar pasta.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra o terminal na pasta do CRM.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Cole o prompt da bolha.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Revise o checklist.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Execute os cliques você no painel.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Copie a URI 5432.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Siga ao Prompt 2.</p></div></div>
+<div class="script-bubble"><span class="label">Prompt 1</span>Estou configurando o VB Solution CRM. Liste um checklist clique a clique para criar um projeto no Supabase (https://supabase.com), gerar Database password, pegar Connection string Session porta 5432 (não 6543), e o que colar em backend/.env (DEV_NO_DB=false, DB_SSL=true, DATABASE_URL). Explique o que NÃO usar (Auth, anon key no React). Não invente pastas fora de VBSOLUTIONCRMCodigoFonte-main.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">25 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Prompt 2</p>
+    <h2>Prompt Claude Code · .env e migrate</h2>
+    <p class="lead">Montar .env e migrar com diagnóstico seguro.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Sair do Bloco de Notas para tabelas reais.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Assistente cola URI que você informar e roda migrate.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>db:migrate:undo sem pedido = risco. O prompt proíbe.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Tenha a URI 5432 no Bloco de Notas.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Cole o Prompt 2.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Informe a URI quando pedir.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Confira JWT novos gerados.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Acompanhe npm install e migrate.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Se falhar, vá ao Prompt 3.</p></div></div>
+<div class="script-bubble"><span class="label">Prompt 2</span>No diretório VBSOLUTIONCRMCodigoFonte-main/backend, ajude a montar o .env a partir do .env.example com DATABASE_URL Session 5432 do Supabase que eu vou colar, DB_SSL=true, DEV_NO_DB=false, JWT_SECRET e JWT_REFRESH_SECRET novos (openssl rand -base64 32). Depois rode npm install e npm run db:migrate. Se der erro, diagnostique (senha, SSL, 6543, IPv6) sem usar db:migrate:undo. Não commit o .env.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">26 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Prompt 3</p>
+    <h2>Prompt Claude Code · diagnosticar conexão</h2>
+    <p class="lead">Erro real colado no prompt encurta o diagnóstico.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Corrigir URI/variáveis sem apagar dado.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Stack do terminal + hipóteses (senha, SSL, 6543, rede).</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Sem o erro colado o assistente chuta.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Copie o stack completo do terminal.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Cole no Prompt 3 no lugar indicado.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Aplique a correção exata sugerida.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Reinicie e teste migrate.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Não apague tabelas “para limpar” sem backup.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Sucesso → Prompt 4.</p></div></div>
+<div class="script-bubble"><span class="label">Prompt 3</span>O migrate do CRM falhou ao conectar no Supabase. Segue o erro do terminal: [COLE O ERRO AQUI]. Analise se é senha, URL-encode, DB_SSL, porta 6543, Network restrictions ou IPv6. Me dê a correção exata na DATABASE_URL e nas variáveis, sem apagar dados.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">27 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Prompt 4</p>
+    <h2>Prompt Claude Code · tabelas e admin</h2>
+    <p class="lead">Validação final + admin para abrir o painel.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Fechar o ciclo banco → usuário.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Checagem de tabelas e admin:local-dev.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Admin gerado e ninguém anotou = lockout no dia seguinte.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Confirme migrate ok.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Cole o Prompt 4.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Valide tabelas citadas.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Rode o admin se existir.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Anote e-mail/senha.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Aponte o frontend para a API.</p></div></div>
+<div class="script-bubble"><span class="label">Prompt 4</span>Após migrate no Supabase, valide se as tabelas principais existem (Users, Companies, Tickets, Messages, leads/imóveis se houver). Rode npm run admin:local-dev se existir no package.json. Me diga e-mail/senha do admin gerado e o próximo passo para abrir o frontend com REACT_APP_BACKEND_URL apontando para a API.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">28 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Roteiro</p>
+    <h2>Conversa completa no terminal VS Code</h2>
+    <p class="lead">Uma sessão Claude Code do zero ao admin.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Ordem que evita retrabalho.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Prompt 1 → URI → 2 → (3 se falhar) → 4.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Pular validação de tabelas = surpresa no login.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Prompt 1 e crie o projeto no navegador.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Copie URI 5432.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Prompt 2 com a URI.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Prompt 3 só se houver erro.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Prompt 4 para admin.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Marque o checklist go-live.</p></div></div>
+<ul class="checklist"><li>Quatro prompts usados na ordem certa</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">29 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Checklist</p>
+    <h2>Checklist banco pronto</h2>
+    <p class="lead">Porteiro do “pode ligar a API em produção”.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Não anunciar CRM com banco pela metade.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Itens binários ok/não.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Item aberto vira incidente no primeiro lead.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Leia a lista em voz alta.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Marque só o que está feito de verdade.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Transforme não em tarefa.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Reteste login salvando um cadastro.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Confirme Table Editor.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Guarde print do checklist.</p></div></div>
+<ul class="checklist"><li>Projeto Healthy</li><li>URI 5432</li><li>Encode ok</li><li>IP liberado</li><li>DEV_NO_DB=false</li><li>DB_SSL=true</li><li>migrate ok</li><li>Tabelas visíveis</li><li>Admin criado</li><li>.env fora do Git</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">30 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">FAQ</p>
+    <h2>FAQ Supabase e banco</h2>
+    <p class="lead">Dúvidas curtas do dia a dia.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Destravar sem reler o manual inteiro.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Pergunta → resposta direta.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>FAQ não substitui o erro do terminal.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Ache sua dúvida abaixo.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Aplique a resposta.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Se não couber, volte à tabela de erros.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Documente o caso novo no runbook.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Confira Free vs Pro se for limite.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Siga ao go-live.</p></div></div>
+
+          <div class="qa"><div class="q">Preciso do Auth do Supabase?</div><div class="a">Não. Login é JWT na API Node.</div></div>
+          <div class="qa"><div class="q">Posso usar 6543?</div><div class="a">Evite no início. Prefira Session 5432.</div></div>
+          <div class="qa"><div class="q">DEV_NO_DB=true em produção?</div><div class="a">Nunca. Ignora o Postgres real.</div></div>
+          <div class="qa"><div class="q">Front fala com Supabase?</div><div class="a">Não neste CRM. Só a API.</div></div>
+          
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">31 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Free vs Pro</p>
+    <h2>Free vs Pro · quando subir de plano</h2>
+    <p class="lead">Free serve para estudar. Produção com cliente real pede margem.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Escolher plano sem surpresa de pausa ou backup fraco.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Compare limites de conexão, pausa e backup.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Cliente no Free pausado = CRM mudo no sábado.</p></div>
+    </div>
+    
+<table class="compact"><thead><tr><th>Tema</th><th>Free</th><th>Pro</th></tr></thead><tbody><tr><td>Estudo</td><td>Ok</td><td>Ok</td></tr><tr><td>Backup</td><td>Limitado</td><td>Melhor</td></tr><tr><td>Produção séria</td><td>Risco</td><td>Recomendado</td></tr></tbody></table>
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Liste se o banco pode pausar.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Veja necessidade de backup automático.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Meça conexões sob uso real.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Se for operação 24h, avalie Pro.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Ajuste DB_POOL_MAX ao plano.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Registre a decisão no contrato/runbook.</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">32 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Segurança</p>
+    <h2>Segurança do banco</h2>
+    <p class="lead">URI e senha são chaves da casa.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Reduzir vazamento e acesso lateral.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Cofre, IP restrito, sem commit de .env, SSL on.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>URI no Discord = incidente.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Nunca commit DATABASE_URL.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Restrinja Network em produção.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Rotacione senha se vazou.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Separe homolog e produção.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Acesso ao dashboard só para quem precisa.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Revise a cada trimestre.</p></div></div>
+<div class="callout danger"><strong>Segurança</strong><br/>Trate a URI como senha de root do negócio.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">33 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Troubleshoot</p>
+    <h2>Troubleshooting rápido</h2>
+    <p class="lead">Roteiro de 10 minutos antes de abrir chamado.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Isolar rede, senha, porta e flags.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Checklist mental + um teste de migrate.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Mudar três coisas ao mesmo tempo obscurece a causa.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Confirme Healthy.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Confirme porta 5432 na URI.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Teste senha/encode.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>DB_SSL=true e DEV_NO_DB=false.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>IP liberado / IPv4.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Um único change por tentativa.</p></div></div>
+<ul class="checklist"><li>Diagnóstico anotado com hora</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">34 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Handoff</p>
+    <h2>Handoff do banco ao cliente</h2>
+    <p class="lead">Cliente precisa saber o que não pode apagar.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Operação sem depender de você a cada dúvida.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Documento: projeto, plano, quem tem acesso, onde está o .env.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Entregar só a senha sem contexto = suporte eterno.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Informe nome do projeto Supabase.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Diga quem tem login no dashboard.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Explique: banco na nuvem, API em Railway/VPS.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Avise que .env não está no GitHub.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Passe o ritual de backup.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Combine canal de suporte.</p></div></div>
+<div class="callout"><strong>Recado</strong><br/>Apagar o projeto Supabase apaga o CRM inteiro.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">35 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Go-live</p>
+    <h2>Go-live do banco com a API</h2>
+    <p class="lead">Dia D: API apontando para o Postgres certo e salvando dado.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Entrar em operação com evidência.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Checklist + login + um create no painel + Table Editor.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Anunciar sem ver a linha no Table Editor = falsa sensação.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Checklist desta página fechado.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>API com as Variables certos.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Login admin.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Criar um registro de teste.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Ver a linha no Table Editor.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Arquivar prints e seguir ao PDF WhatsApp.</p></div></div>
+<div class="link-box"><strong>Supabase</strong><div class="url"><a href="https://supabase.com" target="_blank">https://supabase.com</a></div></div>
+<div class="link-box"><strong>Railway</strong><div class="url"><a href="https://railway.app" target="_blank">https://railway.app</a></div></div>
+<div class="link-box"><strong>Repo</strong><div class="url"><a href="https://github.com/visaobusinesstech/codigo-fonte-COUTINHO" target="_blank">https://github.com/visaobusinesstech/codigo-fonte-COUTINHO</a></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">36 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Fim</p>
+    <h2>Encerramento · links e próximo PDF</h2>
+    <p class="lead">Banco redondo. Próximo: Redis, WhatsApp e e-mail.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Fechar o módulo Supabase.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Ordem: API com URI → canal WhatsApp → painel estável.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Pular Redis com banco ok ainda deixa fila e QR instáveis.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Marque o checklist banco.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Guarde URI no cofre.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Abra o PDF WhatsApp · Redis · E-mail.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Confirme DEV_NO_DB=false em produção.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Revise Free vs Pro.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Arquive prints do go-live.</p></div></div>
+<div class="link-box"><strong>Supabase</strong><div class="url"><a href="https://supabase.com" target="_blank">https://supabase.com</a></div></div>
+<div class="link-box"><strong>Repo</strong><div class="url"><a href="https://github.com/visaobusinesstech/codigo-fonte-COUTINHO" target="_blank">https://github.com/visaobusinesstech/codigo-fonte-COUTINHO</a></div></div>
+<div class="link-box"><strong>Railway</strong><div class="url"><a href="https://railway.app" target="_blank">https://railway.app</a></div></div>
+<div class="callout"><strong>Visão Business · VB Solution CRM</strong><br/>Treinamento · Supabase · 50 páginas · © Visão Business</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">37 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Revisão URI</p>
+    <h2>Revisão · conferir porta e senha na URI</h2>
+    <p class="lead">Olho fresco na Connection string antes do deploy.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Pegar 6543 ou senha placeholder esquecida.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Abrir .env e Settings Database lado a lado.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>URI errada em produção derruba login na hora H.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra backend/.env</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Copie só o host e a porta</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Compare com Session 5432 no painel</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Confira se a senha não é [YOUR-PASSWORD]</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Teste migrate ou um SELECT simples</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Assine ok no runbook</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">38 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Homolog</p>
+    <h2>Banco de homolog separado</h2>
+    <p class="lead">Produção e teste no mesmo projeto misturam lead real com lixo.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Ambiente seguro para experimentar migrate.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Segundo projeto Supabase + segunda URI.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Migrate experimental em produção = susto com cliente.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Crie projeto homolog</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>URI própria no .env de homolog</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Migrate só lá primeiro</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Front preview aponta para API homolog</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Nunca copie dump de prod para chat</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Documente os dois nomes de projeto</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">39 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Logs</p>
+    <h2>Ler log da API quando o banco falha</h2>
+    <p class="lead">A mensagem curta no Chrome esconde o stack.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Ver Sequelize/Postgres no log.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Railway logs ou pm2 logs | terminal local.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Sem log você troca Variable à toa.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Reproduza o erro</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Abra 30 linhas de log da API</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Procure SSL, password, ECONNREFUSED</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Aplique a correção da tabela de erros</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Reinicie uma vez</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Guarde o trecho no chamado</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">40 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Variáveis espelho</p>
+    <h2>DB_HOST e amigos vs DATABASE_URL</h2>
+    <p class="lead">Alguns deploys pedem campos separados além da URI.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Evitar divergência host/senha.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Se preencher ambos, mantenha iguais.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Host de um projeto e senha de outro = falha opaca.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Prefira DATABASE_URL completa</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Se o template pedir DB_HOST, derive da mesma URI</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>DB_PORT=5432</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>DB_NAME=postgres</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Não misture pooler e direct nos campos</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Reinicie após alinhar</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">41 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Senha reset</p>
+    <h2>Reset de Database password</h2>
+    <p class="lead">Às vezes a senha sumiu do cofre.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Recuperar acesso sem recriar o projeto.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Reset no painel + atualizar todos os .env.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Esquecer Railway Variables = API antiga com senha morta.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Reset no Supabase Database settings</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Atualize local .env</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Atualize Railway/VPS</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Reinicie API</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Teste migrate ou login</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Revogue prints antigos com a senha</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">42 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Observabilidade</p>
+    <h2>Sinais de saúde do Postgres</h2>
+    <p class="lead">Banco “no ar” não basta; precisa responder rápido.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Antecipar saturação de conexão.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Olhar logs, tempo de login e erro de pool.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Ignorar lentidão até o go-live público custa caro.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Meça tempo de login</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Veja erros de pool na semana</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Confirme backup recente</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Revise IPs liberados</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Confira plano Free/Pro</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Anote no relatório semanal</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">43 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Entrega técnica</p>
+    <h2>Pacote mínimo de evidências</h2>
+    <p class="lead">Gestor não técnico precisa de print, não de URI.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Fechar o capítulo com prova.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Healthy + Table Editor + login salvando.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Sem evidência o “está pronto” é opinião.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Print Healthy</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Print Table Editor com tabelas</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Print login ok</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Print de um registro criado</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Lista de Variables nomes (sem segredo)</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Arquive na pasta do cliente</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">44 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Próximo módulo</p>
+    <h2>Encaixe com Redis e WhatsApp</h2>
+    <p class="lead">Banco ok não envia mensagem sozinho.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Preparar a ordem do próximo PDF.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Redis → API → conexões → QR ou Cloud API.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Abrir campanha sem Redis = fila morta.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Confirme DATABASE_URL estável</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Abra o manual 04 WhatsApp</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Suba Redis antes do QR</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Não misture Baileys e Oficial no mesmo dia sem plano</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Mantenha backup do banco antes de campanha</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Siga o checklist do PDF 04</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">45 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Auditoria</p>
+    <h2>Auditoria mensal do Supabase</h2>
+    <p class="lead">Rotina curta para não apodrecer configuração.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Pegar IP aberto e usuário fantasma.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Lista fixa de cliques no dashboard.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Sem auditoria o Free pausa e ninguém nota.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Status Healthy?</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Network ainda faz sentido?</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Quem tem acesso ao org?</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Backup recente?</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>URI da API ainda é a mesma?</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Registrar no runbook</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">46 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Simulado</p>
+    <h2>Simulado 15 minutos de banco</h2>
+    <p class="lead">Treino antes do cliente olhar.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Provar que o time executa sem você.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Quebrar de propósito em homolog e corrigir.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Descobrir buraco com calma.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Em homolog, troque a porta para 6543 e veja o erro</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Corrija para 5432</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Desligue DB_SSL e corrija</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Faça um dump rápido</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Crie admin de novo se precisar</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Anote o tempo e as falhas humanas</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">47 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Extra 1</p>
+    <h2>Revisão prática · bloco 1</h2>
+    <p class="lead">Página de reforço do módulo Supabase · Banco: revise o que já fez e confirme no ambiente real.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Fechar lacunas antes do go-live.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Você revisita variáveis, URLs e um teste mínimo.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Item esquecido vira incidente depois do anúncio.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra o .env ou Variables e confira DEV_NO_DB, URLs e Redis.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Confira logs da API (Railway ou pm2).</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Teste login no painel.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Teste uma ação simples (abrir ticket ou salvar cadastro).</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Anote o resultado e só então avance.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Se falhou, volte à página do tema correspondente neste PDF.</p></div></div>
+<div class="callout"><strong>Reforço</strong><br/>Esta página existe para encher o checklist com prática, não com teoria solta.</div>
+<ul class="checklist"><li>Revisão feita</li><li>Erro anotado ou tudo ok</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">48 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Extra 2</p>
+    <h2>Revisão prática · bloco 2</h2>
+    <p class="lead">Página de reforço do módulo Supabase · Banco: revise o que já fez e confirme no ambiente real.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Fechar lacunas antes do go-live.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Você revisita variáveis, URLs e um teste mínimo.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Item esquecido vira incidente depois do anúncio.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra o .env ou Variables e confira DEV_NO_DB, URLs e Redis.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Confira logs da API (Railway ou pm2).</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Teste login no painel.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Teste uma ação simples (abrir ticket ou salvar cadastro).</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Anote o resultado e só então avance.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Se falhou, volte à página do tema correspondente neste PDF.</p></div></div>
+<div class="callout"><strong>Reforço</strong><br/>Esta página existe para encher o checklist com prática, não com teoria solta.</div>
+<ul class="checklist"><li>Revisão feita</li><li>Erro anotado ou tudo ok</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">49 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Supabase · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Extra 3</p>
+    <h2>Revisão prática · bloco 3</h2>
+    <p class="lead">Página de reforço do módulo Supabase · Banco: revise o que já fez e confirme no ambiente real.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Fechar lacunas antes do go-live.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Você revisita variáveis, URLs e um teste mínimo.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Item esquecido vira incidente depois do anúncio.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra o .env ou Variables e confira DEV_NO_DB, URLs e Redis.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Confira logs da API (Railway ou pm2).</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Teste login no painel.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Teste uma ação simples (abrir ticket ou salvar cadastro).</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Anote o resultado e só então avance.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Se falhou, volte à página do tema correspondente neste PDF.</p></div></div>
+<div class="callout"><strong>Reforço</strong><br/>Esta página existe para encher o checklist com prática, não com teoria solta.</div>
+<ul class="checklist"><li>Revisão feita</li><li>Erro anotado ou tudo ok</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">50 / 50</span>
+  </footer>
+</section>
+
+</body>
+</html>

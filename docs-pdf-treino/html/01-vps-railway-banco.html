@@ -1,0 +1,2272 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Treinamento · VPS, Railway e Banco · VB Solution CRM</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles-extra.css" />
+  <link rel="stylesheet" href="styles-dense.css" />
+</head>
+<body>
+
+<section class="page cover">
+  <div class="cover-top">
+    <img class="cover-logo" src="../assets/vbsolution-logo-nome-branca.png" alt="VB Solution" />
+    <div class="badge">Material de treinamento · Código-Fonte · 50 páginas</div>
+  </div>
+  <p class="series">SÉRIE CÓDIGO-FONTE · INFRAESTRUTURA · 50 PÁGINAS</p>
+  <h1>Instalação e Configuração · VPS, Railway e Banco de Dados</h1>
+  <p class="subtitle">Manual completo e passo a passo: PostgreSQL, variáveis de ambiente, Redis, deploy na Railway ou VPS Ubuntu, Nginx, SSL, checklist de go-live e prompts para Claude Code. Escrito para quem comprou o código-fonte e precisa colocar a API no ar sem enrolação.</p>
+  <div class="cover-grid"><div class="cover-card"><span>Público</span><strong>Compradores do código-fonte</strong></div><div class="cover-card"><span>Foco</span><strong>API + Banco + Redis</strong></div><div class="cover-card"><span>Caminhos</span><strong>Railway ou VPS Ubuntu</strong></div><div class="cover-card"><span>Formato</span><strong>50 páginas · passo a passo</strong></div></div>
+  <div class="cover-bottom">
+    <div>Visão Business · VB Solution CRM<br />Manual técnico · © Visão Business</div>
+    <img src="../assets/vbsolution-logo-square.png" alt="VB" />
+  </div>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Mapa</p>
+    <h2>Sumário · o que este manual resolve</h2>
+    
+    <p class="lead">Este material sobe a API do CRM em produção: banco, variáveis, Redis e o servidor (Railway ou VPS). O painel na Vercel fica no outro PDF.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Deixar a API ligada 24h com dados reais e WhatsApp estável.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Você escolhe Railway ou VPS, cola o .env, migra o Postgres e publica HTTPS.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Sem isso o painel até abre, mas login, tickets e WhatsApp quebram em produção.</p></div>
+    </div>
+    
+    <table class="compact"><thead><tr><th>Bloco</th><th>Páginas</th><th>Resultado</th></tr></thead><tbody><tr><td>Arquitetura e contas</td><td>3–7</td><td>Saber o que sobe onde</td></tr><tr><td>PostgreSQL</td><td>8–16</td><td>Banco migrado e com backup</td></tr><tr><td>Variáveis .env</td><td>17–24</td><td>.env de produção fechado</td></tr><tr><td>Railway</td><td>25–33</td><td>API HTTPS na nuvem</td></tr><tr><td>VPS Ubuntu</td><td>34–43</td><td>API na sua máquina virtual</td></tr><tr><td>Checklist, prompts, FAQ</td><td>44–50</td><td>Go-live sem surpresa</td></tr></tbody></table>
+    <div class="link-box"><strong>Código-fonte</strong><div class="url"><a href="https://github.com/visaobusinesstech/codigo-fonte-COUTINHO" target="_blank">https://github.com/visaobusinesstech/codigo-fonte-COUTINHO</a></div></div>
+    <div class="callout"><strong>Como estudar</strong><br/>Faça o passo da página. Só avance quando o checklist do rodapé mental estiver ok.</div>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">2 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Peças</p>
+    <h2>As três peças do CRM em produção</h2>
+    
+    <p class="lead">Pense em três caixas. Cada uma mora em um lugar diferente.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Separar painel, API e banco evita colocar WhatsApp na Vercel (que não aguenta processo 24h).</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Browser fala com a API. API grava no Postgres e usa Redis para filas.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Errar o endereço de qualquer peça = CORS, login falso ou mensagem que não chega.</p></div>
+    </div>
+    
+    <table class="compact"><thead><tr><th>Peça</th><th>Onde sobe</th><th>O que acontece se cair</th></tr></thead><tbody><tr><td>Painel React</td><td>Vercel (outro PDF)</td><td>Ninguém abre a tela</td></tr><tr><td>API Node</td><td>Railway ou VPS</td><td>Login, WhatsApp e tickets param</td></tr><tr><td>PostgreSQL</td><td>Supabase / Railway / VPS</td><td>Nada grava; migrate falha</td></tr><tr><td>Redis</td><td>Plugin / Upstash / VPS</td><td>Fila e sessão WhatsApp travam</td></tr></tbody></table>
+    <div class="step"><div class="n">1</div><div><h4>Anote no papel</h4><p>URL futura da API (ex. api.suaempresa.com ou *.up.railway.app) e URL do painel.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Escolha o caminho</h4><p>Receita rápida: Supabase + Redis Railway + API Railway + painel Vercel.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Não misture no dia 1</h4><p>Um banco por ambiente. Homolog e produção separados.</p></div></div>
+    <div class="callout"><strong>Regra</strong><br/>Root Directory da API: <span class="inline-code">VBSOLUTIONCRMCodigoFonte-main/backend</span></div>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">3 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Fluxo</p>
+    <h2>Como uma requisição anda de ponta a ponta</h2>
+    
+    <p class="lead">Quando o corretor clica em Salvar no painel, isto acontece:</p>
+    <div class="step"><div class="n">1</div><div><h4>Chrome abre o painel</h4><p>O JS foi buildado na Vercel com REACT_APP_BACKEND_URL apontando para a API.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Browser chama a API</h4><p>HTTPS para Railway/VPS. Vai JWT no header se estiver logado.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>API valida e grava</h4><p>Sequelize usa DATABASE_URL. Redis marca jobs se for fila.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Resposta volta</h4><p>JSON no painel. Se FRONTEND_URL estiver errado, o navegador bloqueia (CORS).</p></div></div>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Entender o fluxo para achar o elo quebrado.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Quatro URLs precisam bater: REACT_APP_BACKEND_URL, BACKEND_URL, PUBLIC_BACKEND_URL, FRONTEND_URL.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Um localhost esquecido no build = produção ainda falando com seu PC.</p></div>
+    </div>
+    
+    <div class="callout"><strong>Teste rápido</strong><br/>No Chrome F12 → Network. A chamada deve ir para a API pública, nunca para localhost em produção.</div>
+    <ul class="checklist"><li>Sei qual é a URL da API</li><li>Sei qual é a URL do painel</li><li>Sei qual DATABASE_URL está ativa</li></ul>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">4 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Contas</p>
+    <h2>Contas e acessos que você precisa ter</h2>
+    
+    <p class="lead">Antes de clicar em Deploy, reúna os logins. Evita parar no meio.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Cada serviço exige conta e, às vezes, cartão (Railway que não dorme).</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Você cria projeto, cola URI e gera domínio.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Sem cartão no plano que dorme, a API apaga da memória e o WhatsApp cai.</p></div>
+    </div>
+    
+    <table class="compact"><thead><tr><th>Conta</th><th>Para quê</th><th>Link</th></tr></thead><tbody><tr><td>GitHub</td><td>Código e deploy</td><td><a href="https://github.com" target="_blank">https://github.com</a></td></tr><tr><td>Supabase</td><td>Postgres recomendado</td><td><a href="https://supabase.com" target="_blank">https://supabase.com</a></td></tr><tr><td>Railway</td><td>API + Redis</td><td><a href="https://railway.app" target="_blank">https://railway.app</a></td></tr><tr><td>VPS (Hostgator etc.)</td><td>Alternativa à Railway</td><td>IP + SSH</td></tr><tr><td>Vercel</td><td>Painel (outro PDF)</td><td><a href="https://vercel.com" target="_blank">https://vercel.com</a></td></tr></tbody></table>
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Entre em <a href="https://github.com/visaobusinesstech/codigo-fonte-COUTINHO" target="_blank">https://github.com/visaobusinesstech/codigo-fonte-COUTINHO</a> e confirme que vê o repo (ou use o ZIP).</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Crie/ Supabase e anote a senha do banco agora.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Crie Railway com plano que não hiberna, ou tenha IP da VPS e senha root.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Deixe a conta Vercel pronta para o PDF do frontend.</p></div></div>
+    <div class="callout warn"><strong>Segurança</strong><br/>Senhas do banco e JWT não vão no grupo da família. Só no gerenciador de senhas e no .env.</div>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">5 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Pré</p>
+    <h2>Pré-requisitos no seu PC</h2>
+    
+    <p class="lead">Mesmo publicando na nuvem, você usa o PC para editar .env, rodar migrate e abrir SSH.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Ter Node e um editor para não editar .env no escuro.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Node 20 roda scripts locais; Git clona; terminal fala com a VPS.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Node antigo quebra install. Pasta no OneDrive trava npm.</p></div>
+    </div>
+    
+    <div class="step"><div class="n">1</div><div><h4>Passo 1 · Node 20</h4><p>Instale LTS em <a href="https://nodejs.org" target="_blank">https://nodejs.org</a>. Feche o PowerShell e abra de novo. Rode <span class="inline-code">node -v</span>.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2 · Pasta limpa</h4><p>Use algo como C:\CRM\... Evite OneDrive no meio do npm install.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3 · Editor</h4><p>VS Code ou Cursor para editar .env com calma.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4 · Git (opcional)</h4><p>Se for clonar: <a href="https://git-scm.com" target="_blank">https://git-scm.com</a>.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5 · Confirme</h4><p>node -v = v20.x · npm -v responde · você sabe onde está a pasta backend.</p></div></div>
+    <ul class="checklist"><li>Node 20 ok</li><li>Sei o caminho da pasta backend</li><li>Tenho onde anotar URIs e senhas</li></ul>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">6 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Escolha</p>
+    <h2>Railway ou VPS: qual caminho seguir</h2>
+    
+    <p class="lead">Os dois sobem a mesma API. Muda quem administra o servidor.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Escolher onde a API vai viver as próximas semanas.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Railway: cliques + Variables. VPS: SSH, Nginx, PM2, Certbot.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Trocar no meio do WhatsApp exige novo domínio e reconfigurar webhook Meta.</p></div>
+    </div>
+    
+    <table class="compact"><thead><tr><th>Cenário</th><th>Escolha</th><th>Por quê</th></tr></thead><tbody><tr><td>Quer ir ao ar rápido</td><td>Railway</td><td>Menos Linux na frente</td></tr><tr><td>Já tem VPS Ubuntu</td><td>VPS</td><td>Custo previsível, disco fixo</td></tr><tr><td>Precisa de Volume Baileys</td><td>Os dois</td><td>Railway: Volume; VPS: pasta no disco</td></tr><tr><td>Time sem SSH</td><td>Railway</td><td>Menos superfície de erro</td></tr></tbody></table>
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Marque no papel: Railway OU VPS (não os dois no mesmo dia).</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Se Railway: siga páginas 25–33 depois do banco e .env.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Se VPS: siga páginas 34–43.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Banco e variáveis (8–24) servem para os dois.</p></div></div>
+    <div class="callout"><strong>Dica</strong><br/>Cliente leigo + prazo curto = Railway. Compliance “dado na minha máquina” = VPS + Postgres local ou Supabase com IP liberado.</div>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">7 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Postgres</p>
+    <h2>PostgreSQL · para que serve no CRM</h2>
+    
+    <p class="lead">É o arquivo inteligente: usuários, tickets, mensagens, imóveis, contratos.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Guardar tudo que o painel mostra depois do F5.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>A API fala com ele via Sequelize e DATABASE_URL (ou DB_*).</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>URI errada = login some, migrate falha, Table Editor vazio.</p></div>
+    </div>
+    
+    <table class="compact"><thead><tr><th>Opção</th><th>Quando usar</th><th>Trabalho extra</th></tr></thead><tbody><tr><td>Supabase</td><td>Maioria dos clientes</td><td>Criar projeto + URI 5432</td></tr><tr><td>Postgres Railway</td><td>Tudo num painel</td><td>Não misturar com Supabase</td></tr><tr><td>Postgres na VPS</td><td>Dado no mesmo servidor</td><td>Backup, firewall, updates</td></tr><tr><td>Postgres no Windows</td><td>Só estudo local</td><td>Não é produção</td></tr></tbody></table>
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Decida: Supabase (recomendado) ou outra opção da tabela.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Anote senha agora. Sem ela a URI não fecha.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Lembre: porta do migrate é 5432 Session/Direct, não 6543.</p></div></div>
+    <div class="link-box"><strong>PostgreSQL</strong><div class="url"><a href="https://www.postgresql.org" target="_blank">https://www.postgresql.org</a></div></div>
+    <div class="callout danger"><strong>Regra de ouro</strong><br/>Um ambiente = uma DATABASE_URL. Não aponte produção e homolog para o mesmo banco “só para testar migrate”.</div>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">8 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Local PG</p>
+    <h2>Criar Postgres local (estudo) · passo a passo</h2>
+    
+    <p class="lead">Útil para treinar migrate sem nuvem. Produção prefere Supabase.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Ter um banco no PC para testar sem depender da internet.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Você cria usuário/database e aponta DB_* no .env com DB_SSL=false.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Se esquecer de mudar para a URI da nuvem no deploy, a API na Railway tenta localhost e morre.</p></div>
+    </div>
+    
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Instale Postgres Windows em <a href="https://www.postgresql.org/download/windows/" target="_blank">https://www.postgresql.org/download/windows/</a> ou use Docker.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2 · Docker</h4><p>docker run -d --name vbs-pg -e POSTGRES_PASSWORD=senhaForte123 -e POSTGRES_USER=vbsolution -e POSTGRES_DB=vbsolution -p 5432:5432 postgres:16</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3 · SQL</h4><p>CREATE USER vbsolution WITH PASSWORD 'escolhaUmaSenhaForte'; CREATE DATABASE vbsolution OWNER vbsolution;</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4 · .env</h4><p>DB_HOST=localhost · DB_PORT=5432 · DB_USER=vbsolution · DB_PASS=... · DB_NAME=vbsolution · DB_SSL=false · DEV_NO_DB=false</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>cd backend → npm run db:migrate e confira se não houve exception.</p></div></div>
+    <code>DB_HOST=localhost
+DB_PORT=5432
+DB_USER=vbsolution
+DB_PASS=escolhaUmaSenhaForte
+DB_NAME=vbsolution
+DB_SSL=false
+DEV_NO_DB=false</code>
+    <div class="callout warn"><strong>Atenção</strong><br/>No deploy, troque isso pela DATABASE_URL da nuvem e DB_SSL=true.</div>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">9 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">URI</p>
+    <h2>DATABASE_URL · montar e entender cada pedaço</h2>
+    
+    <p class="lead">A URI é um endereço completo: usuário, senha, host, porta e nome do banco.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Uma linha só para a API achar o Postgres.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>O bootstrap lê DATABASE_URL e preenche DB_* se faltar.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Senha com @ # % sem encode quebra no meio. Porta 6543 quebra o migrate.</p></div>
+    </div>
+    
+    <code>postgresql://USUARIO:SENHA@HOST:5432/NOME_DO_BANCO
+
+# Exemplos Supabase (session/direct 5432):
+postgresql://postgres.xxxxx:SENHA@aws-0-sa-east-1.pooler.supabase.com:5432/postgres
+postgresql://postgres:SENHA@db.xxxxx.supabase.co:5432/postgres</code>
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>No Supabase: Settings → Database → Connection string → Session ou Direct.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Copie a URI para o Bloco de Notas. Troque [YOUR-PASSWORD] pela senha real.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Se a senha tem @, vire %40; # vire %23; % vire %25.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Confira se a porta no meio da URI é 5432.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Cole em DATABASE_URL= no .env sem aspas e sem espaço no começo.</p></div></div>
+    <div class="callout"><strong>Onde acarreta</strong><br/>Railway Variables, .env da VPS e migrate local usam a mesma lógica de URI.</div>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">10 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">5432</p>
+    <h2>Por que evitar a porta 6543 no migrate</h2>
+    
+    <p class="lead">O pooler “transaction” na 6543 é para serverless. O Sequelize deste CRM briga com ele.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Fazer migrate e runtime estáveis.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Session/Direct 5432 mantém prepared statements do jeito que o ORM espera.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Erro clássico: prepared statement already exists. Parece bug do código; é a porta.</p></div>
+    </div>
+    
+    <table class="compact"><thead><tr><th>Modo</th><th>Porta</th><th>Usar neste CRM?</th></tr></thead><tbody><tr><td>Session / Direct</td><td>5432</td><td>Sim</td></tr><tr><td>Transaction pooler</td><td>6543</td><td>Não no migrate</td></tr><tr><td>Session pooler IPv4</td><td>5432</td><td>Sim, se IPv6 falhar</td></tr></tbody></table>
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra a URI no Bloco de Notas e procure :6543.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Se achar, volte ao painel Supabase e pegue Session 5432.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Rode de novo npm run db:migrate.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Se der timeout/IPv6, use a URI IPv4 Session da mesma tela (ainda 5432).</p></div></div>
+    <div class="callout warn"><strong>Como funciona na prática</strong><br/>Você não “otimiza” começando na 6543. Primeiro estabiliza. Pool avançado é assunto depois.</div>
+    <ul class="checklist"><li>URI sem 6543</li><li>DB_SSL=true na nuvem</li><li>DEV_NO_DB=false</li></ul>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">11 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Migrate</p>
+    <h2>Rodar migrações · passo a passo completo</h2>
+    
+    <p class="lead">Migrate é o pedreiro: lê arquivos em backend/src/database/migrations e cria tabelas.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Criar o esquema do CRM (Users, Tickets, Messages, imóveis...).</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>npm run db:migrate aplica o que ainda não está na tabela SequelizeMeta.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Pular migrate = Table Editor vazio e API reclamando de relação inexistente.</p></div>
+    </div>
+    
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra o PowerShell na pasta VBSOLUTIONCRMCodigoFonte-main/backend.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Confira .env: DEV_NO_DB=false e DATABASE_URL (ou DB_*) corretos.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Rode npm install (só na primeira vez ou após puxar código).</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Rode npm run db:migrate e espere voltar ao prompt.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Se houver admin:local-dev no package.json, rode para criar o admin.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>No Supabase Table Editor, confira se as tabelas apareceram.</p></div></div>
+    <code>cd VBSOLUTIONCRMCodigoFonte-main/backend
+npm install
+npm run db:migrate
+npm run admin:local-dev</code>
+    <div class="callout danger"><strong>Não faça</strong><br/>db:migrate:undo em produção sem backup. Desfaz estrutura e pode apagar caminho de dados.</div>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">12 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">SSL Pool</p>
+    <h2>SSL, pool de conexões e Free do Supabase</h2>
+    
+    <p class="lead">Nuvem exige SSL. Free tem limite de conexões simultâneas.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Conectar com segurança e sem estourar o plano.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>DB_SSL=true manda a API negociar TLS. DB_POOL_MAX limita sockets abertos.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Sem SSL a nuvem recusa. Pool alto demais = too many connections.</p></div>
+    </div>
+    
+    <code>DB_SSL=true
+DB_POOL_MAX=8
+DEV_NO_DB=false
+DB_DIALECT=postgres</code>
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Na nuvem, DB_SSL=true sempre.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>No Free, comece com DB_POOL_MAX=8 (não 50).</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Se aparecer too many connections, baixe o pool e feche deploys duplicados.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Local Windows com Postgres instalado: DB_SSL=false.</p></div></div>
+    <table class="compact"><thead><tr><th>Ambiente</th><th>DB_SSL</th><th>Pool sugerido</th></tr></thead><tbody><tr><td>Supabase / Railway PG</td><td>true</td><td>8 no Free</td></tr><tr><td>Postgres local</td><td>false</td><td>10–20</td></tr><tr><td>Vários workers</td><td>true</td><td>Some os pools com cuidado</td></tr></tbody></table>
+    <div class="callout"><strong>Onde acarreta</strong><br/>Mesmas variáveis na Railway Variables e no .env da VPS.</div>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">13 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Backup</p>
+    <h2>Backup e restore · quando e como</h2>
+    
+    <p class="lead">Backup é o cinto de segurança antes de migrate grande ou troca de senha.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Conseguir voltar atrás se algo der errado.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>pg_dump gera arquivo; pg_restore recoloca.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Sem backup, um undo ou projeto apagado vira prejuízo.</p></div>
+    </div>
+    
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Antes de mudança grande, rode o dump com sslmode=require na URI da nuvem.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Guarde o arquivo fora do PC único (Drive/NAS com acesso restrito).</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Teste restore em um projeto de homolog, não direto na produção.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Combine com o cliente a frequência (diário/semanal).</p></div></div>
+    <code>pg_dump "SUA_DATABASE_URL?sslmode=require" -F c -f backup-crm.dump
+pg_restore -d "SUA_DATABASE_URL?sslmode=require" backup-crm.dump</code>
+    <div class="callout warn"><strong>Free Supabase</strong><br/>Backup automático é limitado. Não dependa só dele.</div>
+    <ul class="checklist"><li>Sei onde está o último .dump</li><li>URI de restore é a certa</li><li>Cliente avisado do ritmo de backup</li></ul>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">14 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Rede DB</p>
+    <h2>Rede, firewall e IPv4 do banco</h2>
+    
+    <p class="lead">Às vezes a senha está certa e mesmo assim não conecta: IP ou IPv6.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Deixar a API alcançar o Postgres.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Supabase pode restringir IP; alguns ambientes preferem IPv4.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Timeout e ENETUNREACH parecem “internet ruim”, mas é rede do banco.</p></div>
+    </div>
+    
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>No Supabase: Settings → Database → Network restrictions.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Estudo: Add my IP ou 0.0.0.0/0 aceitando o risco.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Produção: IP da VPS ou ranges da Railway.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Se der ENETUNREACH: URI pooler IPv4 Session 5432 ou add-on IPv4.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Na VPS, não abra 5432 para o mundo se o Postgres for local. Só 80/443.</p></div></div>
+    <div class="callout"><strong>Como funciona</strong><br/>A API na nuvem sai de um IP. Se o Supabase não conhece esse IP, a porta nem responde.</div>
+    <table class="compact"><thead><tr><th>Sintoma</th><th>Olhar primeiro</th></tr></thead><tbody><tr><td>timeout</td><td>Network restrictions / IPv6</td></tr><tr><td>password authentication failed</td><td>Senha e encode</td></tr><tr><td>ENOTFOUND</td><td>Host da URI errado</td></tr></tbody></table>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">15 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Seg DB</p>
+    <h2>Segurança do banco no dia a dia</h2>
+    
+    <p class="lead">Quem tem a DATABASE_URL tem o banco. Trate como chave mestra.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Evitar vazamento e acesso anônimo na porta 5432.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>URI só no .env/Variables; firewall fechado; senhas fortes.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>URI no GitHub público = banco exposto em minutos.</p></div>
+    </div>
+    
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Confirme que .env está no .gitignore.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Nunca cole URI em print de WhatsApp do time.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Se vazou, troque a senha no Supabase e atualize todos os .env.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Restrinja IP depois do go-live.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>JWT_SECRET diferentes de qualquer exemplo deste PDF.</p></div></div>
+    <ul class="checklist"><li>.env fora do Git</li><li>Senha forte anotada no cofre</li><li>IP restrito em produção</li><li>Homolog ≠ produção</li></ul>
+    <div class="callout danger"><strong>Onde acarreta</strong><br/>Vazou URI = precisa rotacionar senha + redeploy API + avisar quem tinha o valor antigo.</div>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">16 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Dois mundos</p>
+    <h2>Dois mundos de variáveis: backend e frontend</h2>
+    
+    <p class="lead">O painel não lê o .env da API. São arquivos e painéis diferentes.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Cada lado recebe só o que precisa.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Backend: DB, JWT, Redis, Meta. Frontend: só REACT_APP_*.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Colocar JWT na Vercel não ajuda e ainda arrisca vazamento no browser.</p></div>
+    </div>
+    
+    <table class="compact"><thead><tr><th>Onde</th><th>Arquivo / painel</th><th>Exemplos</th></tr></thead><tbody><tr><td>API</td><td>backend/.env ou Railway Variables</td><td>DATABASE_URL, JWT, REDIS_*</td></tr><tr><td>Painel</td><td>Vercel Environment Variables</td><td>REACT_APP_BACKEND_URL</td></tr><tr><td>Build local FE</td><td>.env / .env.production</td><td>REACT_APP_* embutido no build</td></tr></tbody></table>
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>cd backend → copy .env.example .env</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Preencha grupos nas próximas páginas.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Frontend fica para o PDF Vercel (REACT_APP_BACKEND_URL).</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Mudou .env? Reinicie npm run dev, pm2 restart ou Redeploy.</p></div></div>
+    <div class="callout"><strong>Como funciona</strong><br/>Create React App grava REACT_APP_* dentro do JS no build. Mudar na Vercel sem Redeploy não altera o pacote antigo.</div>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">17 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">URLs</p>
+    <h2>Grupo servidor · PORT e URLs públicas</h2>
+    
+    <p class="lead">Essas variáveis dizem à API quem ela é e quem pode chamá-la.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>HTTPS certo para webhook Meta, Socket e CORS.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>BACKEND_URL/PUBLIC_BACKEND_URL = endereço público da API. FRONTEND_URL = origem do painel.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Barra no final ou http vs https diferente = CORS e webhook falhando.</p></div>
+    </div>
+    
+    <table class="compact"><thead><tr><th>Variável</th><th>Local</th><th>Produção</th></tr></thead><tbody><tr><td>NODE_ENV</td><td>development</td><td>production</td></tr><tr><td>PORT</td><td>3000</td><td>Railway injeta; VPS 3000 atrás do Nginx</td></tr><tr><td>BACKEND_URL</td><td>http://localhost:3000</td><td>https://api... sem / final</td></tr><tr><td>PUBLIC_BACKEND_URL</td><td>igual</td><td>igual (Meta/webhook)</td></tr><tr><td>FRONTEND_URL</td><td>http://localhost:5181</td><td>URL exata Vercel sem /</td></tr><tr><td>WEB_ORIGIN</td><td>opcional</td><td>mesmo FRONTEND_URL se CORS persistir</td></tr></tbody></table>
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Defina as três URLs sem barra no final.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Copie a URL exatamente como o Chrome mostra (https).</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Depois do domínio Vercel, volte e atualize FRONTEND_URL + redeploy API.</p></div></div>
+    <code>NODE_ENV=production
+PORT=3000
+BACKEND_URL=https://SEU-SERVICO.up.railway.app
+PUBLIC_BACKEND_URL=https://SEU-SERVICO.up.railway.app
+FRONTEND_URL=https://SEU-APP.vercel.app</code>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">18 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Env DB</p>
+    <h2>Grupo banco no .env · linha a linha</h2>
+    
+    <p class="lead">Além da URI, o projeto aceita DB_* soltos. Em nuvem a URI basta se estiver completa.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Conectar o ORM ao Postgres certo.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>DATABASE_URL tem prioridade na prática; DB_* ajudam local.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>DEV_NO_DB=true em produção finge banco: nada grava de verdade.</p></div>
+    </div>
+    
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>DEV_NO_DB=false (produção e nuvem).</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>DB_DIALECT=postgres</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>DB_SSL=true na nuvem; false só no Postgres local.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Cole DATABASE_URL 5432.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Opcional: DB_HOST, DB_PORT, DB_USER, DB_PASS, DB_NAME=postgres.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>DB_POOL_MAX=8 no Free.</p></div></div>
+    <code>DEV_NO_DB=false
+DB_DIALECT=postgres
+DB_SSL=true
+DATABASE_URL=postgresql://...:5432/postgres
+DB_POOL_MAX=8</code>
+    <div class="callout danger"><strong>Onde acarreta</strong><br/>Esquecer DEV_NO_DB=false é o erro mais caro: parece que “funciona”, mas o Supabase fica vazio.</div>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">19 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">JWT</p>
+    <h2>Grupo JWT · gerar e não reutilizar exemplo</h2>
+    
+    <p class="lead">JWT assina o login. Se vazar ou mudar, o efeito é imediato.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Provar que o usuário está logado sem guardar senha a cada request.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>API assina token com JWT_SECRET e refresh com JWT_REFRESH_SECRET.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Trocar em produção = todos deslogados. Reutilizar exemplo do PDF = risco.</p></div>
+    </div>
+    
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>No terminal: openssl rand -base64 32</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Rode de novo para o segundo segredo.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Cole em JWT_SECRET e JWT_REFRESH_SECRET (valores diferentes).</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Nunca commite esses valores.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Se alguém viu o .env, gere de novo e avise o time para logar outra vez.</p></div></div>
+    <code>openssl rand -base64 32
+openssl rand -base64 32
+
+JWT_SECRET=cole-o-primeiro
+JWT_REFRESH_SECRET=cole-o-segundo</code>
+    <div class="callout"><strong>Como funciona</strong><br/>O browser guarda o token. A API confere a assinatura. Segredo fraco = token forjável.</div>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">20 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Redis env</p>
+    <h2>Grupo Redis · três nomes, uma URL no início</h2>
+    
+    <p class="lead">Redis é o caderno rápido de filas e sessão. Em produção não é opcional se houver WhatsApp/campanha.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Filas Bull, ACK e partes da sessão não morrerem a cada request.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>O código lê REDIS_URI, REDIS_URL e REDIS_URI_ACK. No começo as três iguais.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>localhost na Railway = ECONNREFUSED. Login abre, campanha trava.</p></div>
+    </div>
+    
+    <div class="step"><div class="n">1</div><div><h4>Passo 1 · local</h4><p>Docker: docker run -d -p 6379:6379 --name redis redis:7</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>REDIS_*=redis://127.0.0.1:6379 nas três.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3 · Railway</h4><p>Crie plugin Redis e copie a URL (nunca localhost).</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Preencha as três variáveis com a mesma URL ou ${{Redis.REDIS_URL}} se o serviço se chamar Redis.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Upstash: rediss://... (com TLS).</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Reinicie a API e teste redis-cli ping → PONG quando for VPS/local.</p></div></div>
+    <code>REDIS_URI=redis://default:senha@host:port
+REDIS_URL=redis://default:senha@host:port
+REDIS_URI_ACK=redis://default:senha@host:port</code>
+    <div class="link-box"><strong>Railway</strong><div class="url"><a href="https://railway.app" target="_blank">https://railway.app</a></div></div>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">21 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Opcional</p>
+    <h2>Grupos opcionais · Meta, Stripe, IA, OAuth</h2>
+    
+    <p class="lead">No dia 1 podem ficar vazios. Saiba para que existem para não colar no lugar errado.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Ligar WhatsApp Oficial, pagamento e login social quando chegar a hora.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Variáveis no backend; algumas REACT_APP_* no build do painel.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Webhook Stripe/Meta na API. Segredo Stripe na Vercel = erro grave.</p></div>
+    </div>
+    
+    <table class="compact"><thead><tr><th>Grupo</th><th>Exemplos</th><th>Quando preencher</th></tr></thead><tbody><tr><td>Meta / WA</td><td>VERIFY_TOKEN, FACEBOOK_APP_*, TOKEN_API_OFICIAL</td><td>PDF WhatsApp</td></tr><tr><td>Stripe</td><td>STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET</td><td>Pagamentos</td></tr><tr><td>IA</td><td>OPENAI_*, ANTHROPIC_API_KEY</td><td>Ou chave no painel por empresa</td></tr><tr><td>OAuth</td><td>GOOGLE_OAUTH_*, GITHUB_OAUTH_*</td><td>Login social</td></tr></tbody></table>
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra backend/.env.example e localize os blocos.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Deixe em branco o que não for usar agora.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Quando for Meta, siga o PDF WhatsApp (VERIFY_TOKEN igual no painel Meta).</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Stripe webhook → URL da API HTTPS, não Vercel.</p></div></div>
+    <div class="callout"><strong>Onde acarreta</strong><br/>Preencher Meta sem HTTPS público = webhook nunca verifica.</div>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">22 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Check env</p>
+    <h2>Checklist .env de produção · feche antes do deploy</h2>
+    
+    <p class="lead">Imprima mentalmente esta lista. Se faltar um item, o deploy vai mentir que “subiu”.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Evitar redeploy em loop por variável esquecida.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Você confere grupo a grupo e só então Generate Domain / PM2.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Item marcado errado = sintoma em outra página (CORS, migrate, Redis).</p></div>
+    </div>
+    
+    <ul class="checklist"><li>DEV_NO_DB=false</li><li>NODE_ENV=production</li><li>DATABASE_URL 5432 ou DB_* ok</li><li>DB_SSL=true na nuvem</li><li>JWT_SECRET e JWT_REFRESH_SECRET longos e diferentes</li><li>REDIS_URI, REDIS_URL, REDIS_URI_ACK preenchidas</li><li>BACKEND_URL e PUBLIC_BACKEND_URL HTTPS sem / final</li><li>FRONTEND_URL = origem real do painel</li><li>Frontend buildado com o mesmo REACT_APP_BACKEND_URL</li><li>.env fora do Git</li></ul>
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra o .env e marque cada item acima.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Peça para outra pessoa revisar URLs (olho fresco).</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Só então vá ao deploy Railway ou VPS.</p></div></div>
+    <div class="callout"><strong>Como funciona</strong><br/>A API lê o ambiente na subida. Variável errada só muda depois de reiniciar.</div>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">23 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Railway start</p>
+    <h2>Railway · criar conta e projeto</h2>
+    
+    <p class="lead">Railway hospeda a API e o Redis com pouco Linux na frente.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>API pública HTTPS sem montar Nginx do zero.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Conecta no GitHub, builda o backend e injeta Variables.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Plano que dorme = WhatsApp morre quando ninguém acessa.</p></div>
+    </div>
+    
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra <a href="https://railway.app" target="_blank">https://railway.app</a> e entre com GitHub.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Escolha plano que não hiberna (cartão pode ser exigido).</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>New Project → Deploy from GitHub → repo codigo-fonte-COUTINHO.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Se o repo não aparece, autorize a organização no GitHub.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Não configure o Root Directory ainda: primeiro Redis (próxima página).</p></div></div>
+    <div class="link-box"><strong>Railway</strong><div class="url"><a href="https://railway.app" target="_blank">https://railway.app</a></div></div>
+    <div class="callout warn"><strong>Onde acarreta</strong><br/>Sem GitHub autorizado o botão de deploy nem lista o repositório.</div>
+    <ul class="checklist"><li>Login Railway ok</li><li>Repo visível</li><li>Plano sem sleep combinado com o cliente</li></ul>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">24 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Railway Redis</p>
+    <h2>Railway · criar Redis primeiro</h2>
+    
+    <p class="lead">Crie o Redis antes da API para já ter URL na hora das Variables.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Filas e sessão com endereço real na nuvem.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Plugin Redis gera REDIS_URL. A API referencia essa URL.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Subir API com localhost = erro 6379 nos logs.</p></div>
+    </div>
+    
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>No projeto: New → Database → Redis.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Espere o status Healthy.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Abra a variável REDIS_URL e copie (ou prepare a referência ${{Redis.REDIS_URL}}).</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Anote o nome do serviço. Se não for Redis, a referência ${{Redis...}} não resolve.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Não apague o plugin depois do go-live.</p></div></div>
+    <div class="callout"><strong>Como funciona</strong><br/>${{Redis.REDIS_URL}} só funciona se o serviço se chamar exatamente Redis. Senão cole a URL na mão.</div>
+    <table class="compact"><thead><tr><th>Errado</th><th>Certo</th></tr></thead><tbody><tr><td>redis://127.0.0.1:6379 na Railway</td><td>URL do plugin</td></tr><tr><td>Só uma variável Redis</td><td>As três iguais</td></tr></tbody></table>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">25 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Railway API</p>
+    <h2>Railway · serviço da API e Root Directory</h2>
+    
+    <p class="lead">O build precisa apontar para a pasta onde está o package.json do backend.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Instalar e compilar só a API.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Root Directory isola o monorepo. Build e Start rodam ali.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Root na raiz do repo = não acha package.json certo ou builda coisa errada.</p></div>
+    </div>
+    
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Adicione serviço a partir do mesmo repo (se ainda não tiver).</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Settings → Root Directory: VBSOLUTIONCRMCodigoFonte-main/backend</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Build Command: npm install && npm run build</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Start Command: npm start</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Watch Paths (opcional): VBSOLUTIONCRMCodigoFonte-main/backend/**</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Ainda não espere verde total: falta Variables (próxima página).</p></div></div>
+    <code>Root Directory: VBSOLUTIONCRMCodigoFonte-main/backend
+Build: npm install && npm run build
+Start: npm start</code>
+    <div class="callout"><strong>Onde acarreta</strong><br/>Root errado gera Cannot find package.json ou sobe pasta vazia.</div>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">26 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Railway vars</p>
+    <h2>Railway · Variables completas da API</h2>
+    
+    <p class="lead">Cole o pacote mínimo. Sem isso o container sobe e cai no boot.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Mesmo .env de produção, só que no painel Railway.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Variables viram process.env no Node.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Faltou JWT ou DATABASE_URL = crash loop nos logs.</p></div>
+    </div>
+    
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra Variables do serviço da API.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Cole o bloco abaixo adaptado.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Use URI Supabase 5432 com senha já encodada.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Ligue as três Redis.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Salve e deixe o redeploy acontecer.</p></div></div>
+    <code>NODE_ENV=production
+DEV_NO_DB=false
+DB_DIALECT=postgres
+DB_SSL=true
+DATABASE_URL=cole_uri_5432_supabase
+JWT_SECRET=...
+JWT_REFRESH_SECRET=...
+REDIS_URI=${{Redis.REDIS_URL}}
+REDIS_URL=${{Redis.REDIS_URL}}
+REDIS_URI_ACK=${{Redis.REDIS_URL}}
+DB_POOL_MAX=8</code>
+    <div class="callout"><strong>Ainda faltam URLs públicas</strong><br/>Depois do Generate Domain você preenche BACKEND_URL, PUBLIC_BACKEND_URL e FRONTEND_URL.</div>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">27 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Railway domínio</p>
+    <h2>Generate Domain e alinhar URLs</h2>
+    
+    <p class="lead">Sem domínio público não há webhook Meta nem painel falando com a API.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Entregar HTTPS estável do tipo *.up.railway.app.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Networking → Generate Domain cria a URL. Você cola nas Variables.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Esquecer de atualizar FRONTEND_URL depois da Vercel = CORS.</p></div>
+    </div>
+    
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Settings → Networking → Generate Domain.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Copie https://SEU-SERVICO.up.railway.app sem barra final.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Variables: BACKEND_URL e PUBLIC_BACKEND_URL = essa URL.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>FRONTEND_URL = URL da Vercel (quando existir). Provisório: deixe e atualize depois.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Redeploy se as Variables não aplicaram sozinhas.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>No PDF Vercel, REACT_APP_BACKEND_URL = domínio Railway.</p></div></div>
+    <code>BACKEND_URL=https://SEU-SERVICO.up.railway.app
+PUBLIC_BACKEND_URL=https://SEU-SERVICO.up.railway.app
+FRONTEND_URL=https://SEU-FRONTEND.vercel.app</code>
+    <ul class="checklist"><li>Domínio gerado</li><li>URLs sem / final</li><li>HTTPS mesmo no Bloco de Notas</li></ul>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">28 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Railway logs</p>
+    <h2>Ler logs Railway · o que é sucesso</h2>
+    
+    <p class="lead">Logs contam a história: install → build → migrate → servidor iniciado.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Saber se a API está viva de verdade.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Deploy escreve stdout. Erro de senha/Redis aparece ali.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Ignorar log vermelho = achar que “está no ar” com processo morto.</p></div>
+    </div>
+    
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra a aba Deployments / Logs do serviço API.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Confira npm install sem ENOENT de pasta.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Confira tsc/build ok.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Confira migrate sem password authentication failed.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Procure frase de servidor iniciado / listening.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Se reinicia em loop, leia as 30 linhas antes do exit.</p></div></div>
+    <table class="compact"><thead><tr><th>Sintoma no log</th><th>Causa</th></tr></thead><tbody><tr><td>password authentication failed</td><td>DATABASE_URL</td></tr><tr><td>ENOTFOUND / timeout</td><td>IPv6 / host</td></tr><tr><td>prepared statement</td><td>porta 6543</td></tr><tr><td>ECONNREFUSED 6379</td><td>Redis localhost</td></tr><tr><td>DEV_NO_DB</td><td>esqueceu false</td></tr></tbody></table>
+    <div class="callout"><strong>Como funciona</strong><br/>Cada push ou Variable change gera um deploy. O anterior morre.</div>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">29 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Railway volume</p>
+    <h2>Volume Baileys e disco efêmero</h2>
+    
+    <p class="lead">Redeploy apaga arquivos locais do container. Sessão WhatsApp QR some sem Volume.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Manter QR/Baileys conectado entre deploys.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Volume monta pasta persistente no caminho da sessão.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Sem Volume: todo deploy pede QR de novo.</p></div>
+    </div>
+    
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Decida se vai usar Baileys (QR). Se só Cloud API, Volume é menos crítico.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Crie Volume no serviço API.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Monte no caminho que o código usa (public / pasta de sessão do projeto).</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Redeploy e reconecte o QR uma última vez.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Teste um redeploy de Variable inocente e veja se continua Connected.</p></div></div>
+    <div class="callout warn"><strong>Onde acarreta</strong><br/>Cliente reclama que “todo dia pede QR” → quase sempre disco efêmero.</div>
+    <ul class="checklist"><li>Sei se uso Baileys</li><li>Volume criado ou migrei para Oficial</li><li>Backup da sessão se VPS</li></ul>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">30 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Railway erros</p>
+    <h2>Erros comuns Railway · correção objetiva</h2>
+    
+    <p class="lead">Antes de “reinstalar tudo”, case o sintoma com a linha certa.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Encurtar troubleshooting.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Logs + Variables + URI.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Ação errada (apagar projeto) perde domínio e webhook.</p></div>
+    </div>
+    
+    <table class="compact"><thead><tr><th>Sintoma</th><th>Causa</th><th>Correção</th></tr></thead><tbody><tr><td>password authentication failed</td><td>URI/senha</td><td>Reabrir URI 5432 + encode</td></tr><tr><td>ENOTFOUND / timeout</td><td>rede/IPv6</td><td>URI IPv4 Session</td></tr><tr><td>prepared statement</td><td>6543</td><td>trocar para 5432</td></tr><tr><td>ECONNREFUSED 6379</td><td>Redis local</td><td>URL do plugin</td></tr><tr><td>OOM</td><td>plano pequeno</td><td>plano maior ou pool 5</td></tr><tr><td>sleep / app parada</td><td>plano free sleep</td><td>plano sem hibernar</td></tr></tbody></table>
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Copie 20 linhas do log.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Ache a linha na tabela.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Mude só aquela Variable.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Espere o deploy e reteste login.</p></div></div>
+    <div class="callout"><strong>Não faça</strong><br/>Criar segundo Postgres “para ver” e deixar duas URIs pela metade.</div>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">31 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Railway CLI</p>
+    <h2>CLI Railway opcional</h2>
+    
+    <p class="lead">Quem prefere terminal pode linkar a pasta backend.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Deploy e logs sem só clicar no painel.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>railway link associa o diretório ao serviço.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Link na pasta errada sobe contexto errado.</p></div>
+    </div>
+    
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>npm i -g @railway/cli</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>railway login</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>cd VBSOLUTIONCRMCodigoFonte-main/backend</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>railway link e escolha o serviço API</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>railway up ou use o GitHub deploy como fluxo principal</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>railway logs para acompanhar</p></div></div>
+    <code>npm i -g @railway/cli
+railway login
+cd VBSOLUTIONCRMCodigoFonte-main/backend
+railway link
+railway logs</code>
+    <div class="link-box"><strong>Docs Railway</strong><div class="url"><a href="https://docs.railway.app" target="_blank">https://docs.railway.app</a></div></div>
+    <div class="callout"><strong>Como funciona</strong><br/>O fluxo GitHub continua válido. CLI é atalho, não obrigação.</div>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">32 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">VPS specs</p>
+    <h2>VPS Ubuntu · o que contratar e por quê</h2>
+    
+    <p class="lead">VPS é um Linux seu. Você instala Node, Redis, Nginx e PM2.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>API 24h com disco persistente e custo previsível.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>SSH + apt + PM2 + Nginx + Certbot.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Sem PM2 startup, reboot do host derruba WhatsApp.</p></div>
+    </div>
+    
+    <table class="compact"><thead><tr><th>Item</th><th>Sugestão</th><th>Por quê</th></tr></thead><tbody><tr><td>CPU/RAM</td><td>2 vCPU · 4 GB+</td><td>Node + Redis + folga</td></tr><tr><td>Disco</td><td>40 GB+</td><td>logs, mídia, sessão</td></tr><tr><td>SO</td><td>Ubuntu 22.04 LTS</td><td>Comandos deste manual</td></tr><tr><td>Domínio</td><td>api.suaempresa.com</td><td>SSL e webhook</td></tr></tbody></table>
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Contrate Ubuntu 22.04 e anote IP, usuário e senha/SSH key.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Crie o DNS A de api.suaempresa.com → IP (pode propagar).</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Tenha a DATABASE_URL Supabase pronta (ou aceite Postgres na VPS).</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Abra um terminal SSH de teste: ssh root@IP</p></div></div>
+    <div class="callout"><strong>Onde acarreta</strong><br/>DNS errado = Certbot falha. IP sem SSH = nada anda.</div>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">33 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">VPS pacotes</p>
+    <h2>Instalar Node 20, Nginx, Redis, Certbot, PM2</h2>
+    
+    <p class="lead">Um bloco de pacotes e você já tem a base do servidor.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Ferramentas mínimas para rodar a API com HTTPS.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Nodesource instala Node 20; apt traz Nginx/Redis/Certbot; npm -g pm2.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Node 12/14 do Ubuntu antigo quebra dependências do CRM.</p></div>
+    </div>
+    
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>ssh root@IP_DA_VPS</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>sudo apt update && sudo apt upgrade -y</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Instale Node 20 via NodeSource e confira node -v</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>sudo apt install -y nginx redis-server git certbot python3-certbot-nginx</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>sudo npm install -g pm2</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>systemctl enable/start redis-server · redis-cli ping → PONG</p></div></div>
+    <code>curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs nginx redis-server git certbot python3-certbot-nginx
+sudo npm install -g pm2
+sudo systemctl enable redis-server
+sudo systemctl start redis-server
+redis-cli ping</code>
+    <div class="callout warn"><strong>Postgres na VPS</strong><br/>Só se não usar Supabase: sudo apt install -y postgresql. Senão pule.</div>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">34 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">VPS código</p>
+    <h2>Clonar código e criar .env na VPS</h2>
+    
+    <p class="lead">O código mora em /var/www/vbsolution. O segredo mora no .env.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Ter a API versionada e configurada no servidor.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>git clone + cp .env.example .env + nano.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>.env com localhost de desenvolvimento = produção quebrada.</p></div>
+    </div>
+    
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>sudo mkdir -p /var/www/vbsolution && sudo chown $USER:$USER /var/www/vbsolution</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>cd /var/www/vbsolution && git clone https://github.com/visaobusinesstech/codigo-fonte-COUTINHO.git .</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>cd VBSOLUTIONCRMCodigoFonte-main/backend</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>cp .env.example .env && nano .env</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Preencha DEV_NO_DB=false, DATABASE_URL, DB_SSL=true, JWT, Redis local, URLs HTTPS do domínio api.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Salve (Ctrl+O, Enter, Ctrl+X no nano).</p></div></div>
+    <code>DEV_NO_DB=false
+NODE_ENV=production
+DB_SSL=true
+DATABASE_URL=postgresql://...:5432/postgres
+REDIS_URI=redis://127.0.0.1:6379
+REDIS_URL=redis://127.0.0.1:6379
+REDIS_URI_ACK=redis://127.0.0.1:6379
+PORT=3000
+BACKEND_URL=https://api.suaempresa.com
+PUBLIC_BACKEND_URL=https://api.suaempresa.com
+FRONTEND_URL=https://crm.suaempresa.com</code>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">35 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">VPS build</p>
+    <h2>Build, migrate e PM2</h2>
+    
+    <p class="lead">Compilar TypeScript, criar tabelas e deixar o processo gerenciado.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>API rodando mesmo se a sessão SSH fechar.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>npm run build gera dist/. PM2 cuida do restart.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Rodar só node na mão = cai quando o SSH desconecta.</p></div>
+    </div>
+    
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>cd .../backend && npm install --omit=dev</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>npm run build</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>npm run db:migrate</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>pm2 start dist/server.js --name vbs-api  (ou pm2 start npm --name vbs-api -- start)</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>pm2 save</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>pm2 startup e execute o comando sudo que ele imprimir</p></div></div>
+<div class="step"><div class="n">7</div><div><h4>Passo 7</h4><p>pm2 logs vbs-api e confira boot limpo</p></div></div>
+    <code>npm install --omit=dev
+npm run build
+npm run db:migrate
+pm2 start dist/server.js --name vbs-api
+pm2 save
+pm2 startup
+pm2 logs vbs-api</code>
+    <div class="callout danger"><strong>Onde acarreta</strong><br/>Sem pm2 startup, reboot da Hostgator derruba atendimento.</div>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">36 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">VPS nginx</p>
+    <h2>Nginx com WebSocket + SSL Certbot</h2>
+    
+    <p class="lead">Nginx recebe 443 e encaminha para a porta 3000 com Upgrade de WebSocket.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>HTTPS público e tempo real (Socket) estáveis.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>proxy_pass + headers Upgrade/Connection + certbot.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Sem WebSocket no Nginx, chat/atualização ao vivo falha.</p></div>
+    </div>
+    
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Crie /etc/nginx/sites-available/vbs-api com o bloco server abaixo.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>sudo ln -s /etc/nginx/sites-available/vbs-api /etc/nginx/sites-enabled/</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>sudo nginx -t && sudo systemctl reload nginx</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Confirme DNS A de api.suaempresa.com</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>sudo certbot --nginx -d api.suaempresa.com</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Teste https://api.suaempresa.com no browser</p></div></div>
+    <code>server {
+  listen 80;
+  server_name api.suaempresa.com;
+  client_max_body_size 50M;
+  location / {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_read_timeout 3600s;
+  }
+}</code>
+    <div class="link-box"><strong>Certbot</strong><div class="url"><a href="https://certbot.eff.org" target="_blank">https://certbot.eff.org</a></div></div>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">37 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">VPS firewall</p>
+    <h2>UFW e o que NÃO abrir</h2>
+    
+    <p class="lead">Firewall bom é o que fecha porta demais, não o que abre por precaução.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Expor só HTTP/HTTPS e SSH.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>ufw allow 22/80/443. Postgres e 3000 ficam locais.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>5432 aberto na internet = scanners batendo na porta.</p></div>
+    </div>
+    
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>sudo ufw allow OpenSSH</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>sudo ufw allow 80 && sudo ufw allow 443</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>sudo ufw enable</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>sudo ufw status</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Confirme que 3000 e 5432 NÃO estão liberados para o mundo</p></div></div>
+    <table class="compact"><thead><tr><th>Porta</th><th>Abrir?</th></tr></thead><tbody><tr><td>22 SSH</td><td>Sim (ou só seu IP)</td></tr><tr><td>80 / 443</td><td>Sim</td></tr><tr><td>3000</td><td>Não (só localhost via Nginx)</td></tr><tr><td>5432</td><td>Não</td></tr><tr><td>6379</td><td>Não</td></tr></tbody></table>
+    <div class="callout"><strong>Como funciona</strong><br/>O mundo fala com o Nginx. O Node só escuta 127.0.0.1:3000.</div>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">38 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">VPS update</p>
+    <h2>Atualizar código na VPS sem drama</h2>
+    
+    <p class="lead">git pull + install + build + migrate + restart. Sempre nessa ordem.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Publicar correção sem perder .env nem sessão.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Pull na pasta do repo; build no backend; pm2 restart.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Esquecer migrate após pull que cria tabela = erro 500 novo.</p></div>
+    </div>
+    
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>cd /var/www/vbsolution && git pull</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>cd VBSOLUTIONCRMCodigoFonte-main/backend</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>npm install --omit=dev</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>npm run build</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>npm run db:migrate</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>pm2 restart vbs-api && pm2 logs vbs-api</p></div></div>
+<div class="step"><div class="n">7</div><div><h4>Passo 7</h4><p>Teste login e uma rota simples no painel</p></div></div>
+    <code>cd /var/www/vbsolution
+git pull
+cd VBSOLUTIONCRMCodigoFonte-main/backend
+npm install --omit=dev
+npm run build
+npm run db:migrate
+pm2 restart vbs-api</code>
+    <div class="callout warn"><strong>Backup</strong><br/>Antes de migrate arriscado, rode pg_dump (página de backup).</div>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">39 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">VPS problemas</p>
+    <h2>Problemas típicos na VPS</h2>
+    
+    <p class="lead">502, Certbot e WhatsApp que cai depois de reboot têm causa curta.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Voltar o ar sem reinstalar o servidor.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>pm2 logs, nginx -t, DNS, ufw, df -h.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Chutar “é o Node” sem ler log atrasa horas.</p></div>
+    </div>
+    
+    <table class="compact"><thead><tr><th>Sintoma</th><th>Olhar</th><th>Ação</th></tr></thead><tbody><tr><td>502 Bad Gateway</td><td>pm2 logs vbs-api</td><td>Subir processo / corrigir crash</td></tr><tr><td>Certbot falha</td><td>DNS A</td><td>Esperar propagação</td></tr><tr><td>WhatsApp caiu após reboot</td><td>pm2 startup</td><td>Rodar startup + save</td></tr><tr><td>Disco cheio</td><td>df -h</td><td>Limpar logs pm2 flush</td></tr><tr><td>CORS</td><td>FRONTEND_URL</td><td>URL idêntica ao Chrome</td></tr></tbody></table>
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Reproduza o erro e anote a hora.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>pm2 logs vbs-api --lines 50</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>sudo nginx -t</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>df -h e free -m</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Corrija uma coisa só e reteste</p></div></div>
+    <ul class="checklist"><li>Sei ler pm2 logs</li><li>Sei testar nginx</li><li>UFW não fechou SSH sem querer</li></ul>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">40 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Comparativo</p>
+    <h2>Railway vs VPS · quadro final de decisão</h2>
+    
+    <p class="lead">Os dois entregam a mesma API. Escolha pelo time e pelo prazo.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Parar de oscilar entre tutoriais.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Compare operação, disco e custo de atenção.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Manter os dois “meio configurados” dobra incidente.</p></div>
+    </div>
+    
+    <table class="compact"><thead><tr><th>Tema</th><th>Railway</th><th>VPS</th></tr></thead><tbody><tr><td>Velocidade inicial</td><td>Alta</td><td>Média</td></tr><tr><td>SSH / Linux</td><td>Quase zero</td><td>Obrigatório</td></tr><tr><td>Disco Baileys</td><td>Volume</td><td>Pasta nativa</td></tr><tr><td>Hibernação</td><td>Cuidado com plano</td><td>Não hiberna sozinha</td></tr><tr><td>Nginx/SSL</td><td>Plataforma</td><td>Você configura</td></tr><tr><td>Indicação</td><td>Maioria dos go-lives</td><td>Controle total</td></tr></tbody></table>
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Se ainda não escolheu, escolha agora e risque o outro caminho deste sprint.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Feche o checklist .env (página Check env).</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Execute só o bloco do caminho escolhido.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Siga para go-live e PDF Vercel.</p></div></div>
+    <div class="callout"><strong>Como funciona com o cliente</strong><br/>Explique em uma frase: painel na Vercel, API aqui, banco no Supabase.</div>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">41 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Health</p>
+    <h2>Teste de saúde da API depois do deploy</h2>
+    
+    <p class="lead">Antes de chamar o time, prove que a API responde de fora do servidor.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Confirmar HTTPS, DNS e processo vivos.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Browser ou curl na URL pública; logs ao lado.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Painel ok com API morta = tela de erro nas chamadas.</p></div>
+    </div>
+    
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra a BACKEND_URL no Chrome. Não precisa ser página bonita; precisa responder sem timeout.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>No PowerShell: curl -I https://SUA-API (ou Invoke-WebRequest).</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Confira certificado válido (cadeado).</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Olhe logs no mesmo instante (Railway ou pm2 logs).</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Só então teste login pelo painel.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Anote horário e resultado para o checklist go-live.</p></div></div>
+    <div class="callout"><strong>Onde acarreta</strong><br/>Webhook Meta e Socket dependem desse HTTPS estar estável.</div>
+    <ul class="checklist"><li>URL responde</li><li>HTTPS ok</li><li>Logs sem crash loop</li><li>Login testado</li></ul>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">42 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Homolog</p>
+    <h2>Ambiente de homologação · por que separar</h2>
+    
+    <p class="lead">Homolog é a cópia para errar sem machucar o cliente real.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Testar migrate, WhatsApp de teste e variáveis novas.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Segundo projeto Supabase + segundo serviço API + painel preview.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Homolog = produção na mesma URI apaga ou mistura dados reais.</p></div>
+    </div>
+    
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Crie projeto Supabase só de homolog.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Crie serviço Railway/VPS com Variables apontando para essa URI.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Use número WhatsApp de teste, nunca o principal.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>FRONTEND_URL de preview Vercel separado.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Roteiro: migrate em homolog → validar → só então produção.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Documente as quatro URLs de homolog no mesmo cofre.</p></div></div>
+    <div class="callout"><strong>Como funciona</strong><br/>Mesmo código, outro .env. O risco está na URI, não no Git.</div>
+    <table class="compact"><thead><tr><th>Item</th><th>Produção</th><th>Homolog</th></tr></thead><tbody><tr><td>Supabase</td><td>projeto A</td><td>projeto B</td></tr><tr><td>API</td><td>domínio api</td><td>api-hml ou outro serviço</td></tr><tr><td>WhatsApp</td><td>número real</td><td>número teste</td></tr></tbody></table>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">43 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Troubleshoot</p>
+    <h2>Troubleshooting geral API + banco + Redis</h2>
+    
+    <p class="lead">Uma página para triagem rápida antes de abrir chamado.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Separar sintoma de causa.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>CORS ≠ senha do banco ≠ Redis.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Corrigir o item errado cria segundo problema.</p></div>
+    </div>
+    
+    <table class="compact"><thead><tr><th>Sintoma</th><th>Camada</th><th>Primeira checagem</th></tr></thead><tbody><tr><td>CORS no F12</td><td>URLs</td><td>FRONTEND_URL idêntico</td></tr><tr><td>Login não grava</td><td>Banco</td><td>DEV_NO_DB / URI</td></tr><tr><td>Campanha parada</td><td>Redis</td><td>PONG / três variáveis</td></tr><tr><td>Webhook Meta</td><td>HTTPS</td><td>PUBLIC_BACKEND_URL</td></tr><tr><td>502</td><td>Processo</td><td>pm2 / logs Railway</td></tr></tbody></table>
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Classifique a camada (URLs, banco, Redis, processo).</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Mude só variáveis daquela camada.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Reinicie e teste um fluxo mínimo (login).</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Só então teste WhatsApp.</p></div></div>
+    <div class="callout"><strong>Print útil</strong><br/>URL do Chrome + 20 linhas de log + Variable names (sem colar segredos).</div>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">44 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Go-live</p>
+    <h2>Checklist go-live da API</h2>
+    
+    <p class="lead">Marque com o cliente do lado. É o porteiro do estamos no ar.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Não lançar pela metade.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Lista única cobrindo Node, .env, banco, Redis, HTTPS, firewall.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Item aberto = risco de voltar de madrugada.</p></div>
+    </div>
+    
+    <ul class="checklist"><li>Node 20 no ambiente de build</li><li>Root Directory = backend</li><li>DEV_NO_DB=false</li><li>URI 5432 + DB_SSL=true + migrate ok</li><li>Admin criado</li><li>Redis três variáveis + sem ECONNREFUSED</li><li>BACKEND_URL e PUBLIC_BACKEND_URL HTTPS</li><li>FRONTEND_URL alinhado (mesmo que provisório)</li><li>Volume/PM2 startup se Baileys</li><li>Firewall 80/443 (VPS) ou domínio Railway ok</li><li>.env fora do repo</li><li>Cliente sabe: desligar API = WhatsApp cai</li><li>Backup combinado</li></ul>
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Leia em voz alta com o responsável técnico.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>O que não estiver marcado vira tarefa antes do anúncio.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Guarde print do checklist.</p></div></div>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">45 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Prompt 1</p>
+    <h2>Prompt Claude Code · .env e deploy</h2>
+    
+    <p class="lead">Cole no Claude Code no VS Code com a pasta do CRM aberta.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Acelerar montagem sem inventar pasta fora do projeto.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>O assistente edita .env e sugere comandos; você revisa segredos.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Prompt vago gera Variable inventada. Seja específico.</p></div>
+    </div>
+    
+    <div class="script-bubble"><span class="label">Prompt</span>Configure backend/.env para produção com Supabase URI Session 5432 (vou colar), DB_SSL=true, DEV_NO_DB=false, JWT_SECRET e JWT_REFRESH_SECRET novos via openssl, Redis nas três variáveis, BACKEND_URL/PUBLIC_BACKEND_URL/FRONTEND_URL HTTPS sem barra final. Root Directory VBSOLUTIONCRMCodigoFonte-main/backend. Não commit o .env. Liste o checklist antes de eu colar a URI.</div>
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra o terminal do VS Code na pasta do monorepo.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Cole o prompt e forneça a URI quando pedir.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Revise cada linha secreta.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Só então rode migrate/deploy.</p></div></div>
+    <div class="callout warn"><strong>Segurança</strong><br/>Não cole URI em chat público fora da sua máquina.</div>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">46 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Prompt 2</p>
+    <h2>Prompts Claude Code · migrate, PM2, Railway</h2>
+    
+    <p class="lead">Três prompts curtos para momentos diferentes.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Cobrir migrate seguro, VPS e Railway sem misturar.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Um prompt por tarefa.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Pedir tudo de uma vez gera resposta genérica.</p></div>
+    </div>
+    
+    <div class="script-bubble"><span class="label">Migrate</span>Explique npm run db:migrate neste backend. Checklist: DEV_NO_DB, 5432 vs 6543, DB_SSL. Comandos a partir de VBSOLUTIONCRMCodigoFonte-main/backend. Não rode db:migrate:undo.</div>
+    <div class="script-bubble"><span class="label">VPS</span>Ubuntu 22.04: Node 20, Redis, clone codigo-fonte-COUTINHO, .env, build, pm2 nome vbs-api, nginx WebSocket, certbot, UFW. Inclua bloco server completo.</div>
+    <div class="script-bubble"><span class="label">Railway</span>Redis plugin, Root backend, build/start, Variables Supabase+JWT+Redis, Generate Domain, alinhar com Vercel. Erros: prepared statement, sleep, Volume Baileys.</div>
+    <div class="callout"><strong>Como funciona</strong><br/>Você cola um, executa, valida, só então cola o próximo.</div>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">47 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">FAQ</p>
+    <h2>FAQ · dúvidas que mais aparecem</h2>
+    
+    <p class="lead">Respostas curtas para não reabrir o manual inteiro.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Destravar decisão rápida.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Pergunta objetiva → resposta objetiva.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>FAQ não substitui o checklist de go-live.</p></div>
+    </div>
+    
+    <div class="qa"><div class="q">Posso frontend e API na mesma Railway?</div><div class="a">Dá com segundo serviço. Vercel costuma ser mais simples para SPA.</div></div>
+    <div class="qa"><div class="q">Supabase e Postgres Railway juntos?</div><div class="a">Não no mesmo ambiente sem critério. Uma URI ativa.</div></div>
+    <div class="qa"><div class="q">Migrate ok no PC e quebra na nuvem?</div><div class="a">6543, SSL ou IPv6. Use 5432 Session + DB_SSL=true + URI IPv4.</div></div>
+    <div class="qa"><div class="q">Redis é obrigatório no primeiro dia?</div><div class="a">Para login básico às vezes sobe. Para WhatsApp/campanha, sim.</div></div>
+    <div class="qa"><div class="q">Preciso domínio próprio na Railway?</div><div class="a">Não para testar. *.up.railway.app basta. Custom ajuda marca e Meta.</div></div>
+    <div class="qa"><div class="q">Root Directory?</div><div class="a">VBSOLUTIONCRMCodigoFonte-main/backend</div></div>
+    <div class="callout"><strong>Onde acarreta</strong><br/>Tirar dúvida errada no grupo sem olhar log prolonga o incidente.</div>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">48 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Domínio</p>
+    <h2>Domínio próprio · os 4 lugares para atualizar</h2>
+    
+    <p class="lead">Quando sair do *.vercel.app / *.up.railway.app, atualize quatro pontas.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Marca própria sem quebrar CORS e webhook.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>DNS + Variables + rebuild do frontend.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Atualizar só o DNS deixa o build antigo falando com host velho.</p></div>
+    </div>
+    
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Aponte DNS do api. e do crm. (A/CNAME conforme o host).</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Atualize REACT_APP_BACKEND_URL na Vercel e Redeploy.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Atualize BACKEND_URL e PUBLIC_BACKEND_URL na API.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Atualize FRONTEND_URL na API e redeploy/pm2 restart.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Atualize webhook Meta para a nova URL.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Teste login + F12 Network + mensagem WhatsApp.</p></div></div>
+    <table class="compact"><thead><tr><th>Lugar</th><th>Variável</th></tr></thead><tbody><tr><td>Vercel</td><td>REACT_APP_BACKEND_URL</td></tr><tr><td>API</td><td>BACKEND_URL</td></tr><tr><td>API</td><td>PUBLIC_BACKEND_URL</td></tr><tr><td>API</td><td>FRONTEND_URL</td></tr></tbody></table>
+    <div class="callout"><strong>Como funciona</strong><br/>O browser só conhece o que foi buildado. A Meta só conhece a Callback URL salva no app.</div>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">49 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>VPS · Railway · Banco</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Fim</p>
+    <h2>Encerramento · próximos passos e links</h2>
+    
+    <p class="lead">API e banco prontos. Agora publique o painel e ligue o WhatsApp com calma.</p>
+    
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Fechar este módulo e abrir o próximo sem buraco.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Ordem: este PDF → Vercel → Supabase (se ainda não) → WhatsApp.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Pular Vercel com API ok ainda deixa o time sem URL bonita; pular Redis quebra canal.</p></div>
+    </div>
+    
+    <div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Marque o checklist go-live.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Abra o PDF Hospedagem Frontend Vercel.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Alinhe as quatro URLs.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Só então PDF WhatsApp.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Guarde URI, domínio e runbook de update num lugar seguro.</p></div></div>
+    <h3>Links oficiais</h3>
+    <ul>
+      <li>Railway: <a href="https://railway.app" target="_blank">https://railway.app</a></li>
+      <li>Supabase: <a href="https://supabase.com" target="_blank">https://supabase.com</a></li>
+      <li>Node.js: <a href="https://nodejs.org" target="_blank">https://nodejs.org</a></li>
+      <li>Código: <a href="https://github.com/visaobusinesstech/codigo-fonte-COUTINHO" target="_blank">https://github.com/visaobusinesstech/codigo-fonte-COUTINHO</a></li>
+      <li>Certbot: <a href="https://certbot.eff.org" target="_blank">https://certbot.eff.org</a></li>
+      <li>PostgreSQL: <a href="https://www.postgresql.org" target="_blank">https://www.postgresql.org</a></li>
+    </ul>
+    <div class="callout"><strong>Visão Business · VB Solution CRM</strong><br/>Treinamento · VPS, Railway e Banco · 50 páginas · © Visão Business</div>
+    
+  
+        <div class="callout warn"><strong>Se pular esta página</strong><br/>
+        O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis).
+        Feche os passos desta página antes de avançar.</div>
+        <div class="two-col">
+          <div class="card soft"><h4>Antes de avançar</h4>
+            <p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p>
+          </div>
+          <div class="card blue"><h4>Teste mínimo</h4>
+            <p>Rode o teste mais curto desta página (ping, login, migrate, PONG ou F12 Network) e só então vire a folha.</p>
+          </div>
+        </div>
+</div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">50 / 50</span>
+  </footer>
+</section>
+
+</body>
+</html>

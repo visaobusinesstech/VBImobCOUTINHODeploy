@@ -1,0 +1,1614 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Treinamento · WhatsApp Redis E-mail · VB Solution CRM</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles-extra.css" />
+  <link rel="stylesheet" href="styles-dense.css" />
+</head>
+<body>
+
+<section class="page cover">
+  <div class="cover-top">
+    <img class="cover-logo" src="../assets/vbsolution-logo-nome-branca.png" alt="VB Solution" />
+    <div class="badge">Material de treinamento · Código-Fonte · 50 páginas</div>
+  </div>
+  <p class="series">SÉRIE CÓDIGO-FONTE · CANAIS E SERVIÇOS · 50 PÁGINAS</p>
+  <h1>WhatsApp · Redis · E-mail</h1>
+  <p class="subtitle">Manual da ordem Redis → API → login → conexões → teste → campanha. Baileys com QR, Cloud API Meta, SMTP, filas Bull, troubleshooting e prompts Claude Code. Linguagem direta para executar sem chute.</p>
+  <div class="cover-grid"><div class="cover-card"><span>Público</span><strong>Compradores do código-fonte</strong></div><div class="cover-card"><span>Foco</span><strong>Canal e filas</strong></div><div class="cover-card"><span>Plataformas</span><strong>Redis · Meta · SMTP</strong></div><div class="cover-card"><span>Formato</span><strong>50 páginas densas</strong></div></div>
+  <div class="cover-bottom">
+    <div>Visão Business · VB Solution CRM<br />Manual técnico · © Visão Business</div>
+    <img src="../assets/vbsolution-logo-square.png" alt="VB" />
+  </div>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Mapa</p>
+    <h2>Sumário · ordem que funciona</h2>
+    <p class="lead">Canal WhatsApp só estabiliza se Redis, API e login vierem antes do QR.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Subir mensagem, fila e e-mail sem chute de ordem.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Redis → API no ar → login → Conexões → teste → campanha.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>QR antes do Redis = sessão que some e suporte no telefone.</p></div>
+    </div>
+    
+<table class="compact"><thead><tr><th>Bloco</th><th>Páginas</th></tr></thead><tbody><tr><td>Ordem e Redis</td><td>3–12</td></tr><tr><td>Baileys e Meta</td><td>13–26</td></tr><tr><td>SMTP, filas, extras</td><td>27–36</td></tr><tr><td>Prompts e go-live</td><td>37–50</td></tr></tbody></table>
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Suba Redis e confira PONG.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>API com as três REDIS_* e login ok.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Escolha Baileys ou Cloud API.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Conecte e teste um ticket.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Configure SMTP se for e-mail.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Checklist go-live e prompts Claude.</p></div></div>
+<div class="link-box"><strong>Meta Developers</strong><div class="url"><a href="https://developers.facebook.com/" target="_blank">https://developers.facebook.com/</a></div></div>
+<div class="link-box"><strong>Railway</strong><div class="url"><a href="https://railway.app" target="_blank">https://railway.app</a></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">2 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Ordem</p>
+    <h2>Ordem Redis → API → login → conexões</h2>
+    <p class="lead">Cada etapa depende da anterior. Pular vira falso positivo.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Chegar no QR com base sólida.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Redis vivo, API com Variable, usuário logado, menu Conexões.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Campanha sem ticket de teste = ban e fila cheia de erro.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Redis responde PONG.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>API sobe sem ECONNREFUSED no Redis.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Login no painel.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Menu Conexões / WhatsApp.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Teste mensagem em número controlado.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Só então campanha.</p></div></div>
+<ul class="checklist"><li>Ordem anotada no papel</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">3 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Redis papel</p>
+    <h2>Para que o Redis existe neste CRM</h2>
+    <p class="lead">Filas Bull, cache leve e apoio à sessão WhatsApp.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Jobs e conectores não morrerem a cada request.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>API fala REDIS_URI / REDIS_URL / IO_REDIS_SERVER.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Sem Redis: fila parada, QR que não confirma, worker mudo.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Entenda: Postgres = dado · Redis = fila/sessão auxiliar.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Planeje onde o Redis vai morar.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Anote as três variáveis iguais.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Não use Rediszinho “só de teste” em produção sem backup de sessão.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Confirme PONG depois de subir.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Siga às opções de hospedagem.</p></div></div>
+<div class="callout"><strong>Como funciona</strong><br/>WhatsApp e campanhas empurram jobs; Redis segura a fila.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">4 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Redis Docker</p>
+    <h2>Redis com Docker no PC ou VPS</h2>
+    <p class="lead">Caminho rápido para desenvolvimento e VPS simples.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Ter Redis local sem instalar na unha.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Container oficial na porta 6379.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Container sem restart policy cai e a fila some.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Instale Docker Desktop ou engine na VPS.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Rode o container Redis na 6379.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Teste redis-cli ping → PONG.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Aponte as três variáveis para redis://127.0.0.1:6379</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Reinicie a API.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Veja log sem ECONNREFUSED.</p></div></div>
+<code>docker run -d --name vbs-redis -p 6379:6379 redis:7-alpine
+redis-cli ping</code>
+<div class="link-box"><strong>Docker</strong><div class="url"><a href="https://www.docker.com/" target="_blank">https://www.docker.com/</a></div></div>
+<ul class="checklist"><li>PONG</li><li>API sem erro Redis</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">5 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Redis Railway</p>
+    <h2>Redis plugin na Railway</h2>
+    <p class="lead">Produção gerenciada perto da API.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Mesma rede privada, menos dor de firewall.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Plugin Redis + ${{Redis.REDIS_URL}} nas três variáveis.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>URL diferente em cada Variable = bugs fantasma.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>No projeto Railway, adicione Redis.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Copie a REDIS_URL interna.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Cole a mesma URL em REDIS_URI, REDIS_URL e IO_REDIS_SERVER.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Redeploy da API.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Confirme logs limpos.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Teste uma ação de fila (mensagem/campanha leve).</p></div></div>
+<div class="link-box"><strong>Railway</strong><div class="url"><a href="https://railway.app" target="_blank">https://railway.app</a></div></div>
+<div class="callout"><strong>Regra</strong><br/>As três variáveis Redis devem ser idênticas.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">6 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Redis Upstash</p>
+    <h2>Redis Upstash (alternativa)</h2>
+    <p class="lead">Redis serverless com URL TLS quando a VPS não é opção.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Fila na nuvem sem gerenciar container.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>URL rediss:// do Upstash nas três variáveis.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Plano free dormindo ou limite baixo derruba campanha.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Crie banco no Upstash.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Copie a URL TLS.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Cole igual nas três variáveis.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Reinicie API.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Teste PONG/cliente se disponível.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Monitore limite do plano.</p></div></div>
+<ul class="checklist"><li>URL TLS colada</li><li>Três variáveis iguais</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">7 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Três vars</p>
+    <h2>As três variáveis Redis</h2>
+    <p class="lead">O código lê nomes diferentes em pontos distintos.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Uma URL só, três chaves.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>REDIS_URI = REDIS_URL = IO_REDIS_SERVER.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Só uma preenchida = parte da API sobe, fila não.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra .env.example e localize as três.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Defina o mesmo valor nas três.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Sem barra estranha no fim.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Salve e reinicie.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Busque ECONNREFUSED nos logs.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Marque ok no checklist.</p></div></div>
+<code>REDIS_URI=redis://127.0.0.1:6379
+REDIS_URL=redis://127.0.0.1:6379
+IO_REDIS_SERVER=redis://127.0.0.1:6379</code>
+<div class="callout warn"><strong>Produção Railway</strong><br/>Use a URL do plugin, não localhost.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">8 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">PONG</p>
+    <h2>Teste PONG antes do WhatsApp</h2>
+    <p class="lead">Prova mínima de que o broker responde.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Não abrir QR em cima de Redis morto.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>redis-cli ping ou equivalente na nuvem.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Pular PONG gasta hora em QR que nunca confirma.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Acesse o host do Redis.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>ping → PONG</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Se timeout, corrija rede/URL.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Só então suba a API.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Confirme log da API.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Siga ao login e Conexões.</p></div></div>
+<ul class="checklist"><li>PONG ok</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">9 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Baileys intro</p>
+    <h2>Baileys · WhatsApp via QR</h2>
+    <p class="lead">Baileys emula o WhatsApp Web na API.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Canal rápido sem app Meta no dia 1.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Menu Conexões gera QR; celular confirma; sessão em disco/volume.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Ban e desconexão se usar chip errado ou disparo agressivo.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>API e Redis ok.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Login no painel.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Abra Conexões / WhatsApp.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Crie conexão Baileys.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Escaneie o QR no app do celular.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Espere status conectado e teste ticket.</p></div></div>
+<div class="callout warn"><strong>Risco</strong><br/>Número pessoal de dono em campanha em massa é pedido de ban.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">10 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">QR passos</p>
+    <h2>QR Baileys passo a passo</h2>
+    <p class="lead">QR tem prazo. Hesitar demais invalida o código.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Conectar na primeira tentativa limpa.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Tela do painel + WhatsApp do celular → Aparelhos conectados.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Escanear QR de deploy antigo ou API errada não grava sessão.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Garanta a URL certa do painel (API correta).</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Abra a conexão e gere QR novo.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>No celular: WhatsApp → Aparelhos conectados.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Escaneie antes de expirar.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Não tire print interminável: escaneie.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Confirme “conectado” no painel.</p></div></div>
+<ul class="checklist"><li>Status conectado</li><li>Mensagem de teste ok</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">11 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Volume sessão</p>
+    <h2>Volume da sessão Baileys</h2>
+    <p class="lead">A sessão fica em arquivos. Container sem volume esquece o número.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Sobreviver a restart da API.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Volume persistente no path de sessões do backend.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Redeploy Railway sem volume = QR de novo toda noite.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Localize a pasta de sessões no backend.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Na VPS, persistência em disco.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Na Railway, configure Volume no path certo.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Reinicie e veja se mantém conectado.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Backup da pasta em operação crítica.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Documente o path no runbook.</p></div></div>
+<div class="callout"><strong>Onde acarreta</strong><br/>Sem volume, suporte vira “escaneia de novo” todo dia.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">12 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Riscos ban</p>
+    <h2>Riscos de ban no Baileys</h2>
+    <p class="lead">WhatsApp pune comportamento de spam e chip recém-ativado em massa.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Proteger o número do cliente.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Warm-up, opt-in, horários e template humano.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Campanha fria no dia 1 = número no cemitério.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Use número dedicado ao negócio.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Comece com conversas manuais.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Evite lista comprada.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Respeite opt-in.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Monitore desconexões.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Tenha plano B com Cloud API se a operação for crítica.</p></div></div>
+<div class="callout danger"><strong>Aviso</strong><br/>Nenhuma biblioteca garante imunidade a ban.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">13 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Cloud intro</p>
+    <h2>Cloud API Meta · visão geral</h2>
+    <p class="lead">Canal oficial via Graph API e webhook.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Operação mais previsível para empresa.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>App no developers.facebook.com + token + Phone Number ID + webhook na API.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Token de teste curto expira e “some” a mensagem.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Crie app em Meta Developers.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Configure WhatsApp product.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Gere token permanente (ou renove ritual).</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Anote Phone Number ID e WABA.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Aponte webhook para https://SUA-API/webhook/</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Cole Variables no .env e teste.</p></div></div>
+<div class="link-box"><strong>Meta Developers</strong><div class="url"><a href="https://developers.facebook.com/" target="_blank">https://developers.facebook.com/</a></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">14 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Tokens</p>
+    <h2>Tokens e IDs da Cloud API</h2>
+    <p class="lead">Sem IDs certos a API oficial não sabe para quem falar.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Preencher .env Meta sem chute.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Token + Phone Number ID + VERIFY_TOKEN do webhook.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>VERIFY_TOKEN do painel diferente do Meta = webhook recusado.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Copie o token (permanente se possível).</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Copie Phone Number ID.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Defina VERIFY_TOKEN seu (string secreta).</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Cole o mesmo VERIFY_TOKEN no Meta e no .env.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Guarde no cofre, não no chat.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Reinicie a API.</p></div></div>
+<ul class="checklist"><li>Token</li><li>Phone Number ID</li><li>VERIFY_TOKEN alinhado</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">15 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Webhook</p>
+    <h2>Webhook Meta → sua API</h2>
+    <p class="lead">A Meta empurra eventos de mensagem para a URL pública.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Ticket nascer quando o cliente fala.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Callback URL HTTPS + verify token + campos subscritos.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>HTTP local sem túnel = verificação falha.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>API pública HTTPS no ar.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Callback: https://SUA-API/webhook/</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>VERIFY_TOKEN igual nos dois lados.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Valide no painel Meta (check verde).</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Envie mensagem de teste.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Veja ticket/log na API.</p></div></div>
+<div class="callout warn"><strong>Local</strong><br/>Use ngrok ou similar para expor a API no PC.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">16 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Env Meta</p>
+    <h2>.env das variáveis Meta</h2>
+    <p class="lead">Nomes certos no backend evitam “configured but silent”.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Cloud API falar com este CRM.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Preencher bloco WhatsApp oficial do .env.example.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Sobrar Variable antiga de outro número gera envio fantasma.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra .env.example na seção Meta/WhatsApp.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Preencha token, IDs e VERIFY_TOKEN.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Confirme BACKEND_URL/PUBLIC_BACKEND_URL HTTPS.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Salve sem commit.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Reinicie API.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Teste webhook + mensagem.</p></div></div>
+<code># Exemplo ilustrativo — use os nomes do .env.example do repo
+VERIFY_TOKEN=meu_segredo_verify
+# + token e Phone Number ID conforme o projeto</code>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">17 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Teste ticket</p>
+    <h2>Teste de ticket ponta a ponta</h2>
+    <p class="lead">Prova de que canal + banco + painel conversam.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Liberar o time para atender.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Mensagem real → ticket → resposta → log limpo.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Só QR “conectado” sem mensagem testada = falsa segurança.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Entre com usuário atendente.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Mande mensagem do celular de teste.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Veja o ticket abrir.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Responda pelo painel.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Confirme entrega no celular.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Olhe logs Redis/API sem erro.</p></div></div>
+<ul class="checklist"><li>Ticket ok</li><li>Resposta ok</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">18 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Baileys vs Oficial</p>
+    <h2>Baileys vs Cloud API</h2>
+    <p class="lead">Escolha consciente evita retrabalho e risco jurídico/operacional.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Combinar canal com o tamanho da operação.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Baileys: rápido e frágil. Oficial: setup maior e mais estável.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Os dois no mesmo número sem plano = confusão de sessão.</p></div>
+    </div>
+    
+<table class="compact"><thead><tr><th>Tema</th><th>Baileys</th><th>Cloud API</th></tr></thead><tbody><tr><td>Setup</td><td>QR rápido</td><td>App Meta + webhook</td></tr><tr><td>Risco ban</td><td>Maior</td><td>Menor (regras Meta)</td></tr><tr><td>Sessão</td><td>Arquivos/volume</td><td>Token/IDs</td></tr></tbody></table>
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Liste volume e criticidade.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Se piloto interno, Baileys pode bastar.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Se marca grande, prefira Cloud API.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Documente a escolha.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Treine o time no fluxo escolhido.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Não mude de canal no meio da campanha.</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">19 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">SMTP Gmail</p>
+    <h2>SMTP Gmail para e-mail do CRM</h2>
+    <p class="lead">Recuperação de senha e avisos precisam de SMTP.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Sair de “e-mail não chega”.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Conta Google com senha de app + MAIL_* no .env.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Senha normal da conta em SMTP moderno costuma falhar.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Ative 2FA na conta Google.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Gere senha de app.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Preencha MAIL_HOST/PORT/USER/PASS/FROM.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Reinicie API.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Dispare e-mail de teste.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Veja spam se não chegar.</p></div></div>
+<code>MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USER=seu@gmail.com
+MAIL_PASS=senha_de_app
+MAIL_FROM=seu@gmail.com</code>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">20 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">MAIL vars</p>
+    <h2>Variáveis MAIL_* no .env</h2>
+    <p class="lead">Nomes alinhados ao código evitam SMTP “configurado” que não envia.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>E-mail operacional.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Host, porta, user, pass, from (e secure se pedido).</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>FROM de domínio sem SPF = caixa de spam.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Copie o bloco MAIL_ do .env.example.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Preencha com dados reais.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>587 STARTTLS ou 465 conforme o provedor.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Teste envio.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Ajuste SPF/DKIM se for domínio próprio.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Não commit senha.</p></div></div>
+<ul class="checklist"><li>MAIL_* preenchidas</li><li>Teste enviado</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">21 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">SendGrid</p>
+    <h2>SendGrid como alternativa</h2>
+    <p class="lead">SMTP transacional mais previsível que Gmail pessoal.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Escala de avisos sem travar conta Google.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>API key / SMTP SendGrid no lugar de MAIL_PASS.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Conta free com limite: estouro silencioso.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Crie conta SendGrid.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Gere credencial SMTP ou API.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Aponte MAIL_* para o host SendGrid.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Valide remetente.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Teste.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Monitore quota.</p></div></div>
+<div class="callout"><strong>Como funciona</strong><br/>Mesmo contrato MAIL_*; muda host e credencial.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">22 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Bull</p>
+    <h2>Filas Bull e Redis</h2>
+    <p class="lead">Campanhas e jobs pesados não rodam na thread do request HTTP.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>API responsiva com trabalho em background.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Bull usa Redis; worker processa a fila.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Redis caiu = jobs acumulam ou somem conforme config.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Confirme Redis PONG.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Dispare uma ação que enfileira.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Veja log do worker/job.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Se travar, olhe fila e memória Redis.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Não mate Redis no meio de campanha.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Documente qual processo consome a fila.</p></div></div>
+<ul class="checklist"><li>Job processado</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">23 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">OpenAI Stripe</p>
+    <h2>OpenAI e Stripe (se o pacote tiver)</h2>
+    <p class="lead">Alguns módulos pedem chave de IA ou pagamento.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Ligar só o que o cliente contratou.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Keys no .env da API, nunca no frontend público.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Chave no REACT_APP_ vaza no browser.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Veja .env.example por OPENAI_ e STRIPE_.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Crie chave no painel do provedor.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Cole só na API.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Reinicie.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Teste o módulo correspondente.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Revogue chave se vazou.</p></div></div>
+<div class="callout danger"><strong>Segurança</strong><br/>Segredo de pagamento nunca vai para a Vercel como REACT_APP_.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">24 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Checklist Redis</p>
+    <h2>Checklist Redis pronto</h2>
+    <p class="lead">Porteiro antes do QR.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Não abrir Conexões com broker morto.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Itens binários.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Item aberto = QR teatro.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Leia a lista.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Marque só verdade.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Corrija os não.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Reteste PONG.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Reteste API.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Avance ao WhatsApp.</p></div></div>
+<ul class="checklist"><li>Redis no ar</li><li>PONG</li><li>Três variáveis iguais</li><li>API sem ECONNREFUSED</li><li>Volume planejado se Baileys</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">25 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Checklist WA</p>
+    <h2>Checklist WhatsApp</h2>
+    <p class="lead">Antes de liberar o time de atendimento.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Canal comprovado.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Baileys ou Oficial com teste real.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Liberar campanha sem teste = primeiro ban é seu.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Escolha do canal documentada.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Conexão ok.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Ticket teste ok.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Resposta ok.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Logs limpos.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Política de uso combinada.</p></div></div>
+<ul class="checklist"><li>Conectado</li><li>Ticket ida e volta</li><li>Número dedicado</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">26 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Troubleshoot QR</p>
+    <h2>Troubleshooting QR Baileys</h2>
+    <p class="lead">QR que não confirma tem causas repetidas.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Destravar conexão.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>API certa, Redis, relógio, volume, QR fresco.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Gerar 20 QR sem checar Redis não ajuda.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Confirme PONG e logs API.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Painel apontando para a API certa.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Gere QR novo (não use print velho).</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Celular com internet estável.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Confira volume/sessão.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Se loop, apague sessão corrompida em homolog e reconecte.</p></div></div>
+<div class="callout warn"><strong>Dica</strong><br/>Desconecte aparelhos velhos no WhatsApp do celular.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">27 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Troubleshoot webhook</p>
+    <h2>Troubleshooting webhook Meta</h2>
+    <p class="lead">Verificação cinza no painel Meta é o sintoma clássico.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Callback verde e eventos chegando.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>HTTPS, path /webhook/, VERIFY_TOKEN, app modo live se preciso.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Token de desafio diferente = 403 eterno.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Teste a URL no browser/logs.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Confira VERIFY_TOKEN idêntico.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Confira HTTPS válido.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Veja log no momento do Verify.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Reenvie a verificação.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Só então teste mensagem.</p></div></div>
+<ul class="checklist"><li>Verify ok</li><li>Evento recebido</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">28 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Prompt 1</p>
+    <h2>Prompt Claude Code · Redis e WhatsApp</h2>
+    <p class="lead">Inventário de variáveis e passos de conexão.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Montar .env sem esquecer VERIFY_TOKEN.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Cole o prompt no Claude Code.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Sem URL da API o webhook fica genérico.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra o backend no VS Code.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Cole o prompt.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Revise a lista de variáveis.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Aplique no .env.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Siga o passo a passo de Conexões.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Não commit segredos.</p></div></div>
+<div class="script-bubble"><span class="label">Prompt</span>No VB Solution CRM (pasta VBSOLUTIONCRMCodigoFonte-main/backend), liste no .env.example todas as variáveis de Redis e WhatsApp (Baileys e Cloud API). Monte um .env de produção com as três REDIS_* iguais, VERIFY_TOKEN, e explique o passo a passo do menu Conexões para QR e o webhook https://SUA-API/webhook/ para a Meta. Não commit segredos.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">29 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Prompt 2</p>
+    <h2>Prompt Claude Code · Cloud API checklist</h2>
+    <p class="lead">Roteiro Meta completo com diagnóstico de erro.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Ir do app ao teste de mensagem.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Você cola a URL da API e, se falhar, o erro.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Checklist sem Phone Number ID trava no envio.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Tenha a URL HTTPS da API.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Cole o prompt com a URL.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Siga o checklist no Meta.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Preencha .env.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Se webhook falhar, cole o erro.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Feche com mensagem de teste.</p></div></div>
+<div class="script-bubble"><span class="label">Prompt</span>Minha API está em https://[COLE]. Quero WhatsApp Cloud API. Gere o checklist: app Meta, Phone Number ID, token permanente, VERIFY_TOKEN, Callback URL, variáveis .env, reinício da API e teste de mensagem. Se eu colar o erro do webhook, diagnostique.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">30 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">ngrok</p>
+    <h2>ngrok para webhook em localhost</h2>
+    <p class="lead">Meta não alcança localhost puro.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Desenvolver Cloud API no PC.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Túnel HTTPS → porta 3000 da API.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>URL ngrok muda e o webhook quebra se não atualizar.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Suba a API na 3000.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>ngrok http 3000</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Copie a URL HTTPS.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Callback Meta = URL/ngrok/webhook/</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Atualize se o túnel reiniciar.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Em produção, troque por domínio real.</p></div></div>
+<div class="link-box"><strong>ngrok</strong><div class="url"><a href="https://ngrok.com" target="_blank">https://ngrok.com</a></div></div>
+<div class="callout"><strong>Como funciona</strong><br/>Túnel é para estudo. Produção usa API pública.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">31 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Segurança canal</p>
+    <h2>Segurança de tokens e sessões</h2>
+    <p class="lead">Token Meta e pasta de sessão são chaves do canal.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Reduzir sequestro de número e vazamento.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Cofre, least privilege, rotação, volume protegido.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Sessão Baileys copiada = número clonado na prática.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Tokens só no .env/Variables.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Restrinja quem acessa o volume.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Rotacione se vazou.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Não versionar auth Baileys no Git.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Separe número de teste e produção.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Revise acessos Meta Business.</p></div></div>
+<div class="callout danger"><strong>Segurança</strong><br/>Print de QR em grupo público é risco real.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">32 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">FAQ</p>
+    <h2>FAQ WhatsApp Redis e-mail</h2>
+    <p class="lead">Respostas curtas para o plantão.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Destravar operação.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Pergunta → resposta.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>FAQ não substitui log.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Ache a dúvida.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Aplique.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Se persistir, vá ao troubleshoot.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Registre caso novo.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Confirme Redis ainda PONG.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Siga ao go-live.</p></div></div>
+
+          <div class="qa"><div class="q">Preciso Redis no Baileys?</div><div class="a">Sim neste CRM: filas e estabilidade dependem dele.</div></div>
+          <div class="qa"><div class="q">Webhook local sem ngrok?</div><div class="a">Não para a Meta. Use túnel ou deploy.</div></div>
+          <div class="qa"><div class="q">Gmail bloqueou SMTP?</div><div class="a">Use senha de app ou SendGrid.</div></div>
+          <div class="qa"><div class="q">Posso Baileys e Oficial juntos?</div><div class="a">Só com plano claro de números e menus.</div></div>
+          
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">33 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Go-live</p>
+    <h2>Go-live do canal</h2>
+    <p class="lead">Dia D do atendimento.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Time usando WhatsApp de verdade.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Checklists Redis + WhatsApp + um plantão assistido.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Liberar sem plantão = primeiro erro vira crise.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Checklists fechados.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Número oficial no ar.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Dois atendentes testam.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>SMTP ok se o fluxo exige.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Monitorar 24h iniciais.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Registrar no runbook.</p></div></div>
+<div class="link-box"><strong>Meta Developers</strong><div class="url"><a href="https://developers.facebook.com/" target="_blank">https://developers.facebook.com/</a></div></div>
+<div class="link-box"><strong>Railway</strong><div class="url"><a href="https://railway.app" target="_blank">https://railway.app</a></div></div>
+<div class="link-box"><strong>ngrok</strong><div class="url"><a href="https://ngrok.com" target="_blank">https://ngrok.com</a></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">34 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Fim</p>
+    <h2>Encerramento · próximos passos</h2>
+    <p class="lead">Canal vivo. Próximo: instalação local para treino e o handoff.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Fechar o módulo de serviços.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Manter Redis e volume sob vigília.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Desligar Redis “para economizar” derruba o canal.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Arquive prints de ticket teste.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Guarde tokens no cofre.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Abra o PDF Instalação Local se for treinar no PC.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Revise política anti-spam.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Agende auditoria semanal do canal.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Combine suporte com o cliente.</p></div></div>
+<div class="callout"><strong>Visão Business · VB Solution CRM</strong><br/>Treinamento · WhatsApp Redis E-mail · 50 páginas · © Visão Business</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">35 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Warm-up</p>
+    <h2>Aquecimento de número Baileys</h2>
+    <p class="lead">Número novo em massa é sinal de spam.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Reduzir chance de ban cedo.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Conversas reais e volume crescente.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Ignorar warm-up queima o chip do cliente.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Use o número em conversas manuais uns dias</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Evite lista fria</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Aumente volume aos poucos</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Monitore bloqueios</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Pause se houver alerta</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Documente o ritmo</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">36 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Fila travada</p>
+    <h2>Fila Bull parada</h2>
+    <p class="lead">Jobs enfileirados sem consumidor.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Destravar campanha.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Checar Redis, worker e erros de job.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Reprocessar às cegas pode duplicar mensagem.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>PONG no Redis</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Ver se o worker está up</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Ler erro do job falho</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Corrigir causa</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Reprocessar com cuidado</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Testar com 1 destinatário</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">37 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Multi conexão</p>
+    <h2>Várias conexões WhatsApp</h2>
+    <p class="lead">Empresas pedem mais de uma linha.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Organizar sem misturar sessão.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Uma conexão por número, labels claros.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Dois QR no mesmo slot = sessão sobrescrita.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Nomeie conexões pelo DDD/setor</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Não reutilize pasta de sessão</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Teste cada uma</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Treine fila por conexão</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Monitore desconexões</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Atualize o runbook</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">38 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Horário</p>
+    <h2>Horário e template de mensagem</h2>
+    <p class="lead">Disparo na madrugada irrita e denuncia spam.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Conversar como gente.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Janelas comerciais e texto com identificação.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Template genérico “compre já” queima lista.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Defina janela horária</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Identifique a empresa na mensagem</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Inclua opt-out</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Evite link encurtador duvidoso</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>A/B em amostra pequena</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Só então escale</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">39 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">E-mail spam</p>
+    <h2>E-mail caindo em spam</h2>
+    <p class="lead">SMTP ok não garante inbox.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Melhorar entregabilidade básica.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>SPF/DKIM, FROM alinhado, conteúdo limpo.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Gmail pessoal como FROM de marca = spam.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Confirme FROM do domínio</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Configure SPF/DKIM</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Evite assunto clickbait</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Teste em 2 provedores</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Considere SendGrid</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Monitore bounces</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">40 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Railway sleep</p>
+    <h2>API dormindo e WhatsApp caindo</h2>
+    <p class="lead">Plano que dorme mata webhook e Baileys.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Canal 24h exige processo acordado.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Railway/VPS sempre on; volume persistente.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Sleep + Baileys = reconectar eternamente.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Confirme plano sem sleep</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Healthcheck ativo</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Volume sessão ok</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Redis gerenciado ok</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Alerta se a API cair</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Teste restart consciente</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">41 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Permissões Meta</p>
+    <h2>Permissões e modo Live do app</h2>
+    <p class="lead">App em Development limita quem pode falar.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Produção real com clientes.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Revisar App Mode e permissões WhatsApp.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Esquecer Live = só testers recebem.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra o app Meta</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Confira modo Development vs Live</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Revise permissões</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Adicione testers se ainda em Dev</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Reteste mensagem</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Documente o modo atual</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">42 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Backup sessão</p>
+    <h2>Backup da sessão Baileys</h2>
+    <p class="lead">Disco morreu e o QR volta.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Recuperar conexão mais rápido.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Cópia segura da pasta de autenticação.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Backup no Git público = desastre.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Pare a API com janela combinada</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Copie a pasta de sessão para cofre</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Criptografe se possível</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Teste restore em homolog</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Retome API</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Nunca versionar no GitHub</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">43 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Observabilidade canal</p>
+    <h2>Sinais semanais do canal</h2>
+    <p class="lead">Canal “conectado” pode estar mudo.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Pegar drift cedo.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Login, mensagem teste, PONG, webhook.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Sem rotina o cliente descobre antes de você.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>PONG</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Status conexão</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Mensagem teste</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Fila sem erro</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>SMTP teste se usado</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Anotar no relatório</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">44 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Simulado canal</p>
+    <h2>Simulado 20 minutos</h2>
+    <p class="lead">Treino de falha controlada.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Time pronto para o plantão.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Derrubar Redis em homolog e recuperar.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Primeiro incidente real sem ensaio dói.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Em homolog, pare o Redis</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Veja o erro na API</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Suba Redis e recupere</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Regenere QR se preciso</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Reteste ticket</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Registre lições</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">45 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Extra 1</p>
+    <h2>Revisão prática · bloco 1</h2>
+    <p class="lead">Página de reforço do módulo WhatsApp · Redis · E-mail: revise o que já fez e confirme no ambiente real.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Fechar lacunas antes do go-live.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Você revisita variáveis, URLs e um teste mínimo.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Item esquecido vira incidente depois do anúncio.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra o .env ou Variables e confira DEV_NO_DB, URLs e Redis.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Confira logs da API (Railway ou pm2).</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Teste login no painel.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Teste uma ação simples (abrir ticket ou salvar cadastro).</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Anote o resultado e só então avance.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Se falhou, volte à página do tema correspondente neste PDF.</p></div></div>
+<div class="callout"><strong>Reforço</strong><br/>Esta página existe para encher o checklist com prática, não com teoria solta.</div>
+<ul class="checklist"><li>Revisão feita</li><li>Erro anotado ou tudo ok</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">46 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Extra 2</p>
+    <h2>Revisão prática · bloco 2</h2>
+    <p class="lead">Página de reforço do módulo WhatsApp · Redis · E-mail: revise o que já fez e confirme no ambiente real.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Fechar lacunas antes do go-live.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Você revisita variáveis, URLs e um teste mínimo.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Item esquecido vira incidente depois do anúncio.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra o .env ou Variables e confira DEV_NO_DB, URLs e Redis.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Confira logs da API (Railway ou pm2).</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Teste login no painel.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Teste uma ação simples (abrir ticket ou salvar cadastro).</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Anote o resultado e só então avance.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Se falhou, volte à página do tema correspondente neste PDF.</p></div></div>
+<div class="callout"><strong>Reforço</strong><br/>Esta página existe para encher o checklist com prática, não com teoria solta.</div>
+<ul class="checklist"><li>Revisão feita</li><li>Erro anotado ou tudo ok</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">47 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Extra 3</p>
+    <h2>Revisão prática · bloco 3</h2>
+    <p class="lead">Página de reforço do módulo WhatsApp · Redis · E-mail: revise o que já fez e confirme no ambiente real.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Fechar lacunas antes do go-live.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Você revisita variáveis, URLs e um teste mínimo.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Item esquecido vira incidente depois do anúncio.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra o .env ou Variables e confira DEV_NO_DB, URLs e Redis.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Confira logs da API (Railway ou pm2).</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Teste login no painel.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Teste uma ação simples (abrir ticket ou salvar cadastro).</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Anote o resultado e só então avance.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Se falhou, volte à página do tema correspondente neste PDF.</p></div></div>
+<div class="callout"><strong>Reforço</strong><br/>Esta página existe para encher o checklist com prática, não com teoria solta.</div>
+<ul class="checklist"><li>Revisão feita</li><li>Erro anotado ou tudo ok</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">48 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Extra 4</p>
+    <h2>Revisão prática · bloco 4</h2>
+    <p class="lead">Página de reforço do módulo WhatsApp · Redis · E-mail: revise o que já fez e confirme no ambiente real.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Fechar lacunas antes do go-live.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Você revisita variáveis, URLs e um teste mínimo.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Item esquecido vira incidente depois do anúncio.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra o .env ou Variables e confira DEV_NO_DB, URLs e Redis.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Confira logs da API (Railway ou pm2).</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Teste login no painel.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Teste uma ação simples (abrir ticket ou salvar cadastro).</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Anote o resultado e só então avance.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Se falhou, volte à página do tema correspondente neste PDF.</p></div></div>
+<div class="callout"><strong>Reforço</strong><br/>Esta página existe para encher o checklist com prática, não com teoria solta.</div>
+<ul class="checklist"><li>Revisão feita</li><li>Erro anotado ou tudo ok</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">49 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>WhatsApp · Redis · E-mail</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Extra 5</p>
+    <h2>Revisão prática · bloco 5</h2>
+    <p class="lead">Página de reforço do módulo WhatsApp · Redis · E-mail: revise o que já fez e confirme no ambiente real.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Fechar lacunas antes do go-live.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Você revisita variáveis, URLs e um teste mínimo.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Item esquecido vira incidente depois do anúncio.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra o .env ou Variables e confira DEV_NO_DB, URLs e Redis.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Confira logs da API (Railway ou pm2).</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Teste login no painel.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Teste uma ação simples (abrir ticket ou salvar cadastro).</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Anote o resultado e só então avance.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Se falhou, volte à página do tema correspondente neste PDF.</p></div></div>
+<div class="callout"><strong>Reforço</strong><br/>Esta página existe para encher o checklist com prática, não com teoria solta.</div>
+<ul class="checklist"><li>Revisão feita</li><li>Erro anotado ou tudo ok</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">50 / 50</span>
+  </footer>
+</section>
+
+</body>
+</html>

@@ -1,0 +1,1607 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Treinamento · Instalação Local · VB Solution CRM</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles-extra.css" />
+  <link rel="stylesheet" href="styles-dense.css" />
+</head>
+<body>
+
+<section class="page cover">
+  <div class="cover-top">
+    <img class="cover-logo" src="../assets/vbsolution-logo-nome-branca.png" alt="VB Solution" />
+    <div class="badge">Material de treinamento · Código-Fonte · 50 páginas</div>
+  </div>
+  <p class="series">SÉRIE CÓDIGO-FONTE · INSTALAÇÃO LOCAL · 50 PÁGINAS</p>
+  <h1>Instalação Local do CRM</h1>
+  <p class="subtitle">Manual para subir API e painel no notebook: Node 20, Postgres/Redis, DEV_NO_DB, .env, migrate, dois terminais, login, problemas, prompts Claude Code e entrega ao cliente. Linguagem direta para executar.</p>
+  <div class="cover-grid"><div class="cover-card"><span>Público</span><strong>Compradores do código-fonte</strong></div><div class="cover-card"><span>Foco</span><strong>Dev no PC</strong></div><div class="cover-card"><span>Portas</span><strong>3000 · 5181</strong></div><div class="cover-card"><span>Formato</span><strong>50 páginas densas</strong></div></div>
+  <div class="cover-bottom">
+    <div>Visão Business · VB Solution CRM<br />Manual técnico · © Visão Business</div>
+    <img src="../assets/vbsolution-logo-square.png" alt="VB" />
+  </div>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Mapa</p>
+    <h2>Sumário · CRM no seu PC</h2>
+    <p class="lead">Aqui você sobe API e painel em localhost para aprender sem nuvem.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Treinar o produto antes do deploy.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Node 20 → código → .env → migrate ou DEV_NO_DB → dois terminais → login.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Pular Redis/Postgres quando o modo exige = erro opaco no npm run dev.</p></div>
+    </div>
+    
+<table class="compact"><thead><tr><th>Bloco</th><th>Páginas</th></tr></thead><tbody><tr><td>Peças e Node</td><td>3–12</td></tr><tr><td>.env e subida</td><td>13–24</td></tr><tr><td>Uso e problemas</td><td>25–36</td></tr><tr><td>Prompts e entrega</td><td>37–50</td></tr></tbody></table>
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Instale Node 20 e Git.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Obtenha o código (ZIP ou Git).</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Escolha demo DEV_NO_DB ou Postgres real.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>npm install, migrate se preciso, npm run dev.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Frontend na 5181 apontando para 3000.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Login e checklist de primeiro uso.</p></div></div>
+<div class="link-box"><strong>Node.js</strong><div class="url"><a href="https://nodejs.org" target="_blank">https://nodejs.org</a></div></div>
+<div class="link-box"><strong>Repo</strong><div class="url"><a href="https://github.com/visaobusinesstech/codigo-fonte-COUTINHO" target="_blank">https://github.com/visaobusinesstech/codigo-fonte-COUTINHO</a></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">2 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Peças</p>
+    <h2>Peças da stack e portas</h2>
+    <p class="lead">Duas portas fixas na cabeça evitam “página em branco”.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Saber o que sobe onde no notebook.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>API :3000 · Frontend :5181 · Postgres · Redis opcional conforme modo.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Frontend na 3000 por engano mata a API.</p></div>
+    </div>
+    
+<table class="compact"><thead><tr><th>Peça</th><th>Porta / papel</th></tr></thead><tbody><tr><td>Backend</td><td>3000</td></tr><tr><td>Frontend</td><td>5181</td></tr><tr><td>Postgres</td><td>5432 típico</td></tr><tr><td>Redis</td><td>6379 típico</td></tr></tbody></table>
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Anote API = 3000.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Anote painel = 5181.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Postgres se DEV_NO_DB=false.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Redis se for testar filas/WhatsApp.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Não troque portas sem alinhar .env.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Siga à instalação do Node.</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">3 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Node Win</p>
+    <h2>Instalar Node 20 no Windows</h2>
+    <p class="lead">O CRM espera Node 20.x.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>npm e node no PATH.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Instalador LTS 20 em nodejs.org.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Node 16/18 antigo quebra dependência nova.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra https://nodejs.org</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Baixe o LTS 20.x Windows.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Instale com opção de adicionar ao PATH.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Feche e abra o PowerShell.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>node -v e npm -v</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Confirme v20.</p></div></div>
+<div class="link-box"><strong>Node.js</strong><div class="url"><a href="https://nodejs.org" target="_blank">https://nodejs.org</a></div></div>
+<ul class="checklist"><li>node -v mostra 20</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">4 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Node Mac</p>
+    <h2>Instalar Node 20 no Mac</h2>
+    <p class="lead">Mesma versão 20 para igualar o time.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Toolchain pronta no macOS.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Installer oficial ou nvm com 20.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Xcode CLT às vezes falta para módulos nativos.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Baixe LTS 20 em nodejs.org ou use nvm.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Instale.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Abra Terminal novo.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>node -v</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Se módulo nativo falhar, instale CLT.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Siga ao Git.</p></div></div>
+<div class="link-box"><strong>Node.js</strong><div class="url"><a href="https://nodejs.org" target="_blank">https://nodejs.org</a></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">5 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Node Ubuntu</p>
+    <h2>Instalar Node 20 no Ubuntu</h2>
+    <p class="lead">VPS de estudo ou desktop Ubuntu.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Node moderno via NodeSource ou nvm.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Evite node apt antigo do sistema.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Node 12 do distro = install vermelho.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Prefira nvm ou NodeSource 20.x.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Instale e recarregue o shell.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>node -v = v20</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>npm -v ok</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Atualize build-essential se pedir.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Siga ao Git/Docker.</p></div></div>
+<code># Exemplo com nvm (resumo)
+# instale nvm, depois: nvm install 20 && nvm use 20</code>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">6 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Git</p>
+    <h2>Git para clonar o código</h2>
+    <p class="lead">ZIP funciona; Git facilita update.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Obter o monorepo.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>git clone do repositório do código-fonte.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Pasta errada no cd = “não acho package.json”.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Instale Git (git-scm.com no Windows).</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Clone o repo do cliente/fork.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Ou extraia o ZIP na pasta curta.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Entre em VBSOLUTIONCRMCodigoFonte-main</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Confira pastas backend e frontend.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Evite path com espaços longos demais no Windows.</p></div></div>
+<div class="link-box"><strong>Git</strong><div class="url"><a href="https://git-scm.com" target="_blank">https://git-scm.com</a></div></div>
+<div class="link-box"><strong>Repo</strong><div class="url"><a href="https://github.com/visaobusinesstech/codigo-fonte-COUTINHO" target="_blank">https://github.com/visaobusinesstech/codigo-fonte-COUTINHO</a></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">7 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Postgres opções</p>
+    <h2>Postgres local · opções</h2>
+    <p class="lead">Se não for demo, precisa de Postgres.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Escolher caminho simples no PC.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Installer local, Docker Postgres, ou Supabase remoto.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Três Postgres esquecidos = URI no lugar errado.</p></div>
+    </div>
+    
+<table class="compact"><thead><tr><th>Opção</th><th>Quando</th></tr></thead><tbody><tr><td>DEV_NO_DB=true</td><td>Só conhecer telas</td></tr><tr><td>Postgres Docker</td><td>Dev local completo</td></tr><tr><td>Supabase</td><td>Igual produção</td></tr></tbody></table>
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Decida: demo DEV_NO_DB ou banco real.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Se real: Docker Postgres ou instalador.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Anote host/porta/user/senha.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Ou use URI Supabase (PDF 03).</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Uma URI por ambiente local.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Siga ao Redis se for testar filas.</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">8 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Redis local</p>
+    <h2>Redis local com Docker</h2>
+    <p class="lead">Para filas e WhatsApp no notebook.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Mesmo PONG do manual 04.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Container redis:7 na 6379.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Sem Redis com módulos ligados = ECONNREFUSED.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Docker Desktop rodando.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Suba o container Redis.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>PONG</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Três variáveis no .env</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Reinicie API</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Se não for testar fila, pode adiar Redis</p></div></div>
+<code>docker run -d --name vbs-redis -p 6379:6379 redis:7-alpine</code>
+<div class="link-box"><strong>Docker</strong><div class="url"><a href="https://www.docker.com/" target="_blank">https://www.docker.com/</a></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">9 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Pasta código</p>
+    <h2>Pasta do código · ZIP ou Git</h2>
+    <p class="lead">O root certo evita build no lugar errado.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Enxergar backend e frontend.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>VBSOLUTIONCRMCodigoFonte-main como pasta mãe.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Abrir só frontend no editor e esquecer API = login eterno.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Extraia/clone.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Confira backend/package.json</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Confira frontend/package.json</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Abra a pasta mãe no VS Code.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Ignore project/ legado se existir.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Anote o caminho completo.</p></div></div>
+<ul class="checklist"><li>backend e frontend visíveis</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">10 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Estrutura</p>
+    <h2>Estrutura mínima que importa</h2>
+    <p class="lead">Mapa mental do monorepo.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Não se perder em pastas.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>backend = API · frontend = painel · docs = material.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Editar minificado em build/ é prejuízo.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>backend: .env.example, migrations, src</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>frontend: src, public, scripts</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Não commit node_modules</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Não edite build gerado</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Leia README se houver</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Siga ao modo demo ou banco</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">11 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">DEV_NO_DB</p>
+    <h2>Modo demo · DEV_NO_DB=true</h2>
+    <p class="lead">Conhecer telas sem Postgres.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Onboarding rápido no notebook.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Flag no .env faz a API fingir banco.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Esquecer true em “treino com dado real” = nada grava.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>copy .env.example .env</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>DEV_NO_DB=true</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>JWT secrets preenchidos</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>npm install && npm run dev</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Suba o frontend</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Lembre: é demo, não produção</p></div></div>
+<code>DEV_NO_DB=true</code>
+<div class="callout warn"><strong>Limite</strong><br/>Demo não substitui migrate em Supabase.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">12 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Env banco</p>
+    <h2>.env com banco real local</h2>
+    <p class="lead">Quando a demo não basta.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>API gravando de verdade no PC ou Supabase.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>DEV_NO_DB=false + DATABASE_URL + SSL se nuvem.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>URI 6543 também quebra no local.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>DEV_NO_DB=false</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>DB_DIALECT=postgres</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>DATABASE_URL correta</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>DB_SSL=true se Supabase</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>npm run db:migrate</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>admin:local-dev se existir</p></div></div>
+<code>DEV_NO_DB=false
+DB_SSL=true
+DATABASE_URL=postgresql://...:5432/postgres</code>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">13 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">JWT</p>
+    <h2>JWT_SECRET e JWT_REFRESH_SECRET</h2>
+    <p class="lead">Login assina token com esses segredos.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Sessão válida e previsível.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Strings longas aleatórias no .env.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Secret fraco ou diferente a cada restart sem persistir .env = logout eterno.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Gere dois segredos (openssl rand -base64 32).</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Cole em JWT_SECRET e JWT_REFRESH_SECRET.</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Não use 123456.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Mantenha o mesmo .env entre reinícios.</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Em produção, segredos novos e no cofre.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Reinicie a API.</p></div></div>
+<code>JWT_SECRET=troque_por_valor_longo
+JWT_REFRESH_SECRET=outro_valor_longo</code>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">14 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">npm install</p>
+    <h2>npm install no backend e frontend</h2>
+    <p class="lead">Dependências locais não vêm no Git.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>node_modules pronto.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Rodar install em cada pasta.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Install só no front = API sem express.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>cd backend → npm install</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Espere terminar sem erro fatal</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>cd frontend → npm install</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Se falhar, confira Node 20</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Apague node_modules e lock só se orientado</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Siga ao migrate ou ao dev</p></div></div>
+<ul class="checklist"><li>install backend ok</li><li>install frontend ok</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">15 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Migrate local</p>
+    <h2>Migrate no ambiente local</h2>
+    <p class="lead">Schema no Postgres escolhido.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Tabelas iguais às da nuvem.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>npm run db:migrate com .env certo.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Migrate com DEV_NO_DB=true não faz sentido.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>DEV_NO_DB=false</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>URI ok</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>npm run db:migrate</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Leia o resultado</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Não use undo sem backup</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Crie admin</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">16 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">API dev</p>
+    <h2>npm run dev na API (porta 3000)</h2>
+    <p class="lead">Processo longo no terminal 1.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>API respondendo local.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Script dev com reload se houver.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Porta ocupada = EADDRINUSE.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>cd backend</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>npm run dev</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Veja log “listening” na 3000</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Se EADDRINUSE, mate o processo ou mude PORT alinhado</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Deixe o terminal aberto</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Abra o segundo terminal para o front</p></div></div>
+<code>cd VBSOLUTIONCRMCodigoFonte-main/backend
+npm run dev</code>
+<ul class="checklist"><li>API na 3000</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">17 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Front env</p>
+    <h2>Frontend · env apontando para a API</h2>
+    <p class="lead">O painel precisa saber onde está a API local.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Login falar com localhost:3000.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>REACT_APP_BACKEND_URL=http://localhost:3000 e PORT=5181.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>URL com barra final ou https errado no local quebra.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>cd frontend</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Crie .env se necessário</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>REACT_APP_BACKEND_URL=http://localhost:3000</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>PORT=5181</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Salve</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Suba npm start</p></div></div>
+<code>REACT_APP_BACKEND_URL=http://localhost:3000
+PORT=5181</code>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">18 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Front start</p>
+    <h2>npm start no frontend (5181)</h2>
+    <p class="lead">Terminal 2 dedicado ao React.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Painel no Chrome.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>CRA na porta 5181.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Aceitar outra porta sem atualizar hábitos confunde o time.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>cd frontend</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>npm start</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Abra http://localhost:5181</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Se perguntar outra porta, alinhe PORT</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Deixe os dois terminais vivos</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Vá ao login</p></div></div>
+<div class="link-box"><strong>Repo</strong><div class="url"><a href="https://github.com/visaobusinesstech/codigo-fonte-COUTINHO" target="_blank">https://github.com/visaobusinesstech/codigo-fonte-COUTINHO</a></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">19 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Login</p>
+    <h2>Primeiro login local</h2>
+    <p class="lead">Prova de que API + front + (banco ou demo) fecham o ciclo.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Entrar no CRM.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Admin criado ou credencial de demo documentada.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Senha errada + API fora = sintoma idêntico se você não olha Network.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra o painel 5181</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Use o admin gerado</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>F12 Network: chamadas para :3000</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Se 404/CORS, confira URL</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Se 401, confira usuário</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Anote sucesso</p></div></div>
+<ul class="checklist"><li>Login ok</li><li>Network na 3000</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">20 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Dois terminais</p>
+    <h2>Dois terminais · disciplina operacional</h2>
+    <p class="lead">Matar um processo sem perceber é o erro nº 1 do iniciante.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Manter stack local viva.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Terminal A API · Terminal B front · opcional Redis.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Fechar o VS Code inteiro pode matar os dois.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Nomeie as abas API e FRONT</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Não rode os dois na mesma pasta sem cuidado</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Se login falhar, veja qual terminal morreu</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Suba de novo na ordem API→front</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Use pm2 só se souber</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>No fim do dia, encerre com Ctrl+C</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">21 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Problemas</p>
+    <h2>Problemas locais frequentes</h2>
+    <p class="lead">Tabela curta de sintomas no notebook.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Destravar sozinho.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Porta, módulo, DEV_NO_DB, JWT, Redis, Postgres.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Reinstalar Node a cada erro desperdiça tarde.</p></div>
+    </div>
+    
+<table class="compact"><thead><tr><th>Sintoma</th><th>Causa</th><th>Ação</th></tr></thead><tbody><tr><td>EADDRINUSE</td><td>Porta presa</td><td>Matar processo / mudar PORT</td></tr><tr><td>Cannot find module</td><td>Install incompleto</td><td>npm install</td></tr><tr><td>ECONNREFUSED 6379</td><td>Redis off</td><td>Subir Redis ou adiar fila</td></tr><tr><td>password auth</td><td>URI</td><td>Conferir DATABASE_URL</td></tr><tr><td>Login CORS</td><td>URL front/API</td><td>Alinhar REACT_APP_BACKEND_URL</td></tr></tbody></table>
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Leia o erro do terminal</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Ache na tabela</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Aplique um fix</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Reteste</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Se precisar, Prompt de diagnóstico</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Documente</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">22 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Primeiro uso</p>
+    <h2>Primeiro uso depois do login</h2>
+    <p class="lead">Não começar pelo WhatsApp em massa.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Conhecer menus com segurança.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Empresa, usuários, filas, um cadastro de teste.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Campanha no dia 1 local não ensina, só assusta.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Explore o menu com calma</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Crie/ajuste empresa</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Veja usuários e perfis</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Abra filas se existirem</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Cadastre um registro teste</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Só depois WhatsApp</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">23 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Empresas filas</p>
+    <h2>Empresas e filas</h2>
+    <p class="lead">Multiempresa e filas são o coração do atendimento.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Preparar estrutura antes do canal.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Cadastros básicos no painel.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Fila inexistente = ticket sem dono.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Confirme a empresa ativa</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Crie filas com nomes claros</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Associe usuários</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Teste permissões</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Anote o desenho</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Siga ao WhatsApp se for o alvo</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">24 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">WA depois</p>
+    <h2>WhatsApp só depois do local estável</h2>
+    <p class="lead">QR em cima de API oscilando vira teatro.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Canal com base firme.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Login ok + Redis se Baileys + manual 04.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Misturar ngrok, QR e migrate no mesmo minuto confunde.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>API e front estáveis 10 minutos</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Redis PONG se necessário</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Abra o PDF WhatsApp</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Siga a ordem de lá</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Número de teste</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Não use chip do dono em massa</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">25 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Imóveis</p>
+    <h2>Módulo imóveis no local</h2>
+    <p class="lead">Se o pacote trouxer imobiliário, valide cedo.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Ver cadastros e listagens.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Criar um imóvel teste e abrir a ficha.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Julgar o produto sem dado = impressão falsa.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Ache o menu de imóveis</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Crie registro mínimo</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Salve e reabra</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Confira Network 201/200</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Se erro de tabela, rode migrate</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Anote ok</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">26 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Não fazer</p>
+    <h2>O que não fazer no local</h2>
+    <p class="lead">Lista de armadilhas clássicas.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Evitar retrabalho.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Proibições práticas.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Commit de .env e node_modules polui o repo.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Não commit .env</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Não suba API na Vercel</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Não use DEV_NO_DB em produção</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Não delete migrations</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Não rode undo sem backup</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Não compartilhe JWT em print público</p></div></div>
+<div class="callout danger"><strong>Regra</strong><br/>Local é laboratório. Produção tem outro ritual.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">27 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Prompt 1</p>
+    <h2>Prompt Claude Code · subir local</h2>
+    <p class="lead">Assistente guia install e dois processos.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Primeira subida sem travar.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Cole o prompt no VS Code.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Path errado no prompt gera pasta inventada.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra a pasta mãe no VS Code</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Cole o prompt</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Escolha demo ou Postgres</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Acompanhe os comandos</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Teste login</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Não commit .env</p></div></div>
+<div class="script-bubble"><span class="label">Prompt</span>Siga a instalação local do VB Solution CRM em VBSOLUTIONCRMCodigoFonte-main: copie backend/.env.example para .env, configure DEV_NO_DB=true para demo (ou Postgres se eu indicar), suba npm install + npm run dev na API (porta 3000) e no frontend PORT=5181 com REACT_APP_BACKEND_URL=http://localhost:3000. Liste erros do terminal se o login falhar. Não commit .env.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">28 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Prompt 2</p>
+    <h2>Prompt Claude Code · diagnosticar local</h2>
+    <p class="lead">Colar o erro real encurta o conserto.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Voltar a logar.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Stack → causa → comandos PowerShell.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Sem stack o diagnóstico é genérico.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Copie a saída do terminal</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Cole no prompt</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Aplique os comandos sugeridos</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Reteste</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Se for porta, confirme com netstat</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Registre a solução</p></div></div>
+<div class="script-bubble"><span class="label">Prompt</span>O CRM local falhou. Segue a saída do terminal: [COLE AQUI]. Diagnostique porta em uso, módulo faltando, DEV_NO_DB, JWT, Redis ECONNREFUSED ou Postgres. Me dê os comandos exatos para corrigir no Windows PowerShell.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">29 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">PORT</p>
+    <h2>Alinhar PORT da API e do front</h2>
+    <p class="lead">Mudou a porta? Todo mundo precisa saber.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Evitar fantasma de CORS/local.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>PORT no backend · REACT_APP_BACKEND_URL · browser.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>API na 3001 e front ainda em 3000 = Network vermelho.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Decida as portas</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Ajuste .env da API</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Ajuste REACT_APP_BACKEND_URL</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Reinicie os dois</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Confirme no browser</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Atualize o runbook local</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">30 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Checklist local</p>
+    <h2>Checklist instalação local</h2>
+    <p class="lead">Porteiro do “ambiente de treino pronto”.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Não chamar o cliente para demo pela metade.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Itens binários.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Demo com Node 18 esquecido quebra na frente dele.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Leia a lista</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Marque verdade</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Corrija faltas</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Reteste login</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Prepare o roteiro de demo</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Arquive print</p></div></div>
+<ul class="checklist"><li>Node 20</li><li>backend install</li><li>frontend install</li><li>.env definido</li><li>API 3000</li><li>Front 5181</li><li>Login ok</li><li>.env fora do Git</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">31 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">FAQ local</p>
+    <h2>FAQ instalação local</h2>
+    <p class="lead">Dúvidas curtas do notebook.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Destravar estudo.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Pergunta → resposta.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>FAQ não substitui o terminal.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Ache a dúvida</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Aplique</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Se não couber, Prompt 2</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Documente</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Confirme Node 20</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Siga aos próximos PDFs</p></div></div>
+
+          <div class="qa"><div class="q">Posso só abrir o frontend?</div><div class="a">Não. Sem API o login não completa.</div></div>
+          <div class="qa"><div class="q">DEV_NO_DB grava lead?</div><div class="a">Não de verdade. É demo.</div></div>
+          <div class="qa"><div class="q">Preciso Redis sempre?</div><div class="a">Para WhatsApp/filas sim. Para só olhar menu, pode adiar.</div></div>
+          <div class="qa"><div class="q">Porta 5181 ocupada?</div><div class="a">Mate o processo ou defina outra e alinhe hábitos.</div></div>
+          
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">32 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Próximos PDFs</p>
+    <h2>Próximos PDFs depois do local</h2>
+    <p class="lead">Local ensina. Produção exige os outros manuais.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Ordem de leitura/execução.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Supabase → API Railway/VPS → Vercel → WhatsApp.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Pular nuvem e “jogar local na cara do cliente” não escala.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Feche o checklist local</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>PDF Supabase se for banco real</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>PDF VPS/Railway da API</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>PDF Vercel do painel</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>PDF WhatsApp</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Monte o pacote de entrega</p></div></div>
+<div class="link-box"><strong>Repo</strong><div class="url"><a href="https://github.com/visaobusinesstech/codigo-fonte-COUTINHO" target="_blank">https://github.com/visaobusinesstech/codigo-fonte-COUTINHO</a></div></div>
+<div class="link-box"><strong>Node</strong><div class="url"><a href="https://nodejs.org" target="_blank">https://nodejs.org</a></div></div>
+<div class="link-box"><strong>Git</strong><div class="url"><a href="https://git-scm.com" target="_blank">https://git-scm.com</a></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">33 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Entrega cliente</p>
+    <h2>Entrega ao cliente · o que acompanhar</h2>
+    <p class="lead">Cliente compra código + caminho.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Handoff sem orphanagem.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Acesso repo, .env modelo, PDFs, quem hospeda o quê.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Entregar ZIP sem Node 20 = “não funciona” no grupo.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Envie link do repo/ZIP</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Liste pré-requisitos Node 20 Git Docker</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Entregue os PDFs da série</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Explique demo vs produção</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Combine quem cuida de Supabase/Railway/Vercel</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Canal de suporte e horário</p></div></div>
+<div class="callout"><strong>Recado</strong><br/>Local é treino. Produção é outro checklist.</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">34 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Fim</p>
+    <h2>Encerramento · instalação local</h2>
+    <p class="lead">Você sobe o CRM no PC com método.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Fechar o módulo local.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Dois terminais, .env consciente, próximos PDFs.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Desistir no primeiro EADDRINUSE é opcional; corrigir é melhor.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Checklist local ok</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Print do login</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Decida demo ou banco real</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Siga a série de produção</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Guarde prompts Claude</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Arquive este manual com os outros</p></div></div>
+<div class="link-box"><strong>Node.js</strong><div class="url"><a href="https://nodejs.org" target="_blank">https://nodejs.org</a></div></div>
+<div class="link-box"><strong>Git</strong><div class="url"><a href="https://git-scm.com" target="_blank">https://git-scm.com</a></div></div>
+<div class="link-box"><strong>Repo</strong><div class="url"><a href="https://github.com/visaobusinesstech/codigo-fonte-COUTINHO" target="_blank">https://github.com/visaobusinesstech/codigo-fonte-COUTINHO</a></div></div>
+<div class="link-box"><strong>Docker</strong><div class="url"><a href="https://www.docker.com/" target="_blank">https://www.docker.com/</a></div></div>
+<div class="callout"><strong>Visão Business · VB Solution CRM</strong><br/>Treinamento · Instalação Local · 50 páginas · © Visão Business</div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">35 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Path Windows</p>
+    <h2>Paths longos e espaços no Windows</h2>
+    <p class="lead">Caminho gigante quebra ferramenta nativa.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Evitar erro misterioso de file not found.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Pasta curta perto de C:\dev.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Desktop\pasta\com muitos espaços dói no terminal.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Prefira C:\dev\crm</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Evite OneDrive se houver lock</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Reabra o VS Code na pasta</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Reteste npm</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Atualize atalhos</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Documente o path oficial</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">36 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Antivirus</p>
+    <h2>Antivírus e node_modules</h2>
+    <p class="lead">Scanner trava install no Windows.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Install terminar.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Exceção na pasta do projeto (com critério).</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Quarentena de .exe de dependência quebra build.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Veja se o install congela</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Pause scanner só se política permitir</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Refaça npm install</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Restabeleça proteção</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Não desligue AV global</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Reporte ao TI se corporativo</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">37 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Cache npm</p>
+    <h2>Limpar cache npm com cuidado</h2>
+    <p class="lead">Cache corrompido gera hash mismatch.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Install limpo.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>npm cache verify / install de novo.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Apagar cache a cada erro é overkill.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Leia o erro</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Tente install de novo</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>npm cache verify</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Só então limpe cache</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Confirme Node 20</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Reteste</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">38 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Hot reload</p>
+    <h2>Hot reload e .env</h2>
+    <p class="lead">Mudou .env? O processo antigo não leu.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Variável nova valer.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Reinício explícito da API e às vezes do front.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Achar que “já salvou” sem reiniciar perde hora.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Salve o .env</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Ctrl+C na API</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>npm run dev de novo</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Se REACT_APP_, reinicie o front</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Hard refresh</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Confirme no log</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">39 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Seed dados</p>
+    <h2>Dados iniciais e seeds</h2>
+    <p class="lead">Painel vazio assusta o cliente na demo.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Ter amostra mínima.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Seed/admin e um cadastro manual.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Seed em produção sem critério polui dado real.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Rode admin local</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Crie 1 empresa</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Crie 1 usuário</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Crie 1 registro de módulo</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Roteiro de clique para a demo</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Não use seed automático em prod sem backup</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">40 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Proxy corporativo</p>
+    <h2>Proxy e SSL inspection</h2>
+    <p class="lead">Rede corporativa quebra npm e HTTPS local.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Identificar bloqueio.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Testar em outra rede / configurar proxy npm.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Achar que o repo está errado quando é proxy.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Teste hotspot do celular</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Se funcionar, é rede</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Fale com TI</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Configure proxy npm se preciso</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Reteste install</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Documente</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">41 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Versão lock</p>
+    <h2>package-lock e CI local</h2>
+    <p class="lead">Lockfile existe para build repetível.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Evitar “na minha máquina funciona” com versão diferente.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Commit do lock quando o time combina.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Apagar lock sem critério muda árvore inteira.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Não delete lock por esporte</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Use npm ci se o time padronizar</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Node 20 igual</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Se atualizar dep, revise diff</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Teste login depois</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Avise o time</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">42 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Demo script</p>
+    <h2>Roteiro de demo de 10 minutos</h2>
+    <p class="lead">Cliente ao lado do notebook.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Mostrar valor sem travar.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Login → menu → um cadastro → (opcional) ticket.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Improviso sem roteiro encontra o bug ao vivo.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Suba os dois terminais antes</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Login ensaiado</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Mostre 3 telas-chave</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Cadastre um item</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Explique o que vai para nuvem depois</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Anote perguntas</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">43 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Atualizar código</p>
+    <h2>Atualizar ZIP/Git sem perder .env</h2>
+    <p class="lead">Update come .env se você extrair por cima.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Preservar segredos locais.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Backup .env → pull/extrai → restore.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>.env sobrescrito = tarde perdida.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Copie .env para fora</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Atualize o código</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Devolva o .env</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>npm install se lock mudou</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Teste login</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Diff migrations novas</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">44 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Simulado local</p>
+    <h2>Simulado de quebra e recuperação</h2>
+    <p class="lead">Treino de 15 minutos.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Autonomia do operador.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Matar API, subir de novo, corrigir porta.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Primeiro erro na demo ao vivo sem ensaio dói.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Ctrl+C na API</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Veja o front falhar</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Suba API</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Ocupe a 3000 e corrija</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Reteste login</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Anote o tempo</p></div></div>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">45 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Extra 1</p>
+    <h2>Revisão prática · bloco 1</h2>
+    <p class="lead">Página de reforço do módulo Instalação Local: revise o que já fez e confirme no ambiente real.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Fechar lacunas antes do go-live.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Você revisita variáveis, URLs e um teste mínimo.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Item esquecido vira incidente depois do anúncio.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra o .env ou Variables e confira DEV_NO_DB, URLs e Redis.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Confira logs da API (Railway ou pm2).</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Teste login no painel.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Teste uma ação simples (abrir ticket ou salvar cadastro).</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Anote o resultado e só então avance.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Se falhou, volte à página do tema correspondente neste PDF.</p></div></div>
+<div class="callout"><strong>Reforço</strong><br/>Esta página existe para encher o checklist com prática, não com teoria solta.</div>
+<ul class="checklist"><li>Revisão feita</li><li>Erro anotado ou tudo ok</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">46 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Extra 2</p>
+    <h2>Revisão prática · bloco 2</h2>
+    <p class="lead">Página de reforço do módulo Instalação Local: revise o que já fez e confirme no ambiente real.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Fechar lacunas antes do go-live.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Você revisita variáveis, URLs e um teste mínimo.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Item esquecido vira incidente depois do anúncio.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra o .env ou Variables e confira DEV_NO_DB, URLs e Redis.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Confira logs da API (Railway ou pm2).</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Teste login no painel.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Teste uma ação simples (abrir ticket ou salvar cadastro).</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Anote o resultado e só então avance.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Se falhou, volte à página do tema correspondente neste PDF.</p></div></div>
+<div class="callout"><strong>Reforço</strong><br/>Esta página existe para encher o checklist com prática, não com teoria solta.</div>
+<ul class="checklist"><li>Revisão feita</li><li>Erro anotado ou tudo ok</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">47 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Extra 3</p>
+    <h2>Revisão prática · bloco 3</h2>
+    <p class="lead">Página de reforço do módulo Instalação Local: revise o que já fez e confirme no ambiente real.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Fechar lacunas antes do go-live.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Você revisita variáveis, URLs e um teste mínimo.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Item esquecido vira incidente depois do anúncio.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra o .env ou Variables e confira DEV_NO_DB, URLs e Redis.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Confira logs da API (Railway ou pm2).</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Teste login no painel.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Teste uma ação simples (abrir ticket ou salvar cadastro).</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Anote o resultado e só então avance.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Se falhou, volte à página do tema correspondente neste PDF.</p></div></div>
+<div class="callout"><strong>Reforço</strong><br/>Esta página existe para encher o checklist com prática, não com teoria solta.</div>
+<ul class="checklist"><li>Revisão feita</li><li>Erro anotado ou tudo ok</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">48 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Extra 4</p>
+    <h2>Revisão prática · bloco 4</h2>
+    <p class="lead">Página de reforço do módulo Instalação Local: revise o que já fez e confirme no ambiente real.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Fechar lacunas antes do go-live.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Você revisita variáveis, URLs e um teste mínimo.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Item esquecido vira incidente depois do anúncio.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra o .env ou Variables e confira DEV_NO_DB, URLs e Redis.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Confira logs da API (Railway ou pm2).</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Teste login no painel.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Teste uma ação simples (abrir ticket ou salvar cadastro).</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Anote o resultado e só então avance.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Se falhou, volte à página do tema correspondente neste PDF.</p></div></div>
+<div class="callout"><strong>Reforço</strong><br/>Esta página existe para encher o checklist com prática, não com teoria solta.</div>
+<ul class="checklist"><li>Revisão feita</li><li>Erro anotado ou tudo ok</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">49 / 50</span>
+  </footer>
+</section>
+
+<section class="page inner-page">
+  <header class="doc-header">
+    <div class="brand"><img src="../assets/vbsolution-logo-nome-preta.png" alt="VB Solution" /></div>
+    <div class="meta"><strong>Instalação Local</strong>VB Solution CRM · Código-Fonte</div>
+  </header>
+  <div class="page-main">
+    <p class="kicker">Extra 5</p>
+    <h2>Revisão prática · bloco 5</h2>
+    <p class="lead">Página de reforço do módulo Instalação Local: revise o que já fez e confirme no ambiente real.</p>
+
+    <div class="three-col">
+      <div class="card soft"><h4>Para que serve</h4><p>Fechar lacunas antes do go-live.</p></div>
+      <div class="card soft"><h4>Como funciona</h4><p>Você revisita variáveis, URLs e um teste mínimo.</p></div>
+      <div class="card soft"><h4>Onde acarreta</h4><p>Item esquecido vira incidente depois do anúncio.</p></div>
+    </div>
+    
+<div class="step"><div class="n">1</div><div><h4>Passo 1</h4><p>Abra o .env ou Variables e confira DEV_NO_DB, URLs e Redis.</p></div></div>
+<div class="step"><div class="n">2</div><div><h4>Passo 2</h4><p>Confira logs da API (Railway ou pm2).</p></div></div>
+<div class="step"><div class="n">3</div><div><h4>Passo 3</h4><p>Teste login no painel.</p></div></div>
+<div class="step"><div class="n">4</div><div><h4>Passo 4</h4><p>Teste uma ação simples (abrir ticket ou salvar cadastro).</p></div></div>
+<div class="step"><div class="n">5</div><div><h4>Passo 5</h4><p>Anote o resultado e só então avance.</p></div></div>
+<div class="step"><div class="n">6</div><div><h4>Passo 6</h4><p>Se falhou, volte à página do tema correspondente neste PDF.</p></div></div>
+<div class="callout"><strong>Reforço</strong><br/>Esta página existe para encher o checklist com prática, não com teoria solta.</div>
+<ul class="checklist"><li>Revisão feita</li><li>Erro anotado ou tudo ok</li></ul>
+<div class="callout warn"><strong>Se pular esta página</strong><br/>O próximo passo costuma falhar com sintoma em outro lugar (CORS, senha, porta, Redis). Volte e feche os Passos 1 a 6 antes de avançar.</div>
+<div class="two-col"><div class="card soft"><h4>Antes de avançar</h4><p>Faça cada passo na ordem. Anote ok ou o erro (com hora). Se pulou um passo, volte.</p></div><div class="card blue"><h4>Teste mínimo</h4><p>Depois dos passos, rode o teste mais curto possível desta página (ping, login, migrate, PONG, F12 Network) e só então vire a folha.</p></div></div>
+  </div>
+  <footer class="doc-footer">
+    <span>Visão Business · Treinamento Código-Fonte VB Solution CRM</span>
+    <span class="page-num">50 / 50</span>
+  </footer>
+</section>
+
+</body>
+</html>
