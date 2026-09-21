@@ -1,192 +1,150 @@
-# Usar o Supabase como banco do CRM (passo a passo)
+# Como usar o Supabase como banco de dados do CRM
 
-O VB Solution **não usa** Auth/Storage/Realtime do Supabase. Ele usa o **PostgreSQL** que o Supabase hospeda. A API (Express + Sequelize) conecta como em qualquer Postgres na nuvem.
+Este tutorial ensina a criar uma conta, criar um projeto, copiar a senha de conexão e ligar isso no VB Solution. Vamos bem devagar. Se uma tela do Supabase mudar de nome, procure a palavra **Database** ou **Settings**.
 
-Ainda é obrigatório:
+## O que o Supabase é neste projeto (importante)
 
-- **Redis** (filas, campanhas, WhatsApp)
-- **Backend Node** (Railway, VPS ou similar) — **não** rode a API no Vercel (WebSocket + sessões WhatsApp)
-- **Frontend** (Vercel, Nginx ou Railway)
+O Supabase é famoso por “substituir um backend”. **Aqui não é o caso.**
 
-Desligue `DEV_NO_DB` em produção.
+Neste CRM o Supabase é só um **PostgreSQL hospedado**: um HD na nuvem organizado em tabelas. Quem autentica o usuário, quem fala com WhatsApp e quem monta o menu é a **API** (`backend`), não o painel Auth do Supabase.
 
----
-
-## 1. Criar o projeto no Supabase
-
-1. Acesse https://supabase.com e entre na conta.
-2. **New project**.
-3. Nome (ex. `vbsolution-crm`), senha forte do usuário `postgres` — **guarde essa senha**.
-4. Região: a mais perto do Brasil (ex. São Paulo, se existir; senão `South America` / `East US`).
-5. Espere o projeto ficar **Healthy**.
-
-Use um projeto **novo**. Não misture tabelas do Radar antigo (`project/` Vite) com as migrations do VBSolution no mesmo schema `public` sem backup.
+Por isso você **não** vai colar `anon key` no frontend React. Quem cola `anon key` é o app Vite antigo (`project/`), que você pode até apagar.
 
 ---
 
-## 2. Copiar a connection string
+## Passo 1 — Criar conta
 
-No painel: **Project Settings → Database**.
+1. Abra https://supabase.com
+2. Clique em Start project / Sign in.
+3. Entre com GitHub ou e-mail. Confirme o e-mail se pedirem.
 
-Há dois tipos de URI:
+## Passo 2 — Criar o projeto
 
-| Tipo | Porta | Quando usar |
-|---|---|---|
-| **Direct** (Session) | `5432` | VPS e Railway (Sequelize, migrations, WhatsApp 24/7) — **recomendado** |
-| **Transaction pooler** | `6543` | Serverless (muitas conexões curtas). Sequelize + migrate podem falhar aqui |
+1. Clique em **New project**.
+2. Se pedir organização, crie uma com o nome da empresa (ex. Coutinho).
+3. **Name:** algo claro, tipo `crm-coutinho`.
+4. **Database password:** invente uma senha **forte** e grave no gerenciador de senhas **agora**. Se perder, você reseta, mas perde tempo.
+5. **Region:** a mais perto dos usuários (Brasil / São Paulo se aparecer; senão East US ou South America).
+6. Plano: Free serve para começar. Produção séria: Pro (backup).
+7. Create project e **espere**. O status precisa ficar pronto (Healthy). Pode levar uns minutos. Não copie URI no meio do “Setting up”.
 
-Copie **URI** do modo **Session / Direct**.
+## Passo 3 — Achar a string de conexão
 
-Formato:
+1. No menu esquerdo, ícone de engrenagem: **Project Settings**.
+2. Clique em **Database**.
+3. Role até **Connection string** / **URI**.
 
-```
-postgresql://postgres.[PROJECT_REF]:SUA_SENHA@aws-0-sa-east-1.pooler.supabase.com:5432/postgres
-```
+Você verá modos. Para este CRM escolha:
 
-ou host direto:
+**Session mode** ou **Direct connection**, porta **5432**.
 
-```
-postgresql://postgres:SUA_SENHA@db.[PROJECT_REF].supabase.co:5432/postgres
-```
+**Não** comece pelo Transaction pooler porta **6543**. Esse modo é para funções serverless. O Sequelize (a biblioteca que o backend usa) e o `migrate` brigam com ele (prepared statements). Se 5432 falhar por IPv6, aí sim tentamos o pooler em **session** na 5432, não a 6543.
 
-Se a senha tiver `@`, `#`, `%`, encode na URL (`@` → `%40`).
-
-Em **Database → Connection pooling**, anote também IPv4 se o host da VPS não tiver IPv6 (Supabase às vezes exige add-on IPv4).
-
----
-
-## 3. Variáveis no `backend/.env`
+A URI parece com:
 
 ```
-NODE_ENV=production
-DEV_NO_DB=false
-DB_DIALECT=postgres
-DB_SSL=true
-
-DATABASE_URL=postgresql://postgres.[REF]:SENHA@HOST:5432/postgres
-
-DB_HOST=db.XXXX.supabase.co
-DB_PORT=5432
-DB_USER=postgres
-DB_PASS=SENHA
-DB_NAME=postgres
-DB_POOL_MAX=8
-DB_POOL_MIN=0
+postgresql://postgres.abcdefghijklmnop:SUA_SENHA@aws-0-sa-east-1.pooler.supabase.com:5432/postgres
 ```
 
-Pode preencher **só** `DATABASE_URL` + `DB_SSL=true`; o bootstrap também deriva `DB_HOST` da URL.
-
-JWT (obrigatório, valores novos):
+ou:
 
 ```
-JWT_SECRET=
-JWT_REFRESH_SECRET=
+postgresql://postgres:SUA_SENHA@db.abcdefghijklmnop.supabase.co:5432/postgres
 ```
 
-Gere:
+O trecho `SUA_SENHA` deve ser a senha do passo 2. Se a senha tiver `@`, `#`, `%`, `/`, o endereço quebra. Troque esses caracteres na URL:
 
-```bash
-openssl rand -base64 32
-```
+- `@` vira `%40`
+- `#` vira `%23`
+- `%` vira `%25`
 
-Redis (Upstash, Redis Cloud, Railway Redis ou Redis na VPS):
+Ou use uma senha só com letras e números.
 
-```
-REDIS_URI=redis://default:SENHA@HOST:6379
-REDIS_URL=redis://default:SENHA@HOST:6379
-REDIS_URI_ACK=redis://default:SENHA@HOST:6379
-REDIS_HOST=HOST
-REDIS_PORT=6379
-REDIS_PASSWORD=SENHA
-```
+Copie a URI para o Bloco de Notas. Não compartilhe no grupo da família.
 
-URLs públicas:
+## Passo 4 — Colar no backend
 
-```
-BACKEND_URL=https://api.seudominio.com
-PUBLIC_BACKEND_URL=https://api.seudominio.com
-FRONTEND_URL=https://crm.seudominio.com
-```
+Abra `backend/.env`.
 
----
+1. `DEV_NO_DB=false` (se estiver `true`, o CRM **finge** que não há banco e ignora o Supabase).
+2. `DB_DIALECT=postgres`
+3. `DB_SSL=true` (nuvem sempre com SSL).
+4. `DATABASE_URL=` e cole a URI **sem aspas e sem espaço no começo**.
 
-## 4. Liberar rede (se o connect falhar)
+Você também pode preencher `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASS`, `DB_NAME=postgres`. Se `DATABASE_URL` estiver certo, o sistema costuma derivar o resto.
 
-**Project Settings → Database → Network bans / Restrictions.**
+5. Salve.
 
-- Em desenvolvimento: pode permitir seu IP.
-- Em produção: permita o IP da VPS ou deixe aberto se o plano não tiver restrição.
+## Passo 5 — Rede e firewall do Supabase
 
-Erro comum: `ENETUNREACH` / timeout = IPv6. Use a URI **pooler IPv4** ou ative o add-on IPv4 do Supabase.
+Em Settings → Database, veja se há **Network restrictions**.
 
-Erro `SSL`: confirme `DB_SSL=true`. O Sequelize deste CRM usa `rejectUnauthorized: false` quando SSL está ligado.
+- Para testar do seu PC: adicione seu IP (o próprio painel costuma mostrar “Add my IP”) ou, em projeto de estudo, deixe 0.0.0.0/0 (qualquer IP) **só se você aceitar o risco**. Em produção, libere o IP da VPS/Railway.
+- Se o erro for timeout ou `ENETUNREACH`: seu provedor ou a Railway está tentando IPv6 e o Supabase Free às vezes só fala IPv6 bem. Soluções: add-on **IPv4** no Supabase, ou URI do pooler IPv4 que eles documentam na mesma tela.
 
----
+## Passo 6 — Instalar e migrar
 
-## 5. Instalar dependências e migrar
+No PowerShell, pasta `backend`:
 
-No computador ou no servidor, pasta `backend/`:
-
-```bash
-cd VBSOLUTIONCRMCodigoFonte-main/backend
+```powershell
 npm install
 npm run db:migrate
 ```
 
-O `npm start` de produção também roda migrate (`prepare-and-migrate.js`).
+O migrate é o “pedreiro”: lê arquivos na pasta `backend/src/database/migrations` e constrói as tabelas.
 
-Confira no Supabase: **Table Editor** — devem aparecer tabelas (`Users`, `Companies`, `Tickets`, `leads_sales`, `imoveis`, `realty_modulos`, etc.).
+**Sucesso:** volta ao prompt sem stack enorme de erro.
 
-Crie o primeiro admin (scripts no `package.json` do backend), por exemplo:
+**Falha de senha:** `password authentication failed` — URI com senha errada ou caractere especial não codificado.
 
-```bash
+**Falha SSL:** coloque `DB_SSL=true`.
+
+**Falha SSL com certificado:** este projeto usa `rejectUnauthorized: false` quando SSL está ligado, justamente para hosts gerenciados. Se mesmo assim falhar, a URI está incompleta.
+
+## Passo 7 — Conferir no Table Editor
+
+No Supabase, menu **Table Editor**. Você deve ver várias tabelas, entre elas coisas como Users, Companies, Tickets, Messages, leads_sales, imoveis, realty_modulos (os nomes exatos podem ter maiúsculas/minúsculas conforme o Sequelize).
+
+Se estiver vazio depois de um migrate “sucesso”, você migrando **outro** banco (URI de outro projeto).
+
+## Passo 8 — Primeiro usuário
+
+Ainda em `backend`:
+
+```powershell
 npm run admin:local-dev
 ```
 
-(ajuste e-mail/senha depois no painel **Usuários**.)
+Leia o que o script imprimir. Guarde o login.
 
----
+Reinicie `npm run dev` e entre no painel. Agora os dados **ficam** quando você cria um imóvel ou um lead.
 
-## 6. Storage e Auth do Supabase (opcional)
+## Passo 9 — Redis continua sendo outro serviço
 
-| Recurso Supabase | No VB Solution |
-|---|---|
-| Auth | **Não.** Login é JWT nas tabelas `Users` |
-| Storage | **Opcional.** Mídias do WhatsApp vão para o disco da API; se quiser bucket, é extra |
-| Realtime | **Não.** O CRM usa Socket.IO na API |
-| Edge Functions | **Não** são usadas pelo painel |
+Supabase **não** substitui Redis. Sem Redis em produção: campanhas e filas sofrem. Suba Redis na Railway ou na VPS.
 
-Não coloque `VITE_SUPABASE_ANON_KEY` no frontend React do VB. A URL da API é `REACT_APP_BACKEND_URL`.
+## Passo 10 — Storage e Auth do Supabase
 
----
+Pode ignorar **Authentication**, **Storage** e **Edge Functions** para o CRM funcionar. Fotos de WhatsApp o backend grava no disco do servidor (ou volume). Login é JWT na API.
 
-## 7. Testar a conexão
+Se um dia quiser jogar imagens no Storage, isso seria um desenvolvimento extra, não está neste manual de instalação.
 
-```bash
-cd backend
-npm run dev
-```
+## Passo 11 — Não misturar com o Radar antigo
 
-Log esperado: `DB: usando DATABASE_URL` ou `DB: usando DB_HOST ...`.
+Se você já tinha tabelas do Vite/Radar no mesmo projeto Supabase, **não rode o migrate em cima sem backup**. O certo: **projeto Supabase novo** só para o VB Solution. Dados antigos se exportam depois (CSV) com calma.
 
-Se aparecer `DEV_NO_DB` no log, a variável ainda está `true` — desligue.
+## Passo 12 — Backup
 
-Login no painel (`frontend`, porta 5181 em local) com o usuário criado no seed.
+Plano Free: backup limitado. Exporte de vez em quando:
 
----
+Instale cliente `psql`/`pg_dump` ou use o SQL Editor para dumps pontuais.
 
-## 8. Backup
-
-Supabase: **Database → Backups** (plano Pro) ou:
+Exemplo (Git Bash), com SSL:
 
 ```bash
-pg_dump "postgresql://postgres:SENHA@HOST:5432/postgres?sslmode=require" -F c -f vbsolution.dump
+pg_dump "SUA_DATABASE_URL?sslmode=require" -F c -f backup-crm.dump
 ```
 
----
+Guarde o arquivo fora do notebook da empresa.
 
-Próximos passos de hospedagem:
-
-- [06-VPS.md](./06-VPS.md) — API na VPS, banco no Supabase
-- [07-RAILWAY.md](./07-RAILWAY.md) — API no Railway, banco no Supabase (sem plugin Postgres)
-- [15-VERCEL.md](./15-VERCEL.md) — **somente o frontend** na Vercel
+Pronto. Banco na nuvem. Agora a API precisa apontar para essa mesma URI em produção ([07-RAILWAY.md](./07-RAILWAY.md) ou [06-VPS.md](./06-VPS.md)).

@@ -1,49 +1,103 @@
-# Hospedagem em VPS (Ubuntu)
+# Subir a API numa VPS Ubuntu (passo a passo de leigo)
 
-Exemplo: 2 vCPU, 4 GB RAM, Ubuntu 22.04. Domínio `crm.seudominio.com` (painel) e `api.seudominio.com` (backend).
+VPS é um computador alugado na nuvem (DigitalOcean, Contabo, Hostinger, AWS Lightsail…). Você entra nele por SSH, como se fosse o Prompt de Comando, mas o computador fica ligado 24 h.
 
-**Banco no Supabase (recomendado para o cliente):** não instale PostgreSQL na VPS. Siga [14-SUPABASE-PASSO-A-PASSO.md](./14-SUPABASE-PASSO-A-PASSO.md) e no `.env` da API use `DATABASE_URL` + `DB_SSL=true`. Na VPS fique **Node + Redis + Nginx + PM2**. O painel pode ir para a [Vercel](./15-VERCEL.md) em vez do Nginx estático.
+**Recomendação deste cliente:** Postgres no **Supabase**, painel na **Vercel**, e nesta VPS só: **Node + Redis + Nginx + PM2**. Assim a VPS não precisa ser enorme.
 
-Se quiser Postgres local na VPS, continue abaixo (`apt install postgresql`).
+Mínimo sugerido: 2 vCPU, 4 GB de RAM, Ubuntu 22.04, disco 40 GB+. WhatsApp come RAM.
 
-## 1. Servidor
+Domínios de exemplo neste texto:
 
-```bash
-sudo apt update && sudo apt upgrade -y
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt install -y nodejs nginx postgresql redis-server git certbot python3-certbot-nginx
-sudo npm i -g pm2
+- painel: `https://crm.suaempresa.com` (pode ser Vercel)
+- API: `https://api.suaempresa.com` (esta VPS)
+
+---
+
+## Passo 1 — Comprar a VPS e anotar
+
+Anote: IP (tipo `192.0.2.10`), usuário (`root` ou `ubuntu`), senha ou chave SSH.
+
+No Windows, abra PowerShell:
+
+```powershell
+ssh root@IP_DA_VPS
 ```
 
-Crie o banco (usuário e `vbsolution`) como em [03-BANCO-DE-DADOS.md](./03-BANCO-DE-DADOS.md).
+Na primeira vez pergunta se confia no servidor: digite `yes`. Depois a senha (não aparece).
 
-## 2. Código
+## Passo 2 — Atualizar o Ubuntu
+
+```bash
+sudo apt update
+sudo apt upgrade -y
+```
+
+Pode pedir para reiniciar serviços: Enter nas opções padrão.
+
+## Passo 3 — Instalar Node 20, Nginx, Redis, Git, certificado
+
+```bash
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs nginx redis-server git certbot python3-certbot-nginx
+node -v
+```
+
+Tem que mostrar v20.
+
+Instale o PM2 (fica rodando a API se o SSH fechar):
+
+```bash
+sudo npm install -g pm2
+```
+
+**Postgres na VPS?** Só se você **não** for usar Supabase. Aí: `sudo apt install -y postgresql` e [03-BANCO-DE-DADOS.md](./03-BANCO-DE-DADOS.md). Com Supabase, pule o Postgres local.
+
+## Passo 4 — Ligar o Redis
+
+```bash
+sudo systemctl enable redis-server
+sudo systemctl start redis-server
+redis-cli ping
+```
+
+Resposta: `PONG`.
+
+## Passo 5 — Colocar o código no servidor
 
 ```bash
 sudo mkdir -p /var/www/vbsolution
 sudo chown $USER:$USER /var/www/vbsolution
 cd /var/www/vbsolution
-# copie o repositório (git clone ou scp do zip)
+git clone https://github.com/visaobusinesstech/codigo-fonte-COUTINHO.git .
 ```
 
-## 3. Backend
+Se o Git pedir login, use um **Personal Access Token** no lugar da senha (GitHub → Settings → Developer settings → Tokens).
+
+Ajuste o caminho: o `backend` pode estar em `VBSOLUTIONCRMCodigoFonte-main/backend` dentro do clone. Entre **nessa** pasta. Confira com `ls`.
+
+## Passo 6 — `.env` da API
 
 ```bash
-cd /var/www/vbsolution/backend
+cd /var/www/vbsolution/VBSOLUTIONCRMCodigoFonte-main/backend
 cp .env.example .env
 nano .env
 ```
 
-Ajuste:
+`nano` é o editor. Setas para mexer, Ctrl+O Enter para salvar, Ctrl+X para sair.
 
-```
-NODE_ENV=production
-PORT=3000
-BACKEND_URL=https://api.seudominio.com
-PUBLIC_BACKEND_URL=https://api.seudominio.com
-FRONTEND_URL=https://crm.seudominio.com
-DEV_NO_DB=false
-```
+Preencha como em [04-VARIAVEIS-DE-AMBIENTE.md](./04-VARIAVEIS-DE-AMBIENTE.md):
+
+- `DEV_NO_DB=false`
+- `NODE_ENV=production`
+- `DATABASE_URL` do Supabase e `DB_SSL=true`
+- JWT novos
+- Redis `redis://127.0.0.1:6379` (nesta máquina)
+- `PORT=3000`
+- `BACKEND_URL=https://api.suaempresa.com`
+- `PUBLIC_BACKEND_URL=https://api.suaempresa.com`
+- `FRONTEND_URL=https://crm.suaempresa.com` (ou URL da Vercel)
+
+## Passo 7 — Instalar, migrar, build, ligar
 
 ```bash
 npm install --omit=dev
@@ -54,32 +108,30 @@ pm2 save
 pm2 startup
 ```
 
-Se o start oficial for `npm start` (migrate + `dist/server.js`), use isso no PM2:
+O último comando `pm2 startup` **imprime** um comando `sudo ...` — copie e execute para a API voltar depois de reboot.
+
+`pm2 logs vbs-api` — deve dizer que o servidor iniciou. Erro de banco aparece aqui.
+
+Se o `package.json` mandar `npm start` (migrate + dist), pode usar:
 
 ```bash
 pm2 start npm --name vbs-api -- start
 ```
 
-## 4. Frontend
+## Passo 8 — Nginx como porteiro (HTTPS e WebSocket)
 
 ```bash
-cd /var/www/vbsolution/frontend
-echo REACT_APP_BACKEND_URL=https://api.seudominio.com > .env.production
-npm install
-npm run build
+sudo nano /etc/nginx/sites-available/vbs-api
 ```
 
-A pasta `frontend/build` será o site estático.
-
-## 5. Nginx
-
-`/etc/nginx/sites-available/vbs-api`:
+Cole (trocando o domínio):
 
 ```nginx
 server {
   listen 80;
-  server_name api.seudominio.com;
+  server_name api.suaempresa.com;
   client_max_body_size 50M;
+
   location / {
     proxy_pass http://127.0.0.1:3000;
     proxy_http_version 1.1;
@@ -93,28 +145,27 @@ server {
 }
 ```
 
-`/etc/nginx/sites-available/vbs-web`:
-
-```nginx
-server {
-  listen 80;
-  server_name crm.seudominio.com;
-  root /var/www/vbsolution/frontend/build;
-  index index.html;
-  location / {
-    try_files $uri /index.html;
-  }
-}
-```
+As linhas `Upgrade` e `Connection` são o que deixam o **chat ao vivo** funcionar. Sem elas, o ticket “pisca” e cai.
 
 ```bash
 sudo ln -s /etc/nginx/sites-available/vbs-api /etc/nginx/sites-enabled/
-sudo ln -s /etc/nginx/sites-available/vbs-web /etc/nginx/sites-enabled/
-sudo nginx -t && sudo systemctl reload nginx
-sudo certbot --nginx -d api.seudominio.com -d crm.seudominio.com
+sudo nginx -t
+sudo systemctl reload nginx
 ```
 
-## 6. Firewall
+No site do domínio, crie um **A record**: `api` → IP da VPS.
+
+Espere o DNS (às vezes 5 minutos, às vezes algumas horas). Teste: `ping api.suaempresa.com`.
+
+## Passo 9 — Certificado grátis (HTTPS)
+
+```bash
+sudo certbot --nginx -d api.suaempresa.com
+```
+
+Informe o e-mail, aceite, escolha redirect para HTTPS. Sem HTTPS o WhatsApp Cloud e os navegadores modernos reclamam.
+
+## Passo 10 — Firewall
 
 ```bash
 sudo ufw allow OpenSSH
@@ -123,13 +174,31 @@ sudo ufw allow 443
 sudo ufw enable
 ```
 
-Não exponha 5432/6379 na internet.
+**Não** libere 5432 nem 3000 para o mundo. O mundo fala com 443; o Nginx fala com 3000 por dentro.
 
-## 7. Atualizar
+## Passo 11 — Painel: Vercel ou Nginx estático
+
+Vercel: [15-VERCEL.md](./15-VERCEL.md) com `REACT_APP_BACKEND_URL=https://api.suaempresa.com`.
+
+Ou, nesta mesma VPS, `npm run build` no frontend e um `server` Nginx com `root` na pasta `build` e `try_files $uri /index.html`. Detalhes em [08-HOSPEDAGEM-FRONTEND.md](./08-HOSPEDAGEM-FRONTEND.md).
+
+## Passo 12 — Atualizar o sistema no futuro
 
 ```bash
 cd /var/www/vbsolution
 git pull
-cd backend && npm install --omit=dev && npm run build && npm run db:migrate && pm2 restart vbs-api
-cd ../frontend && npm install && npm run build
+cd VBSOLUTIONCRMCodigoFonte-main/backend
+npm install --omit=dev
+npm run build
+npm run db:migrate
+pm2 restart vbs-api
 ```
+
+Se o frontend também estiver nesta máquina, entre em `frontend`, `npm install`, `npm run build`.
+
+## Se der ruim
+
+- 502 Bad Gateway: API caiu. `pm2 logs vbs-api`.
+- Certbot falha: DNS ainda não aponta para este IP.
+- WhatsApp desconecta: VPS reiniciou sem `pm2 startup`, ou Redis caiu (`systemctl status redis`).
+- Disco cheio: `df -h` e limpe logs `pm2 flush`.
