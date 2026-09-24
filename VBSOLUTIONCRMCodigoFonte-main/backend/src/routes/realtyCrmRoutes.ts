@@ -93,5 +93,7 @@ routes.delete("/realty-modulos/:id", isAuth, RealtyIntelController.removeModulo)
 routes.post("/avaliacao", isAuth, RealtyIntelController.avaliarImovel);
 routes.get("/jornada", isAuth, RealtyIntelController.jornadaCliente);
 routes.get("/inteligencia", isAuth, RealtyIntelController.inteligenciaMercado);
+routes.get("/realty-dashboard", isAuth, RealtyIntelController.realtyDashboard);
+routes.post("/realty-seed-demo", isAuth, RealtyIntelController.seedRealtyDemo);
 
 export default routes;

@@ -20,7 +20,7 @@ const createCaptacao = (payload) =>
 const Captacao = () => (
   <RealtyCrudPage
     title="Captação"
-    subtitle="Imóveis em captação — mesma base do inventário imobiliário."
+    subtitle="Imóveis em captação — inputs do pipeline legado (endereço, operação, valor estimado, corretor)."
     listKey="imoveis"
     loader={listCaptacao}
     creator={createCaptacao}
@@ -31,13 +31,24 @@ const Captacao = () => (
       <>
         <span className="realty-chip">{item.status || "captacao"}</span>
         <span>
-          {item.city || "—"} · {formatBRL(item.price)}
+          {item.city || "—"} · {item.neighborhood || ""} · {formatBRL(item.price)}
         </span>
       </>
     )}
     fields={[
-      { name: "title", label: "Título", required: true },
-      { name: "type", label: "Tipo", defaultValue: "apartamento" },
+      { name: "title", label: "Título / referência", required: true },
+      { name: "code", label: "Código do imóvel" },
+      { name: "type", label: "Tipo de imóvel", defaultValue: "apartamento" },
+      {
+        name: "purpose",
+        label: "Operação",
+        type: "select",
+        defaultValue: "venda",
+        options: [
+          { value: "venda", label: "Venda" },
+          { value: "aluguel", label: "Aluguel" },
+        ],
+      },
       {
         name: "status",
         label: "Status",
@@ -45,10 +56,18 @@ const Captacao = () => (
         defaultValue: "captacao",
         options: IMOVEL_STATUSES.map((s) => ({ value: s, label: s })),
       },
-      { name: "price", label: "Preço", type: "number", cast: "number" },
-      { name: "city", label: "Cidade" },
+      { name: "price", label: "Valor estimado (R$)", type: "number", cast: "number" },
+      { name: "address", label: "Endereço" },
       { name: "neighborhood", label: "Bairro" },
-      { name: "description", label: "Descrição", type: "textarea" },
+      { name: "city", label: "Cidade" },
+      { name: "state", label: "UF", defaultValue: "SP" },
+      { name: "bedrooms", label: "Quartos", type: "number", cast: "number" },
+      { name: "suites", label: "Suítes", type: "number", cast: "number" },
+      { name: "parkingSpots", label: "Vagas", type: "number", cast: "number" },
+      { name: "areaM2", label: "Área m²", type: "number", cast: "number" },
+      { name: "proprietarioId", label: "ID Proprietário", type: "number", cast: "number" },
+      { name: "userId", label: "Corretor captador (ID user)", type: "number", cast: "number" },
+      { name: "description", label: "Observações / origem da captação", type: "textarea" },
     ]}
   />
 );

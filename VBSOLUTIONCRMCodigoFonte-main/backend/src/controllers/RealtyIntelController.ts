@@ -26,7 +26,14 @@ import {
 } from "../helpers/portalScraper";
 import { generateSeoContent, computeSeoChecks } from "../helpers/seoContent";
 import RealtyModulo from "../models/RealtyModulo";
+import RealtyFollowup from "../models/RealtyFollowup";
+import RealtyVisita from "../models/RealtyVisita";
+import RealtyProposta from "../models/RealtyProposta";
+import Ticket from "../models/Ticket";
+import User from "../models/User";
+import { Op } from "sequelize";
 import { estimateAvaliacao } from "../helpers/avaliacaoImovel";
+import { DEMO_BY_KIND } from "../helpers/realtyDemoSeed";
 
 export const listGrupos = async (req: Request, res: Response) => {
   const { companyId } = req.user;
@@ -386,6 +393,26 @@ export const listModulos = async (req: Request, res: Response) => {
   const kind = String(req.query.kind || "");
   const where: any = { companyId };
   if (kind) where.kind = kind;
+
+  // Auto-preenche kinds vazios com dados estratégicos do legado
+  if (kind) {
+    const count = await RealtyModulo.count({ where: { companyId, kind } });
+    if (count === 0) {
+      const demos = DEMO_BY_KIND[kind] || [];
+      for (const demo of demos) {
+        await RealtyModulo.create({
+          kind,
+          title: demo.title,
+          status: demo.status || "aberto",
+          notes: demo.notes || null,
+          value: demo.value ?? null,
+          payload: demo.payload || null,
+          companyId
+        } as any);
+      }
+    }
+  }
+
   const items = await RealtyModulo.findAll({
     where,
     order: [["createdAt", "DESC"]],
@@ -503,4 +530,181 @@ export const inteligenciaMercado = async (req: Request, res: Response) => {
     funil[s] = (funil[s] || 0) + 1;
   }
   return res.json({ leads, imoveis, contratos, mercado, funil });
+};
+
+export const realtyDashboard = async (req: Request, res: Response) => {
+  const { companyId } = req.user;
+  const now = new Date();
+  const startOfDay = new Date(now);
+  startOfDay.setHours(0, 0, 0, 0);
+  const endOfDay = new Date(now);
+  endOfDay.setHours(23, 59, 59, 999);
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+
+  const [
+    totalLeads,
+    leadsMes,
+    leadsWon,
+    leadsQuentes,
+    leadsSemCorretor,
+    imoveis,
+    imoveisCaptacao,
+    imoveisDisponiveis,
+    contratos,
+    followupsPendentes,
+    followupsAtrasados,
+    visitasHoje,
+    propostasAbertas,
+    ticketsAbertos,
+    corretores,
+    landingNovos,
+    leadsSample
+  ] = await Promise.all([
+    LeadSale.count({ where: { companyId } }),
+    LeadSale.count({ where: { companyId, createdAt: { [Op.gte]: startOfMonth } } }),
+    LeadSale.count({
+      where: {
+        companyId,
+        status: { [Op.in]: ["fechado", "ganho", "won", "contrato"] }
+      }
+    }),
+    LeadSale.count({
+      where: {
+        companyId,
+        temperature: { [Op.in]: ["quente", "muito_quente"] }
+      }
+    }).catch(() => 0),
+    LeadSale.count({
+      where: {
+        companyId,
+        [Op.or]: [{ responsibleId: null }, { responsibleId: 0 }]
+      }
+    }).catch(() => 0),
+    Imovel.count({ where: { companyId } }),
+    Imovel.count({ where: { companyId, status: "captacao" } }),
+    Imovel.count({
+      where: { companyId, status: { [Op.in]: ["disponivel", "ativo", "publicado"] } }
+    }),
+    Contrato.count({ where: { companyId } }).catch(() => 0),
+    RealtyFollowup.count({ where: { companyId, status: "pendente" } }).catch(() => 0),
+    RealtyFollowup.count({
+      where: {
+        companyId,
+        status: "pendente",
+        scheduledAt: { [Op.lt]: now }
+      }
+    }).catch(() => 0),
+    RealtyVisita.count({
+      where: {
+        companyId,
+        scheduledAt: { [Op.between]: [startOfDay, endOfDay] }
+      }
+    }).catch(() => 0),
+    RealtyProposta.count({
+      where: {
+        companyId,
+        status: { [Op.in]: ["enviada", "em_negociacao", "rascunho"] }
+      }
+    }).catch(() => 0),
+    Ticket.count({
+      where: { companyId, status: { [Op.in]: ["open", "pending"] } }
+    }).catch(() => 0),
+    User.count({ where: { companyId } }).catch(() => 0),
+    RealtyModulo.count({
+      where: { companyId, kind: "leads_landing", status: { [Op.ne]: "lido" } }
+    }).catch(() => 0),
+    LeadSale.findAll({
+      where: { companyId },
+      attributes: ["id", "name", "status", "temperature", "value", "followUpAt", "updatedAt"],
+      order: [["updatedAt", "DESC"]],
+      limit: 8
+    })
+  ]);
+
+  const leadsParados = await LeadSale.count({
+    where: {
+      companyId,
+      updatedAt: { [Op.lt]: threeDaysAgo },
+      status: { [Op.notIn]: ["fechado", "ganho", "won", "perdido", "lost"] }
+    }
+  }).catch(() => 0);
+
+  const porStatus = await LeadSale.findAll({
+    where: { companyId },
+    attributes: ["status"],
+    limit: 3000
+  });
+  const funil: Record<string, number> = {};
+  for (const l of porStatus) {
+    const s = l.status || "novo";
+    funil[s] = (funil[s] || 0) + 1;
+  }
+
+  const conversao =
+    totalLeads > 0 ? Math.round((leadsWon / totalLeads) * 1000) / 10 : 0;
+
+  return res.json({
+    kpis: {
+      totalLeads,
+      leadsMes,
+      leadsWon,
+      leadsQuentes,
+      leadsParados,
+      leadsSemCorretor,
+      conversao,
+      imoveis,
+      imoveisCaptacao,
+      imoveisDisponiveis,
+      contratos,
+      followupsPendentes,
+      followupsAtrasados,
+      visitasHoje,
+      propostasAbertas,
+      ticketsAbertos,
+      corretores,
+      landingNovos
+    },
+    funil,
+    recentLeads: leadsSample
+  });
+};
+
+/** Seed estratégico (legado Radar/Coutinho) — só preenche kinds vazios da empresa. */
+export const seedRealtyDemo = async (req: Request, res: Response) => {
+  const { companyId } = req.user;
+  let created = 0;
+  for (const kind of Object.keys(DEMO_BY_KIND)) {
+    const existing = await RealtyModulo.count({ where: { companyId, kind } });
+    if (existing > 0) continue;
+    for (const demo of DEMO_BY_KIND[kind]) {
+      await RealtyModulo.create({
+        kind: demo.kind,
+        title: demo.title,
+        status: demo.status || "aberto",
+        notes: demo.notes || null,
+        value: demo.value ?? null,
+        payload: demo.payload || null,
+        companyId
+      } as any);
+      created += 1;
+    }
+  }
+
+  const fuCount = await RealtyFollowup.count({ where: { companyId } }).catch(() => 0);
+  const lead = await LeadSale.findOne({ where: { companyId }, order: [["id", "ASC"]] });
+  if (fuCount === 0 && lead) {
+    await RealtyFollowup.create({
+      type: "whatsapp",
+      scheduledAt: new Date(Date.now() + 2 * 60 * 60 * 1000),
+      status: "pendente",
+      notes: "Retorno estratégico pós-LP — confirmar interesse e cidade.",
+      result: "",
+      leadSaleId: lead.id,
+      companyId
+    } as any);
+    created += 1;
+  }
+
+  return res.json({ created, message: created ? "Dados estratégicos carregados" : "Já havia dados; nada a criar" });
 };

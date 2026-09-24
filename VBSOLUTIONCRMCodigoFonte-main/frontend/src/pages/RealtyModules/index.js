@@ -15,33 +15,48 @@ import api from "../../services/api";
 import toastError from "../../errors/toastError";
 import { toast } from "react-toastify";
 import { estimateAvaliacao, formatBRL } from "../../helpers/realtyCrm";
+import { KIND_FIELDS, kindCardMeta } from "../../helpers/realtyKindFields";
 
-const kindPage = (kind, title, subtitle, extraFields = []) => {
+const kindPage = (kind, title, subtitle, extraFields) => {
+  const fieldsExtra = extraFields || KIND_FIELDS[kind] || [];
   const Page = () => (
     <RealtyCrudPage
       title={title}
       subtitle={subtitle}
       listKey="items"
-      loader={(params) => realtyIntelService.listModulos(kind)}
+      packPayload
+      loader={() => realtyIntelService.listModulos(kind)}
       creator={(payload) => realtyIntelService.createModulo({ ...payload, kind })}
       updater={realtyIntelService.updateModulo}
       remover={realtyIntelService.deleteModulo}
+      emptyHint="Nenhum registro ainda. Clique em Novo ou use «Carregar dados estratégicos» no Dashboard."
       cardTitle={(item) => item.title}
-      cardMeta={(item) => (
-        <>
-          <span className="realty-chip">{item.status || "aberto"}</span>
-          <span>
-            {item.value != null ? formatBRL(item.value) : "—"} · {item.notes || ""}
-          </span>
-        </>
-      )}
+      cardMeta={(item, display) => kindCardMeta(kind, item, display)}
       fields={[
-        { name: "title", label: "Título", required: true },
-        { name: "status", label: "Status", defaultValue: "aberto" },
-        { name: "value", label: "Valor", type: "number", cast: "number" },
+        {
+          name: "title",
+          label: kind === "leads_landing" ? "Nome do lead" : kind === "corretor" ? "Nome do corretor" : "Título",
+          required: true,
+        },
+        {
+          name: "status",
+          label: "Status",
+          type: "select",
+          defaultValue: "aberto",
+          options: [
+            { value: "aberto", label: "Aberto" },
+            { value: "ativo", label: "Ativo" },
+            { value: "novo", label: "Novo" },
+            { value: "lido", label: "Lido" },
+            { value: "concluido", label: "Concluído" },
+            { value: "pausado", label: "Pausado" },
+            { value: "cancelado", label: "Cancelado" },
+          ],
+        },
+        { name: "value", label: "Valor (R$)", type: "number", cast: "number" },
         { name: "dueDate", label: "Data", type: "date" },
-        { name: "notes", label: "Notas", type: "textarea" },
-        ...extraFields,
+        ...fieldsExtra,
+        { name: "notes", label: "Observações", type: "textarea" },
       ]}
     />
   );
@@ -67,7 +82,7 @@ export const Inadimplencia = kindPage(
 export const Nutricao = () => (
   <RealtyCrudPage
     title="Nutrição de leads"
-    subtitle="Cadências para leads frios — mensagens e retornos periódicos no WhatsApp."
+    subtitle="Cadências para leads frios — mensagens e retornos periódicos no WhatsApp (legado Radar/Coutinho)."
     listKey="items"
     loader={realtyService.listNutricao}
     creator={realtyService.createNutricao}
@@ -135,9 +150,10 @@ export const ProspeccaoDiaria = () => (
     fields={[
       { name: "title", label: "Título / meta", required: true },
       { name: "prospectDate", label: "Data", type: "date" },
+      { name: "userId", label: "Corretor (ID user)", type: "number", cast: "number" },
       { name: "leadSaleId", label: "ID do Lead", type: "number", cast: "number" },
       { name: "phone", label: "Telefone / WhatsApp" },
-      { name: "targetCount", label: "Meta (qtd)", type: "number", cast: "number", defaultValue: 1 },
+      { name: "targetCount", label: "Meta (qtd)", type: "number", cast: "number", defaultValue: 10 },
       { name: "doneCount", label: "Feitos", type: "number", cast: "number", defaultValue: 0 },
       {
         name: "status",
@@ -707,37 +723,30 @@ export const AgendaImobiliaria = () => (
         ],
       },
       { name: "location", label: "Local" },
-      { name: "result", label: "Resultado" },
+      {
+        name: "result",
+        label: "Reação do cliente",
+        type: "select",
+        defaultValue: "",
+        options: [
+          { value: "", label: "—" },
+          { value: "gostou", label: "Gostou do imóvel" },
+          { value: "mais_opcoes", label: "Pediu mais opções" },
+          { value: "nao_gostou", label: "Não gostou" },
+        ],
+      },
+      { name: "userId", label: "Corretor (ID user)", type: "number", cast: "number" },
       { name: "ticketId", label: "Ticket WhatsApp", type: "number", cast: "number" },
-      { name: "notes", label: "Observações", type: "textarea" },
+      { name: "notes", label: "Observações da visita", type: "textarea" },
     ]}
   />
 );
 
-export const Corretores = () => {
-  const [users, setUsers] = useState([]);
-  useEffect(() => {
-    api.get("/users", { params: { searchParam: "" } }).then((r) => {
-      setUsers(r.data.users || r.data || []);
-    }).catch(toastError);
-  }, []);
-  return (
-    <MainContainer>
-      <div className="realty-page">
-        <h1 className="realty-page__title">Corretores</h1>
-        <p className="realty-page__subtitle">
-          Equipe comercial. Cadastro completo de usuários permanece em <Link to="/users">Usuários</Link>.
-        </p>
-        {(Array.isArray(users) ? users : []).map((u) => (
-          <article key={u.id} className="realty-card" style={{ marginBottom: 8 }}>
-            <h3>{u.name}</h3>
-            <p>{u.email} · {u.profile}</p>
-          </article>
-        ))}
-      </div>
-    </MainContainer>
-  );
-};
+export const Corretores = kindPage(
+  "corretor",
+  "Corretores",
+  "Equipe comercial com CRECI, capacidade e especialidades (legado Radar/Coutinho). Usuários do sistema: /users."
+);
 
 export const Automacoes = kindPage(
   "automacao",
@@ -914,46 +923,168 @@ export const WhatsappImobiliario = () => (
     <div className="realty-page">
       <h1 className="realty-page__title">WhatsApp imobiliário</h1>
       <p className="realty-page__subtitle">
-        Hub do atendimento integrado ao funil: use o ticket do lead, envie matches pelo Pipeline e acompanhe follow-ups/visitas.
+        Hub do atendimento integrado ao funil: ticket do lead, match de imóveis, follow-ups e captação RadarZAP.
       </p>
       <div className="realty-page__grid">
         <article className="realty-card">
           <h3>Atendimento</h3>
-          <p>Inbox canônico do WhatsApp (Baileys / oficial).</p>
-          <Link className="realty-page__btn" to="/tickets">Abrir tickets</Link>
+          <p>Inbox canônico do WhatsApp. No drawer do contato, use o painel CRM (match + follow-up).</p>
+          <Link className="realty-page__btn" to="/tickets">
+            Abrir tickets
+          </Link>
         </article>
         <article className="realty-card">
           <h3>Pipeline + match</h3>
           <p>Envie imóveis compatíveis pelo botão “Enviar opções no WhatsApp”.</p>
-          <Link className="realty-page__btn" to="/pipeline">Abrir pipeline</Link>
+          <Link className="realty-page__btn" to="/pipeline">
+            Abrir pipeline
+          </Link>
         </article>
         <article className="realty-card">
-          <h3>Follow-up</h3>
-          <p>Histórico de retornos vinculados ao lead.</p>
-          <Link className="realty-page__btn" to="/followups">Abrir follow-ups</Link>
+          <h3>Follow-up estratégico</h3>
+          <p>Fila de retornos (ligação, WA, visita) vinculada ao lead e ao ticket.</p>
+          <Link className="realty-page__btn" to="/followups">
+            Abrir follow-ups
+          </Link>
+        </article>
+        <article className="realty-card">
+          <h3>Leads Landing</h3>
+          <p>Entradas de LP — converter em lead/ticket no atendimento.</p>
+          <Link className="realty-page__btn" to="/leads-landing">
+            Abrir CRM Landing
+          </Link>
         </article>
         <article className="realty-card">
           <h3>RadarZAP</h3>
           <p>Captação de grupos WhatsApp → lead.</p>
-          <Link className="realty-page__btn" to="/radarzap">Abrir RadarZAP</Link>
+          <Link className="realty-page__btn" to="/radarzap">
+            Abrir RadarZAP
+          </Link>
         </article>
         <article className="realty-card">
           <h3>Conexões</h3>
           <p>Sessões WhatsApp da empresa.</p>
-          <Link className="realty-page__btn" to="/connections">Abrir conexões</Link>
+          <Link className="realty-page__btn" to="/connections">
+            Abrir conexões
+          </Link>
         </article>
       </div>
     </div>
   </MainContainer>
 );
-export const RealtyDashboard = () => (
-  <MainContainer>
-    <div className="realty-page">
-      <h1 className="realty-page__title">Dashboard imobiliário</h1>
-      <p className="realty-page__subtitle">
-        Visão Radar. O início do VBSolution continua em <Link to="/">Início</Link>. Inteligência em{" "}
-        <Link to="/inteligencia">Inteligência</Link>, funil em <Link to="/pipeline">CRM Pipeline</Link>.
-      </p>
-    </div>
-  </MainContainer>
-);
+
+export const RealtyDashboard = () => {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const d = await realtyIntelService.dashboard();
+      setData(d);
+    } catch (err) {
+      toastError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    (async () => {
+      try {
+        await realtyIntelService.seedDemo();
+      } catch (_) {
+        /* seed opcional */
+      }
+      await load();
+    })();
+  }, []);
+
+  const seed = async () => {
+    try {
+      const r = await realtyIntelService.seedDemo();
+      toast.success(r.message || `${r.created} registros criados`);
+      await load();
+    } catch (err) {
+      toastError(err);
+    }
+  };
+
+  const k = data?.kpis || {};
+  const cards = [
+    { label: "Leads totais", value: k.totalLeads, to: "/leads-sales" },
+    { label: "Leads no mês", value: k.leadsMes, to: "/leads-sales" },
+    { label: "Leads quentes", value: k.leadsQuentes, to: "/pipeline" },
+    { label: "Parados 3+ dias", value: k.leadsParados, to: "/followups" },
+    { label: "Conversão %", value: k.conversao, to: "/pipeline" },
+    { label: "Follow-ups pendentes", value: k.followupsPendentes, to: "/followups" },
+    { label: "Follow-ups atrasados", value: k.followupsAtrasados, to: "/followups" },
+    { label: "Visitas hoje", value: k.visitasHoje, to: "/agenda" },
+    { label: "Propostas abertas", value: k.propostasAbertas, to: "/propostas" },
+    { label: "Imóveis / disponíveis", value: `${k.imoveisDisponiveis || 0}/${k.imoveis || 0}`, to: "/imoveis" },
+    { label: "Em captação", value: k.imoveisCaptacao, to: "/captacao" },
+    { label: "Tickets WA abertos", value: k.ticketsAbertos, to: "/tickets" },
+    { label: "Landing novos", value: k.landingNovos, to: "/leads-landing" },
+    { label: "Sem corretor", value: k.leadsSemCorretor, to: "/fila-distribuicao" },
+    { label: "Contratos", value: k.contratos, to: "/contratos" },
+    { label: "Corretores (users)", value: k.corretores, to: "/corretores" },
+  ];
+
+  const funilEntries = Object.entries(data?.funil || {});
+
+  return (
+    <MainContainer autoHeight>
+      <div className="realty-page">
+        <div className="realty-page__header">
+          <div>
+            <h1 className="realty-page__title">Dashboard imobiliário</h1>
+            <p className="realty-page__subtitle">
+              Indicadores estratégicos (Radar + Coutinho) · Início WhatsApp em <Link to="/">Início</Link>
+            </p>
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <button type="button" className="realty-page__btn realty-page__btn--ghost" onClick={load}>
+              {loading ? "Atualizando…" : "Atualizar"}
+            </button>
+            <button type="button" className="realty-page__btn" onClick={seed}>
+              Carregar dados estratégicos
+            </button>
+          </div>
+        </div>
+        <div className="realty-page__grid">
+          {cards.map((c) => (
+            <Link key={c.label} to={c.to} className="realty-card" style={{ textDecoration: "none", color: "inherit" }}>
+              <p style={{ margin: 0, fontSize: 12, opacity: 0.7 }}>{c.label}</p>
+              <h2 style={{ margin: "6px 0 0", fontSize: 28 }}>{c.value ?? "—"}</h2>
+            </Link>
+          ))}
+        </div>
+        {funilEntries.length > 0 && (
+          <div className="realty-card" style={{ marginTop: 16 }}>
+            <h3>Funil por status</h3>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {funilEntries.map(([status, count]) => (
+                <span key={status} className="realty-chip">
+                  {status}: {count}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+        {(data?.recentLeads || []).length > 0 && (
+          <div className="realty-card" style={{ marginTop: 16 }}>
+            <h3>Leads recentes</h3>
+            <ul style={{ margin: 0, paddingLeft: 18 }}>
+              {data.recentLeads.map((l) => (
+                <li key={l.id}>
+                  #{l.id} {l.name} · {l.status}
+                  {l.temperature ? ` · ${l.temperature}` : ""}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    </MainContainer>
+  );
+};

@@ -11,12 +11,13 @@ import realtyService from "../../services/realtyService";
 const Followups = () => (
   <RealtyCrudPage
     title="Follow-up"
-    subtitle="Fila de retornos com histórico — vinculada ao lead e ao WhatsApp."
+    subtitle="Fila estratégica de retornos (Radar/Coutinho) — ligada ao lead, corretor e WhatsApp do atendimento."
     listKey="followups"
     loader={realtyService.listFollowups}
     creator={realtyService.createFollowup}
     updater={realtyService.updateFollowup}
     remover={realtyService.deleteFollowup}
+    emptyHint="Nenhum follow-up. Crie um retorno ou use «Carregar dados estratégicos» no Dashboard."
     cardTitle={(item) => `Lead #${item.leadSaleId} · ${item.type || "whatsapp"}`}
     cardMeta={(item) => (
       <>
@@ -24,6 +25,7 @@ const Followups = () => (
         <span>
           {item.scheduledAt ? new Date(item.scheduledAt).toLocaleString("pt-BR") : "sem data"}
           {item.result ? ` · ${item.result}` : ""}
+          {item.ticketId ? ` · ticket #${item.ticketId}` : ""}
         </span>
       </>
     )}
@@ -39,9 +41,12 @@ const Followups = () => (
           { value: "ligacao", label: "Ligação" },
           { value: "email", label: "E-mail" },
           { value: "visita", label: "Visita" },
+          { value: "reuniao", label: "Reunião" },
+          { value: "outro", label: "Outro" },
         ],
       },
       { name: "scheduledAt", label: "Agendado para", type: "datetime-local", required: true },
+      { name: "completedAt", label: "Concluído em", type: "datetime-local" },
       {
         name: "status",
         label: "Status",
@@ -53,9 +58,10 @@ const Followups = () => (
           { value: "cancelado", label: "Cancelado" },
         ],
       },
-      { name: "result", label: "Resultado" },
+      { name: "userId", label: "Corretor (ID user)", type: "number", cast: "number" },
+      { name: "result", label: "Resultado / observações do retorno" },
       { name: "ticketId", label: "Ticket WhatsApp", type: "number", cast: "number" },
-      { name: "notes", label: "Observações", type: "textarea" },
+      { name: "notes", label: "Descrição / briefing", type: "textarea" },
     ]}
   />
 );

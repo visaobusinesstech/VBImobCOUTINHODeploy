@@ -20,6 +20,11 @@ const RealtyCrudPage = ({
   fields,
   cardTitle,
   cardMeta,
+  /** When true, non-core fields are stored in `payload` JSON (realty_modulos). */
+  packPayload = false,
+  coreFields = ["title", "status", "value", "dueDate", "notes"],
+  emptyHint = "Nenhum registro ainda. Clique em Novo e preencha os campos estratégicos.",
+  headerActions = null,
 }) => {
   const [items, setItems] = useState([]);
   const [search, setSearch] = useState("");
@@ -35,6 +40,52 @@ const RealtyCrudPage = ({
     });
     return next;
   }, [fields]);
+
+  const flattenItem = (item) => {
+    if (!item) return emptyForm;
+    const next = { ...emptyForm };
+    fields.forEach((f) => {
+      if (item[f.name] != null && item[f.name] !== "") {
+        next[f.name] = item[f.name];
+      } else if (item.payload && item.payload[f.name] != null) {
+        next[f.name] = item.payload[f.name];
+      } else {
+        next[f.name] = f.defaultValue != null ? f.defaultValue : "";
+      }
+    });
+    return next;
+  };
+
+  const buildPayload = (raw) => {
+    const data = { ...raw };
+    fields.forEach((f) => {
+      if (f.cast === "number") {
+        data[f.name] = data[f.name] === "" || data[f.name] == null ? null : Number(data[f.name]);
+      }
+      if (f.cast === "boolean") {
+        data[f.name] = data[f.name] === true || data[f.name] === "true";
+      }
+      if (f.type === "datetime-local" && data[f.name]) {
+        data[f.name] = new Date(data[f.name]).toISOString();
+      }
+      if (f.name === "images" && typeof data.images === "string") {
+        data.images = data.images
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+      }
+    });
+
+    if (!packPayload) return data;
+
+    const core = {};
+    const payload = {};
+    Object.keys(data).forEach((key) => {
+      if (coreFields.includes(key)) core[key] = data[key];
+      else payload[key] = data[key];
+    });
+    return { ...core, payload };
+  };
 
   const load = async () => {
     setLoading(true);
@@ -60,36 +111,15 @@ const RealtyCrudPage = ({
   };
 
   const openEdit = (item) => {
-    const next = { ...emptyForm };
-    fields.forEach((f) => {
-      next[f.name] = item[f.name] != null ? item[f.name] : "";
-    });
     setEditing(item);
-    setForm(next);
+    setForm(flattenItem(item));
     setOpen(true);
   };
 
   const save = async (e) => {
     e.preventDefault();
     try {
-      const payload = { ...form };
-      fields.forEach((f) => {
-        if (f.cast === "number") {
-          payload[f.name] = payload[f.name] === "" ? null : Number(payload[f.name]);
-        }
-        if (f.cast === "boolean") {
-          payload[f.name] = payload[f.name] === true || payload[f.name] === "true";
-        }
-        if (f.type === "datetime-local" && payload[f.name]) {
-          payload[f.name] = new Date(payload[f.name]).toISOString();
-        }
-        if (f.name === "images" && typeof payload.images === "string") {
-          payload.images = payload.images
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean);
-        }
-      });
+      const payload = buildPayload(form);
       if (editing) await updater(editing.id, payload);
       else await creator(payload);
       toast.success(editing ? "Registro atualizado" : "Registro criado");
@@ -111,6 +141,12 @@ const RealtyCrudPage = ({
     }
   };
 
+  const display = (item, name) => {
+    if (item[name] != null && item[name] !== "") return item[name];
+    if (item.payload && item.payload[name] != null) return item.payload[name];
+    return "";
+  };
+
   return (
     <MainContainer autoHeight>
       <div className="realty-page">
@@ -119,9 +155,12 @@ const RealtyCrudPage = ({
             <h1 className="realty-page__title">{title}</h1>
             <p className="realty-page__subtitle">{subtitle}</p>
           </div>
-          <button type="button" className="realty-page__btn" onClick={openCreate}>
-            Novo
-          </button>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {headerActions}
+            <button type="button" className="realty-page__btn" onClick={openCreate}>
+              Novo
+            </button>
+          </div>
         </div>
         <div className="realty-page__toolbar">
           <input
@@ -136,13 +175,13 @@ const RealtyCrudPage = ({
           </button>
         </div>
         {items.length === 0 ? (
-          <div className="realty-empty">Nenhum registro ainda.</div>
+          <div className="realty-empty">{emptyHint}</div>
         ) : (
           <div className="realty-page__grid">
             {items.map((item) => (
               <article key={item.id} className="realty-card">
-                <h3>{cardTitle(item)}</h3>
-                <div>{cardMeta(item)}</div>
+                <h3>{cardTitle ? cardTitle(item, display) : item.title}</h3>
+                <div>{cardMeta ? cardMeta(item, display) : null}</div>
                 <div className="realty-card__actions">
                   <button type="button" className="realty-page__btn realty-page__btn--ghost" onClick={() => openEdit(item)}>
                     Editar
@@ -170,19 +209,24 @@ const RealtyCrudPage = ({
           >
             <form
               className="realty-card realty-form"
-              style={{ width: 420, maxWidth: "92vw", maxHeight: "90vh", overflow: "auto" }}
+              style={{ width: 480, maxWidth: "94vw", maxHeight: "90vh", overflow: "auto" }}
               onClick={(e) => e.stopPropagation()}
               onSubmit={save}
             >
               <h3>{editing ? "Editar" : "Novo"}</h3>
               {fields.map((f) => (
                 <label key={f.name}>
-                  <span style={{ display: "block", fontSize: 12, marginBottom: 4 }}>{f.label}</span>
+                  <span style={{ display: "block", fontSize: 12, marginBottom: 4 }}>
+                    {f.label}
+                    {f.required ? " *" : ""}
+                  </span>
                   {f.type === "select" ? (
                     <select
                       value={form[f.name] || ""}
                       onChange={(e) => setForm({ ...form, [f.name]: e.target.value })}
+                      required={!!f.required}
                     >
+                      {!f.required ? <option value="">—</option> : null}
                       {(f.options || []).map((opt) => (
                         <option key={opt.value} value={opt.value}>
                           {opt.label}
@@ -194,6 +238,8 @@ const RealtyCrudPage = ({
                       rows={3}
                       value={form[f.name] || ""}
                       onChange={(e) => setForm({ ...form, [f.name]: e.target.value })}
+                      required={!!f.required}
+                      placeholder={f.placeholder || ""}
                     />
                   ) : (
                     <input
@@ -201,6 +247,7 @@ const RealtyCrudPage = ({
                       value={form[f.name] || ""}
                       onChange={(e) => setForm({ ...form, [f.name]: e.target.value })}
                       required={!!f.required}
+                      placeholder={f.placeholder || ""}
                     />
                   )}
                 </label>

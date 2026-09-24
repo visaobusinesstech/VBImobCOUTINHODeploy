@@ -29,6 +29,8 @@ const realtyIntelService = {
   avaliar: async (payload) => (await api.post("/avaliacao", payload)).data,
   jornada: async () => (await api.get("/jornada")).data,
   inteligencia: async () => (await api.get("/inteligencia")).data,
+  dashboard: async () => (await api.get("/realty-dashboard")).data,
+  seedDemo: async () => (await api.post("/realty-seed-demo")).data,
 };
 
 export default realtyIntelService;
