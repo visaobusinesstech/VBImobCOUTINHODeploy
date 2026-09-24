@@ -60,7 +60,7 @@ const Followups = () => (
       },
       { name: "userId", label: "Corretor (ID user)", type: "number", cast: "number" },
       { name: "result", label: "Resultado / observações do retorno" },
-      { name: "ticketId", label: "Ticket WhatsApp", type: "number", cast: "number" },
+      { name: "ticketId", label: "Ticket WhatsApp", type: "ticket" },
       { name: "notes", label: "Descrição / briefing", type: "textarea" },
     ]}
   />

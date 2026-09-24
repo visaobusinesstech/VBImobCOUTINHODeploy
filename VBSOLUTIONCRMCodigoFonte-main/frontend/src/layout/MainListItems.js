@@ -468,6 +468,13 @@ function ListItemLink(props) {
         dense
         component={renderLink}
         className={`${classes.listItem} ${isActive ? classes.listItemActive : ""} ${bottom ? classes.bottomSpacing : ""} ${isBottomPrimary && !collapsed ? classes.listItemBottomPrimary : ""}`}
+        onClick={(e) => {
+          const scrollParent = e.currentTarget.closest(".MuiList-root");
+          const top = scrollParent ? scrollParent.scrollTop : 0;
+          requestAnimationFrame(() => {
+            if (scrollParent) scrollParent.scrollTop = top;
+          });
+        }}
       >
         {icon ? (
           <ListItemIcon className={classes.listItemIcon}>
@@ -811,7 +818,7 @@ const MainListItems = ({ collapsed, drawerClose, section }) => {
   );
 
   return (
-    <div onClick={drawerClose} className={classes.sidebarList}>
+    <div className={classes.sidebarList}>
       {section === "main" && (
         <>
           <ListItemLink
@@ -824,13 +831,11 @@ const MainListItems = ({ collapsed, drawerClose, section }) => {
 
           <MenuGroup title={translateUi("Atendimento")}>
             <ListItemLink to="/tickets" primary={translateUi("Tickets")} icon={<AppIcon icon={MessageSquare} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
-            <ListItemLink to="/Kanban" primary={translateUi("Kanban")} icon={<AppIcon icon={LayoutDashboard} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
             <ListItemLink to="/queues" primary={translateUi("Filas & Chatbot")} icon={<AppIcon icon={GitBranch} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
             <ListItemLink to="/quick-messages" primary={translateUi("Respostas rápidas")} icon={<AppIcon icon={Zap} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
             <ListItemLink to="/campaigns" primary={translateUi("Campanhas")} icon={<AppIcon icon={Megaphone} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
             <ListItemLink to="/email" primary={translateUi("Email")} icon={<AppIcon icon={Mail} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
             <ListItemLink to="/schedules" primary={translateUi("Calendário")} icon={<AppIcon icon={Calendar} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
-            <ListItemLink to="/tags" primary={translateUi("Etiquetas")} icon={<AppIcon icon={CheckSquare} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
             {user.showContacts === "enabled" && (
               <ListItemLink to="/contacts" primary={i18n.t("mainDrawer.listItems.contacts")} icon={<AppIcon icon={Contact} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
             )}
@@ -839,9 +844,6 @@ const MainListItems = ({ collapsed, drawerClose, section }) => {
 
           <MenuGroup title={translateUi("IA e automações")}>
             <ListItemLink to="/prompts" primary={translateUi("Agente IA / Prompts")} icon={<AppIcon icon={Bot} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
-            <ListItemLink to="/brain-ai" primary={translateUi("Brain.AI")} icon={<AppIcon icon={Bot} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
-            <ListItemLink to="/configurar-ia" primary={translateUi("Configuração da IA")} icon={<AppIcon icon={Bot} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
-            <ListItemLink to="/flowbuilders" primary={translateUi("Flow builder")} icon={<AppIcon icon={Workflow} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
             <ListItemLink to="/automacoes" primary={translateUi("Automações")} icon={<AppIcon icon={Zap} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
             <ListItemLink to="/automacoes-followup" primary={translateUi("Automações follow-up")} icon={<AppIcon icon={Workflow} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
           </MenuGroup>
@@ -880,7 +882,6 @@ const MainListItems = ({ collapsed, drawerClose, section }) => {
             <ListItemLink to="/radarzap/onboarding" primary={translateUi("RadarZAP onboarding")} icon={<AppIcon icon={Zap} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
             <ListItemLink to="/radarzap/scoring" primary={translateUi("RadarZAP scoring")} icon={<AppIcon icon={Zap} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
             <ListItemLink to="/radarzap/status" primary={translateUi("RadarZAP status")} icon={<AppIcon icon={Zap} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
-            <ListItemLink to="/portais" primary={translateUi("Portais")} icon={<AppIcon icon={Plug} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
             <ListItemLink to="/qcapture" primary={translateUi("Q-Capture")} icon={<AppIcon icon={LayoutDashboard} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
             <ListItemLink to="/monitoramento" primary={translateUi("Monitoramento")} icon={<AppIcon icon={Plug} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
             <ListItemLink to="/whatsapp" primary={translateUi("WhatsApp imobiliário")} icon={<AppIcon icon={MessageSquare} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
@@ -900,7 +901,6 @@ const MainListItems = ({ collapsed, drawerClose, section }) => {
             <ListItemLink to="/reports" primary={translateUi("Relatórios")} icon={<AppIcon icon={LayoutDashboard} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
             <ListItemLink to="/relatorios-agendados" primary={translateUi("Relatórios agendados")} icon={<AppIcon icon={Calendar} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
             <ListItemLink to="/produtividade" primary={translateUi("Produtividade")} icon={<AppIcon icon={LayoutDashboard} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
-            <ListItemLink to="/inteligencia" primary={translateUi("Inteligência")} icon={<AppIcon icon={Bot} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
             <ListItemLink to="/auditoria-leads" primary={translateUi("Auditoria leads")} icon={<AppIcon icon={HelpCircle} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
             <ListItemLink to="/auditoria-extracao" primary={translateUi("Auditoria extração")} icon={<AppIcon icon={HelpCircle} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
             <ListItemLink to="/metricas-extracao" primary={translateUi("Métricas extração")} icon={<AppIcon icon={LayoutDashboard} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
@@ -908,11 +908,8 @@ const MainListItems = ({ collapsed, drawerClose, section }) => {
 
           <MenuGroup title={translateUi("Sistema")}>
             <ListItemLink to="/connections" primary={translateUi("Integrações")} icon={<AppIcon icon={Plug} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
-            <ListItemLink to="/integrations" primary={translateUi("Integrações de filas")} icon={<AppIcon icon={Plug} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
             <ListItemLink to="/users" primary={translateUi("Usuários")} icon={<AppIcon icon={Contact} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
             <ListItemLink to="/settings" primary={translateUi("Configurações")} icon={<AppIcon icon={Settings} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
-            <ListItemLink to="/seguranca" primary={translateUi("Segurança")} icon={<AppIcon icon={Settings} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
-            <ListItemLink to="/lgpd-solicitacoes" primary={translateUi("LGPD")} icon={<AppIcon icon={Settings} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
             <ListItemLink to="/leads-convertidos" primary={translateUi("Empresas")} icon={<AppIcon icon={Building2} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
             <ListItemLink to="/inventory" primary={translateUi("Inventário")} icon={<AppIcon icon={Package} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
             <ListItemLink to="/platform-api" primary={translateUi("API & MCP")} icon={<AppIcon icon={Webhook} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />

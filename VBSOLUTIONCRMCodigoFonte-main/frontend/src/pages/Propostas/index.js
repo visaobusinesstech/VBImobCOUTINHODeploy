@@ -61,7 +61,7 @@ const Propostas = () => (
         ],
       },
       { name: "validUntil", label: "Validade", type: "datetime-local" },
-      { name: "ticketId", label: "Ticket WhatsApp", type: "number", cast: "number" },
+      { name: "ticketId", label: "Ticket WhatsApp", type: "ticket" },
       { name: "conditions", label: "Condições", type: "textarea" },
       { name: "notes", label: "Observações", type: "textarea" },
     ]}

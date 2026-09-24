@@ -4,7 +4,7 @@
  * Uso conforme LICENSE na raiz do repositório.
  */
 
-import React, { useState, useContext, useEffect, useMemo, useCallback, useRef } from "react";
+import React, { useState, useContext, useEffect, useLayoutEffect, useMemo, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import clsx from "clsx";
 import {
@@ -682,6 +682,25 @@ const LoggedInLayout = ({ children, themeToggle, hideMenu = false }) => {
 
   const history = useHistory();
   const location = useLocation();
+  const menuScrollRef = useRef(null);
+  const menuScrollTopRef = useRef(0);
+
+  useEffect(() => {
+    const el = menuScrollRef.current;
+    if (!el) return undefined;
+    const onScroll = () => {
+      menuScrollTopRef.current = el.scrollTop;
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [drawerOpen]);
+
+  useLayoutEffect(() => {
+    const el = menuScrollRef.current;
+    if (!el) return;
+    el.scrollTop = menuScrollTopRef.current;
+  }, [location.pathname, drawerOpen]);
+
   const appBarHelpTopic =
     !usesLayoutNavbarHelp(location.pathname) &&
     getHelpTopicForPath(location.pathname);
@@ -1142,7 +1161,13 @@ const LoggedInLayout = ({ children, themeToggle, hideMenu = false }) => {
               </IconButton>
             )}
           </div>
-          <List className={classes.containerWithScroll}>
+          <List
+            className={classes.containerWithScroll}
+            ref={menuScrollRef}
+            onScroll={(e) => {
+              menuScrollTopRef.current = e.currentTarget.scrollTop;
+            }}
+          >
             <MainListItems collapsed={!drawerOpen} section="main" />
           </List>
           <Divider />

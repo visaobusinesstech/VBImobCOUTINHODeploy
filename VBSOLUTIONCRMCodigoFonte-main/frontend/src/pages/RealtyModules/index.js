@@ -175,7 +175,7 @@ export const ProspeccaoDiaria = () => (
           { value: "concluido", label: "Concluído" },
         ],
       },
-      { name: "ticketId", label: "Ticket WhatsApp", type: "number", cast: "number" },
+      { name: "ticketId", label: "Ticket WhatsApp", type: "ticket" },
       { name: "notes", label: "Observações", type: "textarea" },
     ]}
   />
@@ -745,7 +745,7 @@ export const AgendaImobiliaria = () => (
         ],
       },
       { name: "userId", label: "Corretor (ID user)", type: "number", cast: "number" },
-      { name: "ticketId", label: "Ticket WhatsApp", type: "number", cast: "number" },
+      { name: "ticketId", label: "Ticket WhatsApp", type: "ticket" },
       { name: "notes", label: "Observações da visita", type: "textarea" },
     ]}
   />

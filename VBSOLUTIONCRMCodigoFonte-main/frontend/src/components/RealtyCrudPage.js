@@ -8,6 +8,34 @@ import React, { useEffect, useMemo, useState } from "react";
 import MainContainer from "./MainContainer";
 import { toast } from "react-toastify";
 import toastError from "../errors/toastError";
+import api from "../services/api";
+
+const fetchOpenWhatsappTickets = async () => {
+  const paramsBase = {
+    pageNumber: 1,
+    showAll: "true",
+    queueIds: JSON.stringify([]),
+  };
+  const [openRes, pendingRes] = await Promise.all([
+    api.get("/tickets", { params: { ...paramsBase, status: "open" } }).catch(() => ({ data: {} })),
+    api.get("/tickets", { params: { ...paramsBase, status: "pending" } }).catch(() => ({ data: {} })),
+  ]);
+  const merged = [...(openRes.data?.tickets || []), ...(pendingRes.data?.tickets || [])];
+  const byId = new Map();
+  merged.forEach((t) => {
+    if (!t?.id) return;
+    // Só tickets com conexão WhatsApp (web Baileys ou oficial)
+    if (!t.whatsappId && !t.whatsapp) return;
+    byId.set(t.id, t);
+  });
+  return Array.from(byId.values()).sort((a, b) => Number(b.id) - Number(a.id));
+};
+
+const ticketLabel = (t) => {
+  const contact = t.contact?.name || t.contact?.number || "sem contato";
+  const wa = t.whatsapp?.name || t.whatsapp?.channel || "WhatsApp";
+  return `#${t.id} · ${contact} · ${t.status} · ${wa}`;
+};
 
 const RealtyCrudPage = ({
   title,
@@ -32,6 +60,11 @@ const RealtyCrudPage = ({
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({});
   const [loading, setLoading] = useState(false);
+  const [tickets, setTickets] = useState([]);
+  const [ticketFilter, setTicketFilter] = useState("");
+  const [ticketsLoading, setTicketsLoading] = useState(false);
+
+  const needsTickets = fields.some((f) => f.type === "ticket");
 
   const emptyForm = useMemo(() => {
     const next = {};
@@ -59,7 +92,7 @@ const RealtyCrudPage = ({
   const buildPayload = (raw) => {
     const data = { ...raw };
     fields.forEach((f) => {
-      if (f.cast === "number") {
+      if (f.cast === "number" || f.type === "ticket") {
         data[f.name] = data[f.name] === "" || data[f.name] == null ? null : Number(data[f.name]);
       }
       if (f.cast === "boolean") {
@@ -104,16 +137,33 @@ const RealtyCrudPage = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const loadTickets = async () => {
+    if (!needsTickets) return;
+    setTicketsLoading(true);
+    try {
+      const list = await fetchOpenWhatsappTickets();
+      setTickets(list);
+    } catch (err) {
+      setTickets([]);
+    } finally {
+      setTicketsLoading(false);
+    }
+  };
+
   const openCreate = () => {
     setEditing(null);
     setForm(emptyForm);
+    setTicketFilter("");
     setOpen(true);
+    loadTickets();
   };
 
   const openEdit = (item) => {
     setEditing(item);
     setForm(flattenItem(item));
+    setTicketFilter("");
     setOpen(true);
+    loadTickets();
   };
 
   const save = async (e) => {
@@ -146,6 +196,12 @@ const RealtyCrudPage = ({
     if (item.payload && item.payload[name] != null) return item.payload[name];
     return "";
   };
+
+  const filteredTickets = useMemo(() => {
+    const q = (ticketFilter || "").trim().toLowerCase();
+    if (!q) return tickets;
+    return tickets.filter((t) => ticketLabel(t).toLowerCase().includes(q));
+  }, [tickets, ticketFilter]);
 
   return (
     <MainContainer autoHeight>
@@ -220,7 +276,34 @@ const RealtyCrudPage = ({
                     {f.label}
                     {f.required ? " *" : ""}
                   </span>
-                  {f.type === "select" ? (
+                  {f.type === "ticket" ? (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      <input
+                        type="search"
+                        placeholder={ticketsLoading ? "Carregando tickets…" : "Buscar ticket aberto…"}
+                        value={ticketFilter}
+                        onChange={(e) => setTicketFilter(e.target.value)}
+                        disabled={ticketsLoading}
+                      />
+                      <select
+                        value={form[f.name] != null && form[f.name] !== "" ? String(form[f.name]) : ""}
+                        onChange={(e) => setForm({ ...form, [f.name]: e.target.value })}
+                        required={!!f.required}
+                      >
+                        <option value="">— Sem ticket —</option>
+                        {filteredTickets.map((t) => (
+                          <option key={t.id} value={String(t.id)}>
+                            {ticketLabel(t)}
+                          </option>
+                        ))}
+                      </select>
+                      {!ticketsLoading && tickets.length === 0 ? (
+                        <span style={{ fontSize: 11, opacity: 0.7 }}>
+                          Nenhum ticket open/pending com WhatsApp conectado.
+                        </span>
+                      ) : null}
+                    </div>
+                  ) : f.type === "select" ? (
                     <select
                       value={form[f.name] || ""}
                       onChange={(e) => setForm({ ...form, [f.name]: e.target.value })}

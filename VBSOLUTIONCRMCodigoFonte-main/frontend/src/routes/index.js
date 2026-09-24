@@ -280,7 +280,6 @@ const RoutesContent = () => {
                   isPrivate
                   title="Agendamentos"
                 />
-                <Route exact path="/tags" component={Tags} isPrivate title="Etiquetas" />
                 <Route exact path="/contacts" component={Contacts} isPrivate title="Contatos" />
                 <Route
                   exact
@@ -317,13 +316,6 @@ const RoutesContent = () => {
                 />
                 <Route
                   exact
-                  path="/integrations"
-                  component={QueueIntegration}
-                  isPrivate
-                  title="Integrações"
-                />
-                <Route
-                  exact
                   path="/queue-integration"
                   component={QueueIntegration}
                   isPrivate
@@ -345,14 +337,6 @@ const RoutesContent = () => {
                   isPrivate
                   title="Chat Moments"
                 />
-                <Route exact path="/Kanban" component={Kanban} isPrivate title="Kanban" />
-                <Route
-                  exact
-                  path="/TagsKanban"
-                  component={TagsKanban}
-                  isPrivate
-                  title="Kanban de Tags"
-                />
                 {/* Sem `exact`: filhos em pages/Prompts/index.js tratam /prompts/create e /prompts/create/:id */}
                 <Route path="/prompts" component={Prompts} isPrivate title="Prompts" />
                 <Route
@@ -369,20 +353,6 @@ const RoutesContent = () => {
                   component={CampaignsPhrase}
                   isPrivate
                   title="Frases de Campanha"
-                />
-                <Route
-                  exact
-                  path="/flowbuilders"
-                  component={FlowBuilder}
-                  isPrivate
-                  title="Flow Builder"
-                />
-                <Route
-                  exact
-                  path="/flowbuilder/:id?"
-                  component={FlowBuilderConfig}
-                  isPrivate
-                  title="Configuração de Fluxo"
                 />
                 <Route exact path="/brain-ai" component={AiBrain} isPrivate title="Brain.AI" />
                 
@@ -402,7 +372,6 @@ const RoutesContent = () => {
                 <Route exact path="/corretores" component={Corretores} isPrivate title="Corretores" />
                 <Route exact path="/radarzap" component={RadarZap} isPrivate title="RadarZAP" />
                 <Route exact path="/radarzap-grupos" component={RadarZapGrupos} isPrivate title="RadarZAP grupos" />
-                <Route exact path="/portais" component={PortalScraping} isPrivate title="Scraping de portais" />
                 <Route exact path="/conteudo-seo" component={ConteudoSEO} isPrivate title="Conteúdo SEO" />
                 <Route exact path="/qcapture" component={QCapture} isPrivate title="Q-Capture" />
                 <Route exact path="/condominios" component={Condominios} isPrivate title="CRM Condomínios" />
@@ -412,7 +381,6 @@ const RoutesContent = () => {
                 <Route exact path="/inadimplencia" component={Inadimplencia} isPrivate title="Inadimplência" />
                 <Route exact path="/jornada" component={JornadaCliente} isPrivate title="Jornada do cliente" />
                 <Route exact path="/fila-distribuicao" component={FilaDistribuicao} isPrivate title="Fila de distribuição" />
-                <Route exact path="/inteligencia" component={Inteligencia} isPrivate title="Inteligência" />
                 <Route exact path="/nutricao" component={Nutricao} isPrivate title="Nutrição" />
                 <Route exact path="/prospeccao" component={ProspeccaoDiaria} isPrivate title="Prospecção diária" />
                 <Route exact path="/produtividade" component={Produtividade} isPrivate title="Produtividade" />
@@ -426,13 +394,11 @@ const RoutesContent = () => {
                 <Route exact path="/automacoes" component={Automacoes} isPrivate title="Automações" />
                 <Route exact path="/dashboard" component={RealtyDashboard} isPrivate title="Dashboard imobiliário" />
                 <Route exact path="/whatsapp" component={WhatsappImobiliario} isPrivate title="WhatsApp imobiliário" />
-                <Route exact path="/seguranca" component={Seguranca} isPrivate title="Segurança" />
                 <Route exact path="/auditoria-extracao" component={AuditoriaExtracao} isPrivate title="Auditoria extração" />
                 <Route exact path="/metricas-extracao" component={MetricasExtracao} isPrivate title="Métricas extração" />
                 <Route exact path="/auditoria-requests" component={AuditoriaRequests} isPrivate title="Auditoria requests" />
                 <Route exact path="/auditoria-monitoramento" component={AuditoriaMonitoramento} isPrivate title="Auditoria monitoramento" />
                 <Route exact path="/auditoria-leads" component={AuditoriaLeads} isPrivate title="Auditoria leads" />
-                <Route exact path="/configurar-ia" component={ConfigurarIA} isPrivate title="Configuração da IA" />
                 <Route exact path="/configuracoes-imobiliaria" component={ConfiguracoesImobiliaria} isPrivate title="Configurações imobiliária" />
                 <Route exact path="/diagnostico-avaliacao" component={DiagnosticoAvaliacao} isPrivate title="Diagnóstico avaliação" />
                 <Route exact path="/diagnostico-captacao" component={DiagnosticoCaptacao} isPrivate title="Diagnóstico captação" />
@@ -454,7 +420,6 @@ const RoutesContent = () => {
                 <Route exact path="/captacao-pipeline" component={PipelineCaptacao} isPrivate title="Pipeline de captação" />
                 <Route exact path="/crm-condominios" component={Condominios} isPrivate title="CRM Condomínios" />
                 <Route exact path="/prospeccao-diaria" component={ProspeccaoDiaria} isPrivate title="Prospecção diária" />
-                <Route exact path="/integracao-portais" component={PortalScraping} isPrivate title="Integração portais" />
                 <Route exact path="/captacao-avaliacao" component={CaptacaoAvaliacaoLp} isPrivate title="LP Captação" />
                 <Route exact path="/venda-crm" component={VendaCrmLp} isPrivate title="LP Venda CRM" />
                 <Route exact path="/portal" component={PortalImoveisPublico} isPrivate title="Portal de imóveis" />
