@@ -28,6 +28,7 @@ import formatSerializedId from '../../utils/formatSerializedId';
 import { i18n } from "../../translate/i18n";
 import ModalImageCors from "../ModalImageCors";
 import ContactDrawerSkeleton from "../ContactDrawerSkeleton";
+import RealtyLeadTicketPanel from "./RealtyLeadTicketPanel";
 import MarkdownWrapper from "../MarkdownWrapper";
 import {
 	Badge,
@@ -1243,6 +1244,7 @@ const ContactDrawer = ({ open, handleDrawerClose, contact, ticket, loading }) =>
 
 							{(contact.id && openForm) && <ContactForm initialContact={contact} onCancel={() => setOpenForm(false)} />}
 						</Paper>
+						<RealtyLeadTicketPanel contact={contact} ticket={ticket} />
 					</div>
 
 					{/* Campo de Pesquisa */}

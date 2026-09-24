@@ -878,6 +878,18 @@ export default function LeadCreateWizardForm(props) {
             disabled={ro("parkingSpots")}
           />
         </Grid>
+        <Grid item xs={6} sm={2}>
+          <TextField
+            label="Suítes"
+            type="number"
+            fullWidth
+            size="small"
+            variant="outlined"
+            value={form.suitesDesired || ""}
+            onChange={(e) => setForm((p) => ({ ...p, suitesDesired: e.target.value }))}
+            disabled={ro("suitesDesired")}
+          />
+        </Grid>
         <Grid item xs={6} sm={3}>
           <TextField
             label="Preço mín."
@@ -913,6 +925,71 @@ export default function LeadCreateWizardForm(props) {
             disabled={ro("paymentMethod")}
           />
         </Grid>
+        <Grid item xs={6} sm={4}>
+          <TextField
+            label="Entrada (R$)"
+            type="number"
+            fullWidth
+            size="small"
+            variant="outlined"
+            value={form.downPayment || ""}
+            onChange={(e) => setForm((p) => ({ ...p, downPayment: e.target.value }))}
+            disabled={ro("downPayment")}
+          />
+        </Grid>
+        <Grid item xs={6} sm={4}>
+          <TextField
+            label="Financiamento"
+            select
+            SelectProps={{ native: true }}
+            fullWidth
+            size="small"
+            variant="outlined"
+            value={form.financing ? "true" : "false"}
+            onChange={(e) => setForm((p) => ({ ...p, financing: e.target.value === "true" }))}
+            disabled={ro("financing")}
+          >
+            <option value="false">Não</option>
+            <option value="true">Sim</option>
+          </TextField>
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <TextField
+            label="Documento (CPF/CNPJ)"
+            fullWidth
+            size="small"
+            variant="outlined"
+            value={form.document || ""}
+            onChange={(e) => setForm((p) => ({ ...p, document: e.target.value }))}
+            disabled={ro("document")}
+          />
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <TextField
+            label="Nascimento"
+            type="date"
+            fullWidth
+            size="small"
+            variant="outlined"
+            InputLabelProps={{ shrink: true }}
+            value={form.birthDate || ""}
+            onChange={(e) => setForm((p) => ({ ...p, birthDate: e.target.value }))}
+            disabled={ro("birthDate")}
+          />
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <TextField
+            label="Follow-up em"
+            type="datetime-local"
+            fullWidth
+            size="small"
+            variant="outlined"
+            InputLabelProps={{ shrink: true }}
+            value={form.followUpAt || ""}
+            onChange={(e) => setForm((p) => ({ ...p, followUpAt: e.target.value }))}
+            disabled={ro("followUpAt")}
+          />
+        </Grid>
         <Grid item xs={12} sm={4}>
           <TextField
             label="Próximo contato"
@@ -937,6 +1014,20 @@ export default function LeadCreateWizardForm(props) {
             value={form.featuresDesired || ""}
             onChange={(e) => setForm((p) => ({ ...p, featuresDesired: e.target.value }))}
             disabled={ro("featuresDesired")}
+          />
+        </Grid>
+        <Grid item xs={12}>
+          <TextField
+            label="Motivo da perda"
+            fullWidth
+            size="small"
+            variant="outlined"
+            multiline
+            rows={2}
+            value={form.lostReason || ""}
+            onChange={(e) => setForm((p) => ({ ...p, lostReason: e.target.value }))}
+            disabled={ro("lostReason")}
+            placeholder="Preencher quando status = perdido"
           />
         </Grid>
       </Grid>

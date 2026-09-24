@@ -2360,8 +2360,12 @@ export default function CreateLeadSaleModal({ open, onClose, lead, onSave, pipel
         suitesDesired: form.suitesDesired !== "" && form.suitesDesired != null ? Number(form.suitesDesired) : undefined,
         featuresDesired: (form.featuresDesired || "").trim() || undefined,
         lostReason: (form.lostReason || "").trim() || undefined,
-        followUpAt: form.followUpAt || undefined,
-        nextContactAt: form.nextContactAt || undefined
+        followUpAt: form.followUpAt
+          ? new Date(form.followUpAt).toISOString()
+          : undefined,
+        nextContactAt: form.nextContactAt
+          ? new Date(form.nextContactAt).toISOString()
+          : undefined
       };
       let saved;
       const numericPipelineId = (() => {

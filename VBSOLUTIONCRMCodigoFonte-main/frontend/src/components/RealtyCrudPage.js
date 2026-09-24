@@ -83,6 +83,12 @@ const RealtyCrudPage = ({
         if (f.type === "datetime-local" && payload[f.name]) {
           payload[f.name] = new Date(payload[f.name]).toISOString();
         }
+        if (f.name === "images" && typeof payload.images === "string") {
+          payload.images = payload.images
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
+        }
       });
       if (editing) await updater(editing.id, payload);
       else await creator(payload);

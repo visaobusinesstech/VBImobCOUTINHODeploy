@@ -64,7 +64,9 @@ const Imoveis = () => (
       { name: "parkingSpots", label: "Vagas", type: "number", cast: "number" },
       { name: "areaM2", label: "Área (m²)", type: "number", cast: "number" },
       { name: "proprietarioId", label: "ID Proprietário", type: "number", cast: "number" },
+      { name: "userId", label: "ID Corretor (user)", type: "number", cast: "number" },
       { name: "videoUrl", label: "URL vídeo" },
+      { name: "images", label: "URLs fotos (separadas por vírgula)", type: "textarea" },
       { name: "description", label: "Descrição", type: "textarea" },
     ]}
   />

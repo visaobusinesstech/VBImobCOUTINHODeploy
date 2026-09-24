@@ -40,6 +40,7 @@ const Contratos = () => (
       { name: "imovelId", label: "ID do imóvel", type: "number", cast: "number" },
       { name: "proprietarioId", label: "ID do proprietário", type: "number", cast: "number" },
       { name: "leadSaleId", label: "ID do lead", type: "number", cast: "number" },
+      { name: "propostaId", label: "ID da proposta", type: "number", cast: "number" },
       { name: "notes", label: "Observações", type: "textarea" },
     ]}
   />

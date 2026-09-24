@@ -81,6 +81,10 @@ import RealtyFollowup from "../models/RealtyFollowup";
 import RealtyVisita from "../models/RealtyVisita";
 import RealtyProposta from "../models/RealtyProposta";
 import RealtyLeadImovelEnvio from "../models/RealtyLeadImovelEnvio";
+import RealtyNutricao from "../models/RealtyNutricao";
+import RealtyProspeccao from "../models/RealtyProspeccao";
+import RealtyAutomacaoFollowup from "../models/RealtyAutomacaoFollowup";
+import RealtyFilaConfig from "../models/RealtyFilaConfig";
 import {
   RadarZapGrupo,
   RadarZapMensagem,
@@ -267,6 +271,10 @@ const models = [
   RealtyVisita,
   RealtyProposta,
   RealtyLeadImovelEnvio,
+  RealtyNutricao,
+  RealtyProspeccao,
+  RealtyAutomacaoFollowup,
+  RealtyFilaConfig,
   RadarZapGrupo,
   RadarZapMensagem,
   RadarZapLead,

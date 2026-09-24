@@ -118,6 +118,77 @@ const realtyService = {
     const { data } = await api.get("/realty-jornada", { params: { leadId } });
     return data;
   },
+  async listNutricao(params) {
+    const { data } = await api.get("/realty-nutricao", { params });
+    return data;
+  },
+  async createNutricao(payload) {
+    const { data } = await api.post("/realty-nutricao", payload);
+    return data;
+  },
+  async updateNutricao(id, payload) {
+    const { data } = await api.put(`/realty-nutricao/${id}`, payload);
+    return data;
+  },
+  async deleteNutricao(id) {
+    const { data } = await api.delete(`/realty-nutricao/${id}`);
+    return data;
+  },
+  async listProspeccao(params) {
+    const { data } = await api.get("/realty-prospeccao", { params });
+    return data;
+  },
+  async createProspeccao(payload) {
+    const { data } = await api.post("/realty-prospeccao", payload);
+    return data;
+  },
+  async updateProspeccao(id, payload) {
+    const { data } = await api.put(`/realty-prospeccao/${id}`, payload);
+    return data;
+  },
+  async deleteProspeccao(id) {
+    const { data } = await api.delete(`/realty-prospeccao/${id}`);
+    return data;
+  },
+  async listAutomacaoFollowup(params) {
+    const { data } = await api.get("/realty-automacao-followup", { params });
+    return data;
+  },
+  async createAutomacaoFollowup(payload) {
+    const { data } = await api.post("/realty-automacao-followup", payload);
+    return data;
+  },
+  async updateAutomacaoFollowup(id, payload) {
+    const { data } = await api.put(`/realty-automacao-followup/${id}`, payload);
+    return data;
+  },
+  async deleteAutomacaoFollowup(id) {
+    const { data } = await api.delete(`/realty-automacao-followup/${id}`);
+    return data;
+  },
+  async runAutomacaoFollowup() {
+    const { data } = await api.post("/realty-automacao-followup/run");
+    return data;
+  },
+  async getFilaConfig() {
+    const { data } = await api.get("/realty-fila-config");
+    return data;
+  },
+  async saveFilaConfig(payload) {
+    const { data } = await api.put("/realty-fila-config", payload);
+    return data;
+  },
+  async assignFilaLead(leadId, userId) {
+    const { data } = await api.post("/realty-fila/assign", { leadId, userId });
+    return data;
+  },
+  async sendComparativoWhatsApp(leadId, imovelIds) {
+    const { data } = await api.post("/imoveis/comparativo/enviar-whatsapp", {
+      leadId,
+      imovelIds,
+    });
+    return data;
+  },
 };
 
 export default realtyService;

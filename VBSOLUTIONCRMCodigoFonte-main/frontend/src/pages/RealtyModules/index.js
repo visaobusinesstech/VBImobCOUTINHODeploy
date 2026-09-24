@@ -64,15 +64,96 @@ export const Inadimplencia = kindPage(
   "Inadimplência",
   "Cobranças e contratos em atraso."
 );
-export const Nutricao = kindPage(
-  "nutricao",
-  "Nutrição de leads",
-  "Campanhas e conteúdos para nutrir o funil."
+export const Nutricao = () => (
+  <RealtyCrudPage
+    title="Nutrição de leads"
+    subtitle="Cadências para leads frios — mensagens e retornos periódicos no WhatsApp."
+    listKey="items"
+    loader={realtyService.listNutricao}
+    creator={realtyService.createNutricao}
+    updater={realtyService.updateNutricao}
+    remover={realtyService.deleteNutricao}
+    cardTitle={(item) => item.title}
+    cardMeta={(item) => (
+      <>
+        <span className="realty-chip">{item.status || "ativo"}</span>
+        <span>
+          Lead #{item.leadSaleId || "—"} · a cada {item.cadenceDays || 7} dias · {item.channel || "whatsapp"}
+        </span>
+      </>
+    )}
+    fields={[
+      { name: "title", label: "Título da cadência", required: true },
+      { name: "leadSaleId", label: "ID do Lead", type: "number", cast: "number" },
+      { name: "cadenceDays", label: "Intervalo (dias)", type: "number", cast: "number", defaultValue: 7 },
+      { name: "nextSendAt", label: "Próximo envio", type: "datetime-local" },
+      {
+        name: "channel",
+        label: "Canal",
+        type: "select",
+        defaultValue: "whatsapp",
+        options: [
+          { value: "whatsapp", label: "WhatsApp" },
+          { value: "email", label: "E-mail" },
+          { value: "sms", label: "SMS" },
+        ],
+      },
+      {
+        name: "status",
+        label: "Status",
+        type: "select",
+        defaultValue: "ativo",
+        options: [
+          { value: "ativo", label: "Ativo" },
+          { value: "pausado", label: "Pausado" },
+          { value: "concluido", label: "Concluído" },
+        ],
+      },
+      { name: "messageTemplate", label: "Mensagem / template", type: "textarea" },
+      { name: "notes", label: "Observações", type: "textarea" },
+    ]}
+  />
 );
-export const ProspeccaoDiaria = kindPage(
-  "prospeccao",
-  "Prospecção diária",
-  "Lista de contatos e ações do dia."
+export const ProspeccaoDiaria = () => (
+  <RealtyCrudPage
+    title="Prospecção diária"
+    subtitle="Meta do dia do corretor — quem ligar/escrever e status de execução."
+    listKey="items"
+    loader={realtyService.listProspeccao}
+    creator={realtyService.createProspeccao}
+    updater={realtyService.updateProspeccao}
+    remover={realtyService.deleteProspeccao}
+    cardTitle={(item) => item.title}
+    cardMeta={(item) => (
+      <>
+        <span className="realty-chip">{item.status || "pendente"}</span>
+        <span>
+          {item.prospectDate || "sem data"} · {item.doneCount || 0}/{item.targetCount || 1} · {item.phone || ""}
+        </span>
+      </>
+    )}
+    fields={[
+      { name: "title", label: "Título / meta", required: true },
+      { name: "prospectDate", label: "Data", type: "date" },
+      { name: "leadSaleId", label: "ID do Lead", type: "number", cast: "number" },
+      { name: "phone", label: "Telefone / WhatsApp" },
+      { name: "targetCount", label: "Meta (qtd)", type: "number", cast: "number", defaultValue: 1 },
+      { name: "doneCount", label: "Feitos", type: "number", cast: "number", defaultValue: 0 },
+      {
+        name: "status",
+        label: "Status",
+        type: "select",
+        defaultValue: "pendente",
+        options: [
+          { value: "pendente", label: "Pendente" },
+          { value: "em_andamento", label: "Em andamento" },
+          { value: "concluido", label: "Concluído" },
+        ],
+      },
+      { name: "ticketId", label: "Ticket WhatsApp", type: "number", cast: "number" },
+      { name: "notes", label: "Observações", type: "textarea" },
+    ]}
+  />
 );
 export const RelatoriosAgendados = kindPage(
   "relatorio_agendado",
@@ -95,11 +176,84 @@ export const CuradoriaViral = kindPage(
   "Curadoria viral",
   "Peças e criativos para redes."
 );
-export const AutomacoesFollowup = kindPage(
-  "automacao_followup",
-  "Automações de follow-up",
-  "Regras de retorno automático (além da tela Follow-up)."
-);
+export const AutomacoesFollowup = () => {
+  const run = async () => {
+    try {
+      const data = await realtyService.runAutomacaoFollowup();
+      toast.success(`${data.count || 0} follow-ups gerados automaticamente`);
+    } catch (err) {
+      toastError(err);
+    }
+  };
+  return (
+    <div>
+      <div className="realty-page" style={{ padding: "12px 16px 0" }}>
+        <button type="button" className="realty-page__btn" onClick={run}>
+          Executar regras agora
+        </button>
+      </div>
+      <RealtyCrudPage
+        title="Automações de follow-up"
+        subtitle="Regras: sem resposta, lead parado, pós-visita, pós-proposta."
+        listKey="items"
+        loader={realtyService.listAutomacaoFollowup}
+        creator={realtyService.createAutomacaoFollowup}
+        updater={realtyService.updateAutomacaoFollowup}
+        remover={realtyService.deleteAutomacaoFollowup}
+        cardTitle={(item) => item.title}
+        cardMeta={(item) => (
+          <>
+            <span className="realty-chip">{item.active === false ? "off" : "on"}</span>
+            <span>
+              {item.trigger} · {item.daysWithoutContact || 3}d · {item.action || "criar_followup"}
+            </span>
+          </>
+        )}
+        fields={[
+          { name: "title", label: "Nome da regra", required: true },
+          {
+            name: "trigger",
+            label: "Gatilho",
+            type: "select",
+            defaultValue: "sem_resposta",
+            options: [
+              { value: "sem_resposta", label: "Sem resposta" },
+              { value: "parado", label: "Lead parado" },
+              { value: "pos_visita", label: "Pós-visita" },
+              { value: "pos_proposta", label: "Pós-proposta" },
+            ],
+          },
+          { name: "daysWithoutContact", label: "Dias sem contato", type: "number", cast: "number", defaultValue: 3 },
+          { name: "fromStatus", label: "Status origem (opcional)" },
+          { name: "toStatus", label: "Mover para status (opcional)" },
+          {
+            name: "action",
+            label: "Ação",
+            type: "select",
+            defaultValue: "criar_followup",
+            options: [
+              { value: "criar_followup", label: "Criar follow-up" },
+              { value: "enviar_mensagem", label: "Preparar mensagem" },
+            ],
+          },
+          {
+            name: "active",
+            label: "Ativa",
+            type: "select",
+            defaultValue: "true",
+            cast: "boolean",
+            options: [
+              { value: "true", label: "Sim" },
+              { value: "false", label: "Não" },
+            ],
+          },
+          { name: "messageTemplate", label: "Mensagem", type: "textarea" },
+          { name: "notes", label: "Observações", type: "textarea" },
+        ]}
+      />
+    </div>
+  );
+};
 export const RadarZapGrupos = kindPage(
   "radarzap_grupo",
   "RadarZAP — grupos",
@@ -183,32 +337,58 @@ export const Avaliacao = () => {
 
 export const ComparativoImoveis = () => {
   const [imoveis, setImoveis] = useState([]);
+  const [leads, setLeads] = useState([]);
   const [a, setA] = useState("");
   const [b, setB] = useState("");
+  const [c, setC] = useState("");
+  const [leadId, setLeadId] = useState("");
 
   useEffect(() => {
     realtyService.listImoveis({ pageSize: 200 }).then((d) => setImoveis(d.imoveis || [])).catch(toastError);
+    leadsSalesService.list({ pageSize: 200 }).then((d) => setLeads(d.leads || [])).catch(toastError);
   }, []);
 
   const ia = imoveis.find((i) => String(i.id) === String(a));
   const ib = imoveis.find((i) => String(i.id) === String(b));
+  const ic = imoveis.find((i) => String(i.id) === String(c));
   const col = (im) =>
     im ? (
       <div className="realty-card">
         <h3>{im.title}</h3>
         <p>{im.type} · {im.city} · {im.neighborhood}</p>
-        <p>{im.bedrooms} quartos · {im.areaM2} m²</p>
+        <p>{im.bedrooms} quartos · {im.areaM2} m² · {im.parkingSpots || 0} vagas</p>
         <strong>{formatBRL(im.price)}</strong>
       </div>
     ) : (
       <div className="realty-empty">Selecione um imóvel</div>
     );
 
+  const enviar = async () => {
+    const ids = [a, b, c].map(Number).filter((n) => Number.isFinite(n) && n > 0);
+    if (!leadId || ids.length < 2) {
+      toast.error("Selecione um lead e ao menos 2 imóveis");
+      return;
+    }
+    try {
+      const data = await realtyService.sendComparativoWhatsApp(Number(leadId), ids);
+      toast.success(data.sent ? "Comparativo enviado no WhatsApp" : "Comparativo registrado (abra o ticket)");
+    } catch (err) {
+      toastError(err);
+    }
+  };
+
   return (
     <MainContainer>
       <div className="realty-page">
         <h1 className="realty-page__title">Comparativo de imóveis</h1>
+        <p className="realty-page__subtitle">Compare opções e envie o comparativo ao lead pelo WhatsApp.</p>
         <div className="realty-page__toolbar">
+          <select className="realty-page__search" value={leadId} onChange={(e) => setLeadId(e.target.value)}>
+            <option value="">Lead destinatário</option>
+            {leads.map((l) => (
+              <option key={l.id} value={l.id}>#{l.id} · {l.name}</option>
+            ))}
+          </select>
           <select className="realty-page__search" value={a} onChange={(e) => setA(e.target.value)}>
             <option value="">Imóvel A</option>
             {imoveis.map((i) => (
@@ -221,10 +401,20 @@ export const ComparativoImoveis = () => {
               <option key={i.id} value={i.id}>{i.title}</option>
             ))}
           </select>
+          <select className="realty-page__search" value={c} onChange={(e) => setC(e.target.value)}>
+            <option value="">Imóvel C (opcional)</option>
+            {imoveis.map((i) => (
+              <option key={`c-${i.id}`} value={i.id}>{i.title}</option>
+            ))}
+          </select>
+          <button type="button" className="realty-page__btn" onClick={enviar}>
+            Enviar no WhatsApp
+          </button>
         </div>
         <div className="realty-page__grid">
           {col(ia)}
           {col(ib)}
+          {c ? col(ic) : null}
         </div>
       </div>
     </MainContainer>
@@ -387,14 +577,20 @@ export const Produtividade = () => {
 export const FilaDistribuicao = () => {
   const [leads, setLeads] = useState([]);
   const [users, setUsers] = useState([]);
+  const [cfg, setCfg] = useState(null);
+  const [selectedUsers, setSelectedUsers] = useState("");
+
   const load = async () => {
     try {
-      const [l, u] = await Promise.all([
+      const [l, u, f] = await Promise.all([
         leadsSalesService.list({ pageSize: 200 }),
         api.get("/users", { params: { searchParam: "" } }),
+        realtyService.getFilaConfig(),
       ]);
       setLeads((l.leads || []).filter((x) => !x.responsibleId));
       setUsers(u.data.users || u.data || []);
+      setCfg(f);
+      setSelectedUsers(Array.isArray(f.userIds) ? f.userIds.join(",") : "");
     } catch (err) {
       toastError(err);
     }
@@ -402,26 +598,67 @@ export const FilaDistribuicao = () => {
   useEffect(() => {
     load();
   }, []);
+
+  const saveCfg = async () => {
+    try {
+      const userIds = selectedUsers
+        .split(",")
+        .map((s) => Number(s.trim()))
+        .filter((n) => Number.isFinite(n) && n > 0);
+      const data = await realtyService.saveFilaConfig({
+        strategy: "round_robin",
+        userIds,
+        active: true,
+      });
+      setCfg(data);
+      toast.success("Fila configurada");
+    } catch (err) {
+      toastError(err);
+    }
+  };
+
   const assign = async (leadId, responsibleId) => {
     try {
-      await leadsSalesService.update(leadId, { responsibleId: Number(responsibleId) });
+      if (responsibleId) {
+        await realtyService.assignFilaLead(leadId, Number(responsibleId));
+      } else {
+        await realtyService.assignFilaLead(leadId);
+      }
       toast.success("Lead distribuído");
       await load();
     } catch (err) {
       toastError(err);
     }
   };
+
   return (
     <MainContainer>
       <div className="realty-page">
         <h1 className="realty-page__title">Fila de distribuição</h1>
-        <p className="realty-page__subtitle">Leads sem corretor — atribua para a equipe (os mesmos de Leads e Vendas).</p>
+        <p className="realty-page__subtitle">
+          Round-robin entre corretores. IDs na fila (vírgula): deixe vazio para usar todos os usuários.
+        </p>
+        <div className="realty-page__toolbar">
+          <input
+            className="realty-page__search"
+            placeholder="IDs dos corretores na fila (ex: 1,2,3)"
+            value={selectedUsers}
+            onChange={(e) => setSelectedUsers(e.target.value)}
+          />
+          <button type="button" className="realty-page__btn" onClick={saveCfg}>
+            Salvar fila
+          </button>
+          <span className="realty-chip">último: {cfg?.lastUserId || "—"}</span>
+        </div>
         {leads.length === 0 && <div className="realty-empty">Fila vazia.</div>}
         {leads.map((lead) => (
           <article key={lead.id} className="realty-lead" style={{ marginTop: 8 }}>
             <strong>{lead.name}</strong>
+            <button type="button" className="realty-page__btn" onClick={() => assign(lead.id)}>
+              Auto (round-robin)
+            </button>
             <select defaultValue="" onChange={(e) => e.target.value && assign(lead.id, e.target.value)}>
-              <option value="">Atribuir…</option>
+              <option value="">Atribuir manual…</option>
               {(Array.isArray(users) ? users : []).map((u) => (
                 <option key={u.id} value={u.id}>{u.name}</option>
               ))}

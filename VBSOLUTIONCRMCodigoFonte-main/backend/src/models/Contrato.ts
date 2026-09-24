@@ -67,6 +67,9 @@ class Contrato extends Model<Contrato> {
   @BelongsTo(() => LeadSale)
   leadSale: LeadSale;
 
+  @Column({ allowNull: true })
+  propostaId: number;
+
   @ForeignKey(() => Company)
   @Column
   companyId: number;

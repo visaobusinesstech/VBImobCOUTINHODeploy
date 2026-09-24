@@ -15,6 +15,11 @@ import RealtyFollowup from "../models/RealtyFollowup";
 import RealtyVisita from "../models/RealtyVisita";
 import RealtyProposta from "../models/RealtyProposta";
 import RealtyLeadImovelEnvio from "../models/RealtyLeadImovelEnvio";
+import RealtyNutricao from "../models/RealtyNutricao";
+import RealtyProspeccao from "../models/RealtyProspeccao";
+import RealtyAutomacaoFollowup from "../models/RealtyAutomacaoFollowup";
+import RealtyFilaConfig from "../models/RealtyFilaConfig";
+import User from "../models/User";
 import ResolveTicketForLeadPreviewService from "../services/TicketServices/ResolveTicketForLeadPreviewService";
 import SendWhatsAppMessage from "../services/WbotServices/SendWhatsAppMessage";
 import {
@@ -242,7 +247,8 @@ export const storeContrato = async (req: Request, res: Response): Promise<Respon
     "notes",
     "imovelId",
     "proprietarioId",
-    "leadSaleId"
+    "leadSaleId",
+    "propostaId"
   ]);
   if (!data.title) return res.status(400).json({ error: "title is required" });
   if (!data.status) {
@@ -250,7 +256,7 @@ export const storeContrato = async (req: Request, res: Response): Promise<Respon
   } else {
     data.status = pickAllowedStatus(data.status, CONTRATO_STATUSES, "rascunho");
   }
-  ["imovelId", "proprietarioId", "leadSaleId"].forEach(k => {
+  ["imovelId", "proprietarioId", "leadSaleId", "propostaId"].forEach(k => {
     data[k] = emptyToNull(data[k]);
   });
   const record = await Contrato.create({ ...data, companyId } as any);
@@ -271,9 +277,10 @@ export const updateContrato = async (req: Request, res: Response): Promise<Respo
     "notes",
     "imovelId",
     "proprietarioId",
-    "leadSaleId"
+    "leadSaleId",
+    "propostaId"
   ]);
-  ["imovelId", "proprietarioId", "leadSaleId"].forEach(k => {
+  ["imovelId", "proprietarioId", "leadSaleId", "propostaId"].forEach(k => {
     if (data[k] !== undefined) data[k] = emptyToNull(data[k]);
   });
   if (data.status !== undefined) {
@@ -346,9 +353,34 @@ const followupsCrud = crudFactory(
   FOLLOWUP_STATUSES
 );
 export const listFollowups = followupsCrud.list;
-export const storeFollowup = followupsCrud.store;
 export const updateFollowup = followupsCrud.update;
 export const removeFollowup = followupsCrud.remove;
+
+export const storeFollowup = async (req: Request, res: Response): Promise<Response> => {
+  const { companyId, id: userId } = req.user as any;
+  const data = pick(req.body || {}, [
+    "type", "scheduledAt", "completedAt", "result", "notes", "status", "leadSaleId", "userId", "ticketId"
+  ]);
+  if (!data.leadSaleId) return res.status(400).json({ error: "leadSaleId is required" });
+  if (!data.scheduledAt) return res.status(400).json({ error: "scheduledAt is required" });
+  if (!data.status) data.status = "pendente";
+  else data.status = pickAllowedStatus(data.status, FOLLOWUP_STATUSES as any, "pendente");
+  if (data.userId === undefined) data.userId = userId;
+  ["leadSaleId", "userId", "ticketId"].forEach(k => {
+    if (data[k] !== undefined) data[k] = emptyToNull(data[k]);
+  });
+  const record = await RealtyFollowup.create({ ...data, companyId } as any);
+
+  const lead = await LeadSale.findOne({ where: { id: data.leadSaleId, companyId } });
+  if (lead) {
+    await lead.update({
+      followUpAt: new Date(data.scheduledAt as any),
+      nextContactAt: new Date(data.scheduledAt as any)
+    } as any);
+  }
+
+  return res.status(201).json(record);
+};
 
 const visitasCrud = crudFactory(
   RealtyVisita,
@@ -515,3 +547,169 @@ export const leadTimeline = async (req: Request, res: Response): Promise<Respons
 
   return res.json({ lead, followups, visitas, propostas, envios });
 };
+
+const nutricaoCrud = crudFactory(
+  RealtyNutricao,
+  ["title", "leadSaleId", "cadenceDays", "nextSendAt", "channel", "messageTemplate", "status", "notes", "userId"],
+  ["title", "status", "channel", "notes"],
+  "items"
+);
+export const listNutricao = nutricaoCrud.list;
+export const storeNutricao = nutricaoCrud.store;
+export const updateNutricao = nutricaoCrud.update;
+export const removeNutricao = nutricaoCrud.remove;
+
+const prospeccaoCrud = crudFactory(
+  RealtyProspeccao,
+  ["title", "prospectDate", "leadSaleId", "phone", "targetCount", "doneCount", "status", "notes", "userId", "ticketId"],
+  ["title", "status", "phone", "notes"],
+  "items"
+);
+export const listProspeccao = prospeccaoCrud.list;
+export const storeProspeccao = prospeccaoCrud.store;
+export const updateProspeccao = prospeccaoCrud.update;
+export const removeProspeccao = prospeccaoCrud.remove;
+
+const automacaoCrud = crudFactory(
+  RealtyAutomacaoFollowup,
+  ["title", "trigger", "daysWithoutContact", "fromStatus", "toStatus", "action", "messageTemplate", "active", "notes"],
+  ["title", "trigger", "action", "notes"],
+  "items"
+);
+export const listAutomacaoFollowup = automacaoCrud.list;
+export const storeAutomacaoFollowup = automacaoCrud.store;
+export const updateAutomacaoFollowup = automacaoCrud.update;
+export const removeAutomacaoFollowup = automacaoCrud.remove;
+
+export const getFilaConfig = async (req: Request, res: Response): Promise<Response> => {
+  const { companyId } = req.user;
+  let cfg = await RealtyFilaConfig.findOne({ where: { companyId, active: true }, order: [["id", "DESC"]] });
+  if (!cfg) {
+    cfg = await RealtyFilaConfig.create({
+      companyId,
+      strategy: "round_robin",
+      userIds: [],
+      active: true
+    } as any);
+  }
+  return res.json(cfg);
+};
+
+export const saveFilaConfig = async (req: Request, res: Response): Promise<Response> => {
+  const { companyId } = req.user;
+  const data = pick(req.body || {}, ["strategy", "lastUserId", "userIds", "active", "notes"]);
+  let cfg = await RealtyFilaConfig.findOne({ where: { companyId }, order: [["id", "DESC"]] });
+  if (!cfg) {
+    cfg = await RealtyFilaConfig.create({ ...data, companyId, strategy: data.strategy || "round_robin" } as any);
+  } else {
+    await cfg.update(data as any);
+  }
+  return res.json(cfg);
+};
+
+export const assignFilaLead = async (req: Request, res: Response): Promise<Response> => {
+  const { companyId } = req.user;
+  const leadId = Number(req.body?.leadId);
+  let userId = req.body?.userId != null ? Number(req.body.userId) : null;
+  if (!Number.isFinite(leadId)) return res.status(400).json({ error: "leadId required" });
+
+  const lead = await LeadSale.findOne({ where: { id: leadId, companyId } });
+  if (!lead) return res.status(404).json({ error: "Lead not found" });
+
+  let cfg = await RealtyFilaConfig.findOne({ where: { companyId }, order: [["id", "DESC"]] });
+  if (!cfg) {
+    cfg = await RealtyFilaConfig.create({ companyId, strategy: "round_robin", userIds: [], active: true } as any);
+  }
+
+  if (!userId) {
+    const pool: number[] = Array.isArray((cfg as any).userIds) && (cfg as any).userIds.length
+      ? (cfg as any).userIds.map(Number)
+      : (
+          await User.findAll({
+            where: { companyId },
+            attributes: ["id"],
+            order: [["id", "ASC"]],
+            limit: 50
+          })
+        ).map((u: any) => u.id);
+
+    if (!pool.length) return res.status(400).json({ error: "Nenhum corretor na fila" });
+
+    if ((cfg as any).strategy === "round_robin" || !(cfg as any).strategy) {
+      const last = Number((cfg as any).lastUserId) || 0;
+      const idx = pool.findIndex(id => id === last);
+      userId = pool[(idx + 1) % pool.length];
+    } else {
+      userId = pool[0];
+    }
+  }
+
+  await lead.update({ responsibleId: userId } as any);
+  await cfg.update({ lastUserId: userId } as any);
+
+  return res.json({ lead, assignedUserId: userId });
+};
+
+export const runAutomacoesFollowup = async (req: Request, res: Response): Promise<Response> => {
+  const { companyId, id: userId } = req.user as any;
+  const rules = await RealtyAutomacaoFollowup.findAll({
+    where: { companyId, active: true }
+  });
+  const created: any[] = [];
+  const now = Date.now();
+
+  for (const rule of rules) {
+    const days = Number((rule as any).daysWithoutContact) || 3;
+    const cutoff = new Date(now - days * 24 * 60 * 60 * 1000);
+    const where: any = { companyId };
+    if ((rule as any).fromStatus) where.status = (rule as any).fromStatus;
+
+    const leads = await LeadSale.findAll({
+      where: {
+        ...where,
+        [Op.or]: [
+          { followUpAt: { [Op.lt]: cutoff } },
+          { followUpAt: null, updatedAt: { [Op.lt]: cutoff } }
+        ]
+      },
+      limit: 100
+    });
+
+    for (const lead of leads) {
+      if ((rule as any).action === "criar_followup" || !(rule as any).action) {
+        const scheduledAt = new Date(now + 60 * 60 * 1000);
+        const fu = await RealtyFollowup.create({
+          type: "whatsapp",
+          scheduledAt,
+          status: "pendente",
+          notes: `Auto: ${(rule as any).title}`,
+          leadSaleId: lead.id,
+          userId: lead.responsibleId || userId,
+          ticketId: lead.ticketId,
+          companyId
+        } as any);
+        await lead.update({ followUpAt: scheduledAt, nextContactAt: scheduledAt } as any);
+        if ((rule as any).toStatus) {
+          await lead.update({ status: (rule as any).toStatus } as any);
+        }
+        created.push({ leadId: lead.id, followupId: fu.id, ruleId: rule.id });
+      }
+    }
+  }
+
+  return res.json({ created, count: created.length });
+};
+
+export const sendComparativoWhatsApp = async (req: Request, res: Response): Promise<Response> => {
+  const { companyId, id: userId } = req.user as any;
+  const leadId = Number(req.body?.leadId);
+  const imovelIds: number[] = Array.isArray(req.body?.imovelIds)
+    ? req.body.imovelIds.map(Number).filter((n: number) => Number.isFinite(n))
+    : [];
+  if (!Number.isFinite(leadId) || imovelIds.length < 2) {
+    return res.status(400).json({ error: "leadId e ao menos 2 imovelIds são obrigatórios" });
+  }
+  req.body.imovelIds = imovelIds;
+  return sendMatchWhatsApp(req, res);
+};
+
