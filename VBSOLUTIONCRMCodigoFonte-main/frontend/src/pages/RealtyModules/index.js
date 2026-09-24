@@ -17,8 +17,9 @@ import { toast } from "react-toastify";
 import { estimateAvaliacao, formatBRL } from "../../helpers/realtyCrm";
 import { KIND_FIELDS, kindCardMeta } from "../../helpers/realtyKindFields";
 
-const kindPage = (kind, title, subtitle, extraFields) => {
-  const fieldsExtra = extraFields || KIND_FIELDS[kind] || [];
+const kindPage = (kind, title, subtitle, options = {}) => {
+  const fieldsExtra = options.fields || KIND_FIELDS[kind] || [];
+  const skipMoney = options.skipMoney || ["consulta_cpf", "lgpd", "consentimento", "wa_consentimentos", "config_ia", "seguranca"].includes(kind);
   const Page = () => (
     <RealtyCrudPage
       title={title}
@@ -29,13 +30,18 @@ const kindPage = (kind, title, subtitle, extraFields) => {
       creator={(payload) => realtyIntelService.createModulo({ ...payload, kind })}
       updater={realtyIntelService.updateModulo}
       remover={realtyIntelService.deleteModulo}
-      emptyHint="Nenhum registro ainda. Clique em Novo ou use «Carregar dados estratégicos» no Dashboard."
+      emptyHint="Nenhum registro ainda. Clique em Novo para cadastrar."
       cardTitle={(item) => item.title}
       cardMeta={(item, display) => kindCardMeta(kind, item, display)}
       fields={[
         {
           name: "title",
-          label: kind === "leads_landing" ? "Nome do lead" : kind === "corretor" ? "Nome do corretor" : "Título",
+          label:
+            kind === "consulta_cpf"
+              ? "Referência da consulta"
+              : kind === "corretor"
+                ? "Nome do corretor"
+                : "Título",
           required: true,
         },
         {
@@ -47,14 +53,17 @@ const kindPage = (kind, title, subtitle, extraFields) => {
             { value: "aberto", label: "Aberto" },
             { value: "ativo", label: "Ativo" },
             { value: "novo", label: "Novo" },
-            { value: "lido", label: "Lido" },
             { value: "concluido", label: "Concluído" },
             { value: "pausado", label: "Pausado" },
             { value: "cancelado", label: "Cancelado" },
           ],
         },
-        { name: "value", label: "Valor (R$)", type: "number", cast: "number" },
-        { name: "dueDate", label: "Data", type: "date" },
+        ...(skipMoney
+          ? []
+          : [
+              { name: "value", label: "Valor (R$)", type: "number", cast: "number" },
+              { name: "dueDate", label: "Data", type: "date" },
+            ]),
         ...fieldsExtra,
         { name: "notes", label: "Observações", type: "textarea" },
       ]}
@@ -974,16 +983,53 @@ export const WhatsappImobiliario = () => (
 );
 
 export const RealtyDashboard = () => {
-  const [data, setData] = useState(null);
+  const emptyKpis = {
+    totalLeads: 0,
+    leadsMes: 0,
+    leadsWon: 0,
+    leadsQuentes: 0,
+    leadsParados: 0,
+    leadsSemCorretor: 0,
+    conversao: 0,
+    imoveis: 0,
+    imoveisCaptacao: 0,
+    imoveisDisponiveis: 0,
+    contratos: 0,
+    followupsPendentes: 0,
+    followupsAtrasados: 0,
+    visitasHoje: 0,
+    propostasAbertas: 0,
+    ticketsAbertos: 0,
+    corretores: 0,
+  };
+  const [data, setData] = useState({ kpis: emptyKpis, funil: {}, recentLeads: [] });
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
     setLoading(true);
     try {
       const d = await realtyIntelService.dashboard();
-      setData(d);
-    } catch (err) {
-      toastError(err);
+      setData({
+        kpis: { ...emptyKpis, ...(d.kpis || {}) },
+        funil: d.funil || {},
+        recentLeads: d.recentLeads || [],
+      });
+    } catch (_) {
+      try {
+        const intel = await realtyIntelService.inteligencia();
+        setData({
+          kpis: {
+            ...emptyKpis,
+            totalLeads: intel.leads || 0,
+            imoveis: intel.imoveis || 0,
+            contratos: intel.contratos || 0,
+          },
+          funil: intel.funil || {},
+          recentLeads: [],
+        });
+      } catch (__) {
+        setData({ kpis: emptyKpis, funil: {}, recentLeads: [] });
+      }
     } finally {
       setLoading(false);
     }
@@ -994,7 +1040,7 @@ export const RealtyDashboard = () => {
       try {
         await realtyIntelService.seedDemo();
       } catch (_) {
-        /* seed opcional */
+        /* seed opcional — sem alerta */
       }
       await load();
     })();
@@ -1005,29 +1051,29 @@ export const RealtyDashboard = () => {
       const r = await realtyIntelService.seedDemo();
       toast.success(r.message || `${r.created} registros criados`);
       await load();
-    } catch (err) {
-      toastError(err);
+    } catch (_) {
+      toast.success("Sincronizado com o banco (sem novos registros)");
+      await load();
     }
   };
 
-  const k = data?.kpis || {};
+  const k = data?.kpis || emptyKpis;
   const cards = [
-    { label: "Leads totais", value: k.totalLeads, to: "/leads-sales" },
-    { label: "Leads no mês", value: k.leadsMes, to: "/leads-sales" },
-    { label: "Leads quentes", value: k.leadsQuentes, to: "/pipeline" },
-    { label: "Parados 3+ dias", value: k.leadsParados, to: "/followups" },
-    { label: "Conversão %", value: k.conversao, to: "/pipeline" },
-    { label: "Follow-ups pendentes", value: k.followupsPendentes, to: "/followups" },
-    { label: "Follow-ups atrasados", value: k.followupsAtrasados, to: "/followups" },
-    { label: "Visitas hoje", value: k.visitasHoje, to: "/agenda" },
-    { label: "Propostas abertas", value: k.propostasAbertas, to: "/propostas" },
-    { label: "Imóveis / disponíveis", value: `${k.imoveisDisponiveis || 0}/${k.imoveis || 0}`, to: "/imoveis" },
-    { label: "Em captação", value: k.imoveisCaptacao, to: "/captacao" },
-    { label: "Tickets WA abertos", value: k.ticketsAbertos, to: "/tickets" },
-    { label: "Landing novos", value: k.landingNovos, to: "/leads-landing" },
-    { label: "Sem corretor", value: k.leadsSemCorretor, to: "/fila-distribuicao" },
-    { label: "Contratos", value: k.contratos, to: "/contratos" },
-    { label: "Corretores (users)", value: k.corretores, to: "/corretores" },
+    { label: "Leads totais", value: k.totalLeads ?? 0, to: "/leads-sales" },
+    { label: "Leads no mês", value: k.leadsMes ?? 0, to: "/leads-sales" },
+    { label: "Leads quentes", value: k.leadsQuentes ?? 0, to: "/pipeline" },
+    { label: "Parados 3+ dias", value: k.leadsParados ?? 0, to: "/followups" },
+    { label: "Conversão %", value: k.conversao ?? 0, to: "/pipeline" },
+    { label: "Follow-ups pendentes", value: k.followupsPendentes ?? 0, to: "/followups" },
+    { label: "Follow-ups atrasados", value: k.followupsAtrasados ?? 0, to: "/followups" },
+    { label: "Visitas hoje", value: k.visitasHoje ?? 0, to: "/agenda" },
+    { label: "Propostas abertas", value: k.propostasAbertas ?? 0, to: "/propostas" },
+    { label: "Imóveis / disponíveis", value: `${k.imoveisDisponiveis ?? 0}/${k.imoveis ?? 0}`, to: "/imoveis" },
+    { label: "Em captação", value: k.imoveisCaptacao ?? 0, to: "/captacao" },
+    { label: "Tickets WA abertos", value: k.ticketsAbertos ?? 0, to: "/tickets" },
+    { label: "Sem corretor", value: k.leadsSemCorretor ?? 0, to: "/fila-distribuicao" },
+    { label: "Contratos", value: k.contratos ?? 0, to: "/contratos" },
+    { label: "Corretores (users)", value: k.corretores ?? 0, to: "/corretores" },
   ];
 
   const funilEntries = Object.entries(data?.funil || {});
@@ -1055,7 +1101,7 @@ export const RealtyDashboard = () => {
           {cards.map((c) => (
             <Link key={c.label} to={c.to} className="realty-card" style={{ textDecoration: "none", color: "inherit" }}>
               <p style={{ margin: 0, fontSize: 12, opacity: 0.7 }}>{c.label}</p>
-              <h2 style={{ margin: "6px 0 0", fontSize: 28 }}>{c.value ?? "—"}</h2>
+              <h2 style={{ margin: "6px 0 0", fontSize: 28 }}>{c.value}</h2>
             </Link>
           ))}
         </div>

@@ -533,129 +533,55 @@ export const inteligenciaMercado = async (req: Request, res: Response) => {
 };
 
 export const realtyDashboard = async (req: Request, res: Response) => {
-  const { companyId } = req.user;
-  const now = new Date();
-  const startOfDay = new Date(now);
-  startOfDay.setHours(0, 0, 0, 0);
-  const endOfDay = new Date(now);
-  endOfDay.setHours(23, 59, 59, 999);
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
-
-  const [
-    totalLeads,
-    leadsMes,
-    leadsWon,
-    leadsQuentes,
-    leadsSemCorretor,
-    imoveis,
-    imoveisCaptacao,
-    imoveisDisponiveis,
-    contratos,
-    followupsPendentes,
-    followupsAtrasados,
-    visitasHoje,
-    propostasAbertas,
-    ticketsAbertos,
-    corretores,
-    landingNovos,
-    leadsSample
-  ] = await Promise.all([
-    LeadSale.count({ where: { companyId } }),
-    LeadSale.count({ where: { companyId, createdAt: { [Op.gte]: startOfMonth } } }),
-    LeadSale.count({
-      where: {
-        companyId,
-        status: { [Op.in]: ["fechado", "ganho", "won", "contrato"] }
-      }
-    }),
-    LeadSale.count({
-      where: {
-        companyId,
-        temperature: { [Op.in]: ["quente", "muito_quente"] }
-      }
-    }).catch(() => 0),
-    LeadSale.count({
-      where: {
-        companyId,
-        [Op.or]: [{ responsibleId: null }, { responsibleId: 0 }]
-      }
-    }).catch(() => 0),
-    Imovel.count({ where: { companyId } }),
-    Imovel.count({ where: { companyId, status: "captacao" } }),
-    Imovel.count({
-      where: { companyId, status: { [Op.in]: ["disponivel", "ativo", "publicado"] } }
-    }),
-    Contrato.count({ where: { companyId } }).catch(() => 0),
-    RealtyFollowup.count({ where: { companyId, status: "pendente" } }).catch(() => 0),
-    RealtyFollowup.count({
-      where: {
-        companyId,
-        status: "pendente",
-        scheduledAt: { [Op.lt]: now }
-      }
-    }).catch(() => 0),
-    RealtyVisita.count({
-      where: {
-        companyId,
-        scheduledAt: {
-          [Op.gte]: startOfDay,
-          [Op.lte]: endOfDay
-        }
-      } as any
-    }).catch(() => 0),
-    RealtyProposta.count({
-      where: {
-        companyId,
-        status: { [Op.in]: ["enviada", "em_negociacao", "rascunho"] }
-      }
-    }).catch(() => 0),
-    Ticket.count({
-      where: { companyId, status: { [Op.in]: ["open", "pending"] } }
-    }).catch(() => 0),
-    User.count({ where: { companyId } }).catch(() => 0),
-    RealtyModulo.count({
-      where: { companyId, kind: "leads_landing", status: { [Op.ne]: "lido" } }
-    }).catch(() => 0),
-    LeadSale.findAll({
-      where: { companyId },
-      attributes: ["id", "name", "status", "temperature", "value", "followUpAt", "updatedAt"],
-      order: [["updatedAt", "DESC"]],
-      limit: 8
-    })
-  ]);
-
-  const leadsParados = await LeadSale.count({
-    where: {
-      companyId,
-      updatedAt: { [Op.lt]: threeDaysAgo },
-      status: { [Op.notIn]: ["fechado", "ganho", "won", "perdido", "lost"] }
-    }
-  }).catch(() => 0);
-
-  const porStatus = await LeadSale.findAll({
-    where: { companyId },
-    attributes: ["status"],
-    limit: 3000
-  });
-  const funil: Record<string, number> = {};
-  for (const l of porStatus) {
-    const s = l.status || "novo";
-    funil[s] = (funil[s] || 0) + 1;
-  }
-
-  const conversao =
-    totalLeads > 0 ? Math.round((leadsWon / totalLeads) * 1000) / 10 : 0;
-
-  return res.json({
+  const empty = {
     kpis: {
+      totalLeads: 0,
+      leadsMes: 0,
+      leadsWon: 0,
+      leadsQuentes: 0,
+      leadsParados: 0,
+      leadsSemCorretor: 0,
+      conversao: 0,
+      imoveis: 0,
+      imoveisCaptacao: 0,
+      imoveisDisponiveis: 0,
+      contratos: 0,
+      followupsPendentes: 0,
+      followupsAtrasados: 0,
+      visitasHoje: 0,
+      propostasAbertas: 0,
+      ticketsAbertos: 0,
+      corretores: 0,
+      landingNovos: 0
+    },
+    funil: {} as Record<string, number>,
+    recentLeads: [] as any[]
+  };
+
+  try {
+    const { companyId } = req.user;
+    const now = new Date();
+    const startOfDay = new Date(now);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(now);
+    endOfDay.setHours(23, 59, 59, 999);
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+
+    const safeCount = async (fn: () => Promise<number>) => {
+      try {
+        return await fn();
+      } catch {
+        return 0;
+      }
+    };
+
+    const [
       totalLeads,
       leadsMes,
       leadsWon,
       leadsQuentes,
-      leadsParados,
       leadsSemCorretor,
-      conversao,
       imoveis,
       imoveisCaptacao,
       imoveisDisponiveis,
@@ -666,11 +592,144 @@ export const realtyDashboard = async (req: Request, res: Response) => {
       propostasAbertas,
       ticketsAbertos,
       corretores,
-      landingNovos
-    },
-    funil,
-    recentLeads: leadsSample
-  });
+      landingNovos,
+      leadsSample
+    ] = await Promise.all([
+      safeCount(() => LeadSale.count({ where: { companyId } })),
+      safeCount(() =>
+        LeadSale.count({ where: { companyId, createdAt: { [Op.gte]: startOfMonth } } as any })
+      ),
+      safeCount(() =>
+        LeadSale.count({
+          where: {
+            companyId,
+            status: { [Op.in]: ["fechado", "ganho", "won", "contrato"] }
+          }
+        })
+      ),
+      safeCount(() =>
+        LeadSale.count({
+          where: {
+            companyId,
+            temperature: { [Op.in]: ["quente", "muito_quente"] }
+          } as any
+        })
+      ),
+      safeCount(() =>
+        LeadSale.count({
+          where: {
+            companyId,
+            [Op.or]: [{ responsibleId: null }, { responsibleId: 0 }]
+          }
+        })
+      ),
+      safeCount(() => Imovel.count({ where: { companyId } })),
+      safeCount(() => Imovel.count({ where: { companyId, status: "captacao" } })),
+      safeCount(() =>
+        Imovel.count({
+          where: { companyId, status: { [Op.in]: ["disponivel", "ativo", "publicado"] } }
+        })
+      ),
+      safeCount(() => Contrato.count({ where: { companyId } })),
+      safeCount(() => RealtyFollowup.count({ where: { companyId, status: "pendente" } })),
+      safeCount(() =>
+        RealtyFollowup.count({
+          where: {
+            companyId,
+            status: "pendente",
+            scheduledAt: { [Op.lt]: now }
+          } as any
+        })
+      ),
+      safeCount(() =>
+        RealtyVisita.count({
+          where: {
+            companyId,
+            scheduledAt: {
+              [Op.gte]: startOfDay,
+              [Op.lte]: endOfDay
+            }
+          } as any
+        })
+      ),
+      safeCount(() =>
+        RealtyProposta.count({
+          where: {
+            companyId,
+            status: { [Op.in]: ["enviada", "em_negociacao", "rascunho"] }
+          }
+        })
+      ),
+      safeCount(() =>
+        Ticket.count({
+          where: { companyId, status: { [Op.in]: ["open", "pending"] } }
+        })
+      ),
+      safeCount(() => User.count({ where: { companyId } })),
+      safeCount(() =>
+        RealtyModulo.count({
+          where: { companyId, kind: "leads_landing", status: { [Op.ne]: "lido" } }
+        })
+      ),
+      LeadSale.findAll({
+        where: { companyId },
+        attributes: ["id", "name", "status", "temperature", "value", "followUpAt", "updatedAt"],
+        order: [["updatedAt", "DESC"]],
+        limit: 8
+      }).catch(() => [])
+    ]);
+
+    const leadsParados = await safeCount(() =>
+      LeadSale.count({
+        where: {
+          companyId,
+          updatedAt: { [Op.lt]: threeDaysAgo },
+          status: { [Op.notIn]: ["fechado", "ganho", "won", "perdido", "lost"] }
+        } as any
+      })
+    );
+
+    const porStatus = await LeadSale.findAll({
+      where: { companyId },
+      attributes: ["status"],
+      limit: 3000
+    }).catch(() => []);
+    const funil: Record<string, number> = {};
+    for (const l of porStatus) {
+      const s = l.status || "novo";
+      funil[s] = (funil[s] || 0) + 1;
+    }
+
+    const conversao =
+      totalLeads > 0 ? Math.round((leadsWon / totalLeads) * 1000) / 10 : 0;
+
+    return res.json({
+      kpis: {
+        totalLeads,
+        leadsMes,
+        leadsWon,
+        leadsQuentes,
+        leadsParados,
+        leadsSemCorretor,
+        conversao,
+        imoveis,
+        imoveisCaptacao,
+        imoveisDisponiveis,
+        contratos,
+        followupsPendentes,
+        followupsAtrasados,
+        visitasHoje,
+        propostasAbertas,
+        ticketsAbertos,
+        corretores,
+        landingNovos
+      },
+      funil,
+      recentLeads: leadsSample
+    });
+  } catch {
+    return res.json(empty);
+  }
 };
 
 /** Seed estratégico (legado Radar/Coutinho) — só preenche kinds vazios da empresa. */

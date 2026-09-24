@@ -312,42 +312,113 @@ export const KIND_FIELDS = {
 
 export const kindCardMeta = (kind, item, display) => {
   const d = (name) => display(item, name);
-  if (kind === "leads_landing") {
-    return (
+  const chip = (label) => <span className="realty-chip">{label}</span>;
+  const line = (...parts) => <span>{parts.filter(Boolean).join(" · ") || "—"}</span>;
+
+  const map = {
+    leads_landing: () => (
       <>
-        <span className="realty-chip">{d("lido") === "true" || d("lido") === true ? "lido" : "novo"}</span>
-        <span>
-          {d("telefone") || "—"} · {d("email") || "—"} · {d("origem") || d("source_url") || ""}
-        </span>
+        {chip(d("lido") === "true" || d("lido") === true ? "lido" : "novo")}
+        {line(d("telefone"), d("email"), d("interesse"), d("origem") || d("source_url"))}
       </>
-    );
-  }
-  if (kind === "pipeline_captacao") {
-    return (
+    ),
+    pipeline_captacao: () => (
       <>
-        <span className="realty-chip">{d("estagio") || item.status}</span>
-        <span>
-          {d("imovel_cidade") || "—"} · {d("telefone") || ""} · {d("origem") || ""}
-        </span>
+        {chip(d("estagio") || item.status)}
+        {line(d("imovel_tipo"), d("imovel_cidade"), d("operacao"), d("telefone"))}
       </>
-    );
-  }
-  if (kind === "corretor") {
-    return (
+    ),
+    corretor: () => (
       <>
-        <span className="realty-chip">{d("statusCorretor") || item.status || "ativo"}</span>
-        <span>
-          CRECI {d("creci") || "—"} · {d("telefone") || d("email") || ""}
-        </span>
+        {chip(d("statusCorretor") || item.status || "ativo")}
+        {line(`CRECI ${d("creci") || "—"}`, d("telefone") || d("email"), d("limite") ? `limite ${d("limite")}` : "")}
       </>
-    );
-  }
+    ),
+    condominio: () => (
+      <>
+        {chip(item.status || "ativo")}
+        {line(d("sindico"), d("unidades") ? `${d("unidades")} un.` : "", d("taxa") ? `R$ ${d("taxa")}` : "")}
+      </>
+    ),
+    relacionamento: () => (
+      <>
+        {chip(d("temperatura") || d("tipo") || item.status)}
+        {line(d("telefone"), d("proximoPasso"), d("ultimoContato"))}
+      </>
+    ),
+    inadimplencia: () => (
+      <>
+        {chip(d("acao") || item.status)}
+        {line(d("contratoRef"), d("diasAtraso") ? `${d("diasAtraso")} dias` : "", d("valorDevido") ? `R$ ${d("valorDevido")}` : "")}
+      </>
+    ),
+    consulta_cpf: () => (
+      <>
+        {chip(d("resultado") || item.status)}
+        {line(d("cpf"), d("nome"))}
+      </>
+    ),
+    automacao: () => (
+      <>
+        {chip(d("ativo") === "false" ? "off" : "on")}
+        {line(d("trigger_desc"), d("tipo"), d("acao"))}
+      </>
+    ),
+    feed: () => (
+      <>
+        {chip(d("canal") || item.status)}
+        {line(d("engajamento"), d("link"))}
+      </>
+    ),
+    curadoria: () => (
+      <>
+        {chip(d("formato") || item.status)}
+        {line(d("tema"), d("cta"))}
+      </>
+    ),
+    lgpd: () => (
+      <>
+        {chip(d("tipoPedido") || item.status)}
+        {line(d("titular"), d("prazo"))}
+      </>
+    ),
+    radar_oportunidades: () => (
+      <>
+        {chip(d("score") ? `score ${d("score")}` : item.status)}
+        {line(d("regiao"), d("tipo"), d("precoMedio") ? `R$ ${d("precoMedio")}` : "")}
+      </>
+    ),
+    pagamento_publico: () => (
+      <>
+        {chip(d("statusPagamento") || item.status)}
+        {line(d("cliente"), d("valorPagamento") ? `R$ ${d("valorPagamento")}` : "")}
+      </>
+    ),
+    monitoramento: () => (
+      <>
+        {chip(d("severidade") || item.status)}
+        {line(d("fonte"), d("regiao"), d("alerta"))}
+      </>
+    ),
+    wa_templates_captacao: () => (
+      <>
+        {chip(d("canal") || item.status)}
+        {line(d("variaveis"), (d("template") || "").slice(0, 48))}
+      </>
+    ),
+    config_imobiliaria: () => (
+      <>
+        {chip(item.status || "ativo")}
+        {line(d("marca"), d("cidadePadrao"), d("creciEmpresa"))}
+      </>
+    ),
+  };
+
+  if (map[kind]) return map[kind]();
   return (
     <>
-      <span className="realty-chip">{item.status || "aberto"}</span>
-      <span>
-        {[d("telefone"), d("cidade") || d("regiao"), item.notes].filter(Boolean).join(" · ") || "—"}
-      </span>
+      {chip(item.status || "aberto")}
+      {line(d("telefone"), d("cidade") || d("regiao"), item.notes)}
     </>
   );
 };
