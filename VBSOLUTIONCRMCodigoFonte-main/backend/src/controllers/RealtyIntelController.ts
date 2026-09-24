@@ -598,8 +598,11 @@ export const realtyDashboard = async (req: Request, res: Response) => {
     RealtyVisita.count({
       where: {
         companyId,
-        scheduledAt: { [Op.between]: [startOfDay, endOfDay] }
-      }
+        scheduledAt: {
+          [Op.gte]: startOfDay,
+          [Op.lte]: endOfDay
+        }
+      } as any
     }).catch(() => 0),
     RealtyProposta.count({
       where: {
