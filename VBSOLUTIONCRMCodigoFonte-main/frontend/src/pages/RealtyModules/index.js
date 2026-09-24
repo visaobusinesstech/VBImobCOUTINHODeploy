@@ -957,13 +957,6 @@ export const WhatsappImobiliario = () => (
           </Link>
         </article>
         <article className="realty-card">
-          <h3>Leads Landing</h3>
-          <p>Entradas de LP — converter em lead/ticket no atendimento.</p>
-          <Link className="realty-page__btn" to="/leads-landing">
-            Abrir CRM Landing
-          </Link>
-        </article>
-        <article className="realty-card">
           <h3>RadarZAP</h3>
           <p>Captação de grupos WhatsApp → lead.</p>
           <Link className="realty-page__btn" to="/radarzap">
