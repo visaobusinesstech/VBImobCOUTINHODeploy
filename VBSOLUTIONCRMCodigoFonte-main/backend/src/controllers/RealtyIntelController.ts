@@ -568,9 +568,10 @@ export const realtyDashboard = async (req: Request, res: Response) => {
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
 
-    const safeCount = async (fn: () => Promise<number>) => {
+    const safeCount = async (fn: () => any): Promise<number> => {
       try {
-        return await fn();
+        const n = await fn();
+        return Number(n) || 0;
       } catch {
         return 0;
       }
