@@ -776,6 +776,173 @@ export default function LeadCreateWizardForm(props) {
     </SectionWrap>
   );
 
+  const sectionInterest = (
+    <SectionWrap
+      {...sectionWrapProps}
+      id="lead-section-interest"
+      title="Interesse imobiliário"
+      hint="Perfil para matching de imóveis e WhatsApp"
+    >
+      <Grid container spacing={1}>
+        <Grid item xs={12} sm={4}>
+          <TextField
+            label="Temperatura"
+            select
+            SelectProps={{ native: true }}
+            fullWidth
+            size="small"
+            variant="outlined"
+            value={form.temperature || ""}
+            onChange={(e) => setForm((p) => ({ ...p, temperature: e.target.value }))}
+            disabled={ro("temperature")}
+          >
+            <option value="" />
+            <option value="quente">Quente</option>
+            <option value="morno">Morno</option>
+            <option value="frio">Frio</option>
+          </TextField>
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <TextField
+            label="Finalidade"
+            select
+            SelectProps={{ native: true }}
+            fullWidth
+            size="small"
+            variant="outlined"
+            value={form.purpose || ""}
+            onChange={(e) => setForm((p) => ({ ...p, purpose: e.target.value }))}
+            disabled={ro("purpose")}
+          >
+            <option value="" />
+            <option value="compra">Compra</option>
+            <option value="aluguel">Aluguel</option>
+            <option value="investimento">Investimento</option>
+          </TextField>
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <TextField
+            label="Tipo imóvel"
+            fullWidth
+            size="small"
+            variant="outlined"
+            value={form.interestType || ""}
+            onChange={(e) => setForm((p) => ({ ...p, interestType: e.target.value }))}
+            disabled={ro("interestType")}
+            placeholder="apartamento, casa..."
+          />
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <TextField
+            label="Cidade interesse"
+            fullWidth
+            size="small"
+            variant="outlined"
+            value={form.interestCity || ""}
+            onChange={(e) => setForm((p) => ({ ...p, interestCity: e.target.value }))}
+            disabled={ro("interestCity")}
+          />
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <TextField
+            label="Bairro interesse"
+            fullWidth
+            size="small"
+            variant="outlined"
+            value={form.interestNeighborhood || ""}
+            onChange={(e) => setForm((p) => ({ ...p, interestNeighborhood: e.target.value }))}
+            disabled={ro("interestNeighborhood")}
+          />
+        </Grid>
+        <Grid item xs={6} sm={2}>
+          <TextField
+            label="Quartos"
+            type="number"
+            fullWidth
+            size="small"
+            variant="outlined"
+            value={form.bedrooms || ""}
+            onChange={(e) => setForm((p) => ({ ...p, bedrooms: e.target.value }))}
+            disabled={ro("bedrooms")}
+          />
+        </Grid>
+        <Grid item xs={6} sm={2}>
+          <TextField
+            label="Vagas"
+            type="number"
+            fullWidth
+            size="small"
+            variant="outlined"
+            value={form.parkingSpots || ""}
+            onChange={(e) => setForm((p) => ({ ...p, parkingSpots: e.target.value }))}
+            disabled={ro("parkingSpots")}
+          />
+        </Grid>
+        <Grid item xs={6} sm={3}>
+          <TextField
+            label="Preço mín."
+            type="number"
+            fullWidth
+            size="small"
+            variant="outlined"
+            value={form.priceMin || ""}
+            onChange={(e) => setForm((p) => ({ ...p, priceMin: e.target.value }))}
+            disabled={ro("priceMin")}
+          />
+        </Grid>
+        <Grid item xs={6} sm={3}>
+          <TextField
+            label="Preço máx."
+            type="number"
+            fullWidth
+            size="small"
+            variant="outlined"
+            value={form.priceMax || ""}
+            onChange={(e) => setForm((p) => ({ ...p, priceMax: e.target.value }))}
+            disabled={ro("priceMax")}
+          />
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <TextField
+            label="Pagamento"
+            fullWidth
+            size="small"
+            variant="outlined"
+            value={form.paymentMethod || ""}
+            onChange={(e) => setForm((p) => ({ ...p, paymentMethod: e.target.value }))}
+            disabled={ro("paymentMethod")}
+          />
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <TextField
+            label="Próximo contato"
+            type="datetime-local"
+            fullWidth
+            size="small"
+            variant="outlined"
+            InputLabelProps={{ shrink: true }}
+            value={form.nextContactAt || ""}
+            onChange={(e) => setForm((p) => ({ ...p, nextContactAt: e.target.value }))}
+            disabled={ro("nextContactAt")}
+          />
+        </Grid>
+        <Grid item xs={12}>
+          <TextField
+            label="Características desejadas"
+            fullWidth
+            size="small"
+            variant="outlined"
+            multiline
+            rows={2}
+            value={form.featuresDesired || ""}
+            onChange={(e) => setForm((p) => ({ ...p, featuresDesired: e.target.value }))}
+            disabled={ro("featuresDesired")}
+          />
+        </Grid>
+      </Grid>
+    </SectionWrap>
+  );
+
   const sectionNotes = (
     <SectionWrap {...sectionWrapProps} id="lead-section-notes" title="Anotações">
       {renderLabel("Descrição", "description")}
@@ -849,6 +1016,7 @@ export default function LeadCreateWizardForm(props) {
         {show("personal") && sectionPersonal}
         {show("product") && sectionProduct}
         {show("origin") && sectionOrigin}
+        {sectionInterest}
         {show("notes") && sectionNotes}
       </div>
 

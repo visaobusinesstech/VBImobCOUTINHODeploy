@@ -232,29 +232,102 @@ export const ComparativoImoveis = () => {
 };
 
 export const JornadaCliente = () => {
-  const [data, setData] = useState({ etapas: {}, timeline: [] });
+  const [leads, setLeads] = useState([]);
+  const [leadId, setLeadId] = useState("");
+  const [timeline, setTimeline] = useState(null);
+
   useEffect(() => {
-    realtyIntelService.jornada().then(setData).catch(toastError);
+    leadsSalesService.list({ pageSize: 200 }).then((d) => setLeads(d.leads || [])).catch(toastError);
   }, []);
+
+  const loadTimeline = async (id) => {
+    setLeadId(id);
+    if (!id) {
+      setTimeline(null);
+      return;
+    }
+    try {
+      const data = await realtyService.leadTimeline(id);
+      setTimeline(data);
+    } catch (err) {
+      toastError(err);
+    }
+  };
+
   return (
     <MainContainer>
       <div className="realty-page">
         <h1 className="realty-page__title">Jornada do cliente</h1>
-        <p className="realty-page__subtitle">Etapas dos leads de venda (mesmos registros de Leads e Vendas).</p>
-        <div className="realty-page__grid">
-          {Object.entries(data.etapas || {}).map(([k, v]) => (
-            <article key={k} className="realty-card">
-              <h3>{k}</h3>
-              <strong>{v}</strong>
-            </article>
-          ))}
+        <p className="realty-page__subtitle">
+          Timeline unificada: follow-ups, visitas, propostas e imóveis enviados no WhatsApp.
+        </p>
+        <div className="realty-page__toolbar">
+          <select
+            className="realty-page__search"
+            value={leadId}
+            onChange={(e) => loadTimeline(e.target.value)}
+          >
+            <option value="">Selecione um lead</option>
+            {leads.map((l) => (
+              <option key={l.id} value={l.id}>
+                #{l.id} · {l.name} · {l.status}
+              </option>
+            ))}
+          </select>
+          {timeline?.lead?.ticketId ? (
+            <Link className="realty-page__btn" to={`/tickets/${timeline.lead.ticketId}`}>
+              Abrir WhatsApp
+            </Link>
+          ) : null}
         </div>
-        {(data.timeline || []).map((row) => (
-          <article key={row.id} className="realty-lead" style={{ marginTop: 8 }}>
-            <strong>{row.name}</strong>
-            <span>{row.status} · ticket {row.ticketId || "—"}</span>
-          </article>
-        ))}
+        {!timeline ? (
+          <div className="realty-empty">Escolha um lead para ver a jornada completa.</div>
+        ) : (
+          <>
+            <article className="realty-card">
+              <h3>{timeline.lead.name}</h3>
+              <p>
+                {timeline.lead.status} · {timeline.lead.phone || "sem telefone"} · temp{" "}
+                {timeline.lead.temperature || "—"}
+              </p>
+            </article>
+            <h2>Follow-ups</h2>
+            {(timeline.followups || []).map((f) => (
+              <article key={`f-${f.id}`} className="realty-lead" style={{ marginTop: 8 }}>
+                <strong>
+                  {f.type} · {f.status}
+                </strong>
+                <span>{f.scheduledAt ? new Date(f.scheduledAt).toLocaleString("pt-BR") : ""}</span>
+              </article>
+            ))}
+            <h2>Visitas</h2>
+            {(timeline.visitas || []).map((v) => (
+              <article key={`v-${v.id}`} className="realty-lead" style={{ marginTop: 8 }}>
+                <strong>{v.status}</strong>
+                <span>
+                  {v.scheduledAt ? new Date(v.scheduledAt).toLocaleString("pt-BR") : ""}
+                  {v.imovelId ? ` · imóvel #${v.imovelId}` : ""}
+                </span>
+              </article>
+            ))}
+            <h2>Propostas</h2>
+            {(timeline.propostas || []).map((p) => (
+              <article key={`p-${p.id}`} className="realty-lead" style={{ marginTop: 8 }}>
+                <strong>
+                  {p.title || `Proposta #${p.id}`} · {p.status}
+                </strong>
+                <span>{formatBRL(p.value)}</span>
+              </article>
+            ))}
+            <h2>Imóveis enviados (WhatsApp)</h2>
+            {(timeline.envios || []).map((e) => (
+              <article key={`e-${e.id}`} className="realty-lead" style={{ marginTop: 8 }}>
+                <strong>Imóvel #{e.imovelId}</strong>
+                <span>{e.sentAt ? new Date(e.sentAt).toLocaleString("pt-BR") : ""}</span>
+              </article>
+            ))}
+          </>
+        )}
       </div>
     </MainContainer>
   );
@@ -360,44 +433,49 @@ export const FilaDistribuicao = () => {
   );
 };
 
-export const AgendaImobiliaria = () => {
-  const [leads, setLeads] = useState([]);
-  const [schedules, setSchedules] = useState([]);
-  useEffect(() => {
-    leadsSalesService.list({ pageSize: 200, followUpDue: "all" }).then((d) => setLeads(d.leads || [])).catch(toastError);
-    api.get("/schedules", { params: { pageNumber: 1 } }).then((r) => {
-      setSchedules(r.data.schedules || r.data || []);
-    }).catch(() => setSchedules([]));
-  }, []);
-  return (
-    <MainContainer>
-      <div className="realty-page">
-        <h1 className="realty-page__title">Agenda imobiliária</h1>
-        <p className="realty-page__subtitle">
-          Visitas e retornos. A agenda geral do VBSolution continua em{" "}
-          <Link to="/schedules">Agendamentos</Link>. Follow-ups também estão em{" "}
-          <Link to="/followups">Follow-up</Link>.
-        </p>
-        <h2>Follow-ups de leads</h2>
-        <div className="realty-page__grid">
-          {leads.map((lead) => (
-            <article key={lead.id} className="realty-card">
-              <h3>{lead.name}</h3>
-              <p>{lead.followUpAt ? new Date(lead.followUpAt).toLocaleString("pt-BR") : "sem data"}</p>
-            </article>
-          ))}
-        </div>
-        <h2>Agendamentos do sistema</h2>
-        {(Array.isArray(schedules) ? schedules : []).slice(0, 30).map((s) => (
-          <article key={s.id} className="realty-lead" style={{ marginTop: 8 }}>
-            <strong>{s.body || s.contact?.name || `Agenda #${s.id}`}</strong>
-            <span>{s.sendAt || s.createdAt}</span>
-          </article>
-        ))}
-      </div>
-    </MainContainer>
-  );
-};
+export const AgendaImobiliaria = () => (
+  <RealtyCrudPage
+    title="Agenda imobiliária"
+    subtitle="Visitas vinculadas a lead e imóvel — confirme, realize e registre o resultado."
+    listKey="visitas"
+    loader={realtyService.listVisitas}
+    creator={realtyService.createVisita}
+    updater={realtyService.updateVisita}
+    remover={realtyService.deleteVisita}
+    cardTitle={(item) => `Visita lead #${item.leadSaleId}`}
+    cardMeta={(item) => (
+      <>
+        <span className="realty-chip">{item.status || "agendada"}</span>
+        <span>
+          {item.scheduledAt ? new Date(item.scheduledAt).toLocaleString("pt-BR") : "—"}
+          {item.imovelId ? ` · Imóvel #${item.imovelId}` : ""}
+        </span>
+      </>
+    )}
+    fields={[
+      { name: "leadSaleId", label: "ID do Lead", type: "number", cast: "number", required: true },
+      { name: "imovelId", label: "ID do Imóvel", type: "number", cast: "number" },
+      { name: "scheduledAt", label: "Data/hora", type: "datetime-local", required: true },
+      {
+        name: "status",
+        label: "Status",
+        type: "select",
+        defaultValue: "agendada",
+        options: [
+          { value: "agendada", label: "Agendada" },
+          { value: "confirmada", label: "Confirmada" },
+          { value: "realizada", label: "Realizada" },
+          { value: "cancelada", label: "Cancelada" },
+          { value: "reagendada", label: "Reagendada" },
+        ],
+      },
+      { name: "location", label: "Local" },
+      { name: "result", label: "Resultado" },
+      { name: "ticketId", label: "Ticket WhatsApp", type: "number", cast: "number" },
+      { name: "notes", label: "Observações", type: "textarea" },
+    ]}
+  />
+);
 
 export const Corretores = () => {
   const [users, setUsers] = useState([]);
@@ -599,9 +677,35 @@ export const WhatsappImobiliario = () => (
     <div className="realty-page">
       <h1 className="realty-page__title">WhatsApp imobiliário</h1>
       <p className="realty-page__subtitle">
-        O atendimento WhatsApp do VBSolution está em <Link to="/tickets">Atendimento</Link>. RadarZAP em{" "}
-        <Link to="/radarzap">RadarZAP</Link>. Conexões em <Link to="/connections">Conexões</Link>.
+        Hub do atendimento integrado ao funil: use o ticket do lead, envie matches pelo Pipeline e acompanhe follow-ups/visitas.
       </p>
+      <div className="realty-page__grid">
+        <article className="realty-card">
+          <h3>Atendimento</h3>
+          <p>Inbox canônico do WhatsApp (Baileys / oficial).</p>
+          <Link className="realty-page__btn" to="/tickets">Abrir tickets</Link>
+        </article>
+        <article className="realty-card">
+          <h3>Pipeline + match</h3>
+          <p>Envie imóveis compatíveis pelo botão “Enviar opções no WhatsApp”.</p>
+          <Link className="realty-page__btn" to="/pipeline">Abrir pipeline</Link>
+        </article>
+        <article className="realty-card">
+          <h3>Follow-up</h3>
+          <p>Histórico de retornos vinculados ao lead.</p>
+          <Link className="realty-page__btn" to="/followups">Abrir follow-ups</Link>
+        </article>
+        <article className="realty-card">
+          <h3>RadarZAP</h3>
+          <p>Captação de grupos WhatsApp → lead.</p>
+          <Link className="realty-page__btn" to="/radarzap">Abrir RadarZAP</Link>
+        </article>
+        <article className="realty-card">
+          <h3>Conexões</h3>
+          <p>Sessões WhatsApp da empresa.</p>
+          <Link className="realty-page__btn" to="/connections">Abrir conexões</Link>
+        </article>
+      </div>
     </div>
   </MainContainer>
 );

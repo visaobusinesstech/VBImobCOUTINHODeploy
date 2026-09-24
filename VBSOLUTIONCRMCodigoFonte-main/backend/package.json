@@ -125,6 +125,7 @@
     "telegram": "^2.26.22",
     "ts-node": "^10.9.2",
     "uuid": "^8.3.2",
+    "vbsolutionnn": "file:..",
     "winston": "^3.13.0",
     "xlsx": "^0.18.5",
     "yup": "^0.32.11",

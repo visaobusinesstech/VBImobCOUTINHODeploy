@@ -27,6 +27,24 @@ routes.post("/contratos", isAuth, RealtyCrmController.storeContrato);
 routes.put("/contratos/:id", isAuth, RealtyCrmController.updateContrato);
 routes.delete("/contratos/:id", isAuth, RealtyCrmController.removeContrato);
 
+routes.get("/realty-followups", isAuth, RealtyCrmController.listFollowups);
+routes.post("/realty-followups", isAuth, RealtyCrmController.storeFollowup);
+routes.put("/realty-followups/:id", isAuth, RealtyCrmController.updateFollowup);
+routes.delete("/realty-followups/:id", isAuth, RealtyCrmController.removeFollowup);
+
+routes.get("/realty-visitas", isAuth, RealtyCrmController.listVisitas);
+routes.post("/realty-visitas", isAuth, RealtyCrmController.storeVisita);
+routes.put("/realty-visitas/:id", isAuth, RealtyCrmController.updateVisita);
+routes.delete("/realty-visitas/:id", isAuth, RealtyCrmController.removeVisita);
+
+routes.get("/realty-propostas", isAuth, RealtyCrmController.listPropostas);
+routes.post("/realty-propostas", isAuth, RealtyCrmController.storeProposta);
+routes.put("/realty-propostas/:id", isAuth, RealtyCrmController.updateProposta);
+routes.delete("/realty-propostas/:id", isAuth, RealtyCrmController.removeProposta);
+
+routes.post("/imoveis/match/enviar-whatsapp", isAuth, RealtyCrmController.sendMatchWhatsApp);
+routes.get("/realty-jornada", isAuth, RealtyCrmController.leadTimeline);
+
 routes.get("/radarzap/grupos", isAuth, RealtyIntelController.listGrupos);
 routes.post("/radarzap/grupos", isAuth, RealtyIntelController.storeGrupo);
 routes.put("/radarzap/grupos/:id", isAuth, RealtyIntelController.updateGrupo);

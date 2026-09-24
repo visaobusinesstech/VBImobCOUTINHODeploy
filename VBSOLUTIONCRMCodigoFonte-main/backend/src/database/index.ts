@@ -77,6 +77,10 @@ import LeadSale from "../models/LeadSale";
 import Proprietario from "../models/Proprietario";
 import Imovel from "../models/Imovel";
 import Contrato from "../models/Contrato";
+import RealtyFollowup from "../models/RealtyFollowup";
+import RealtyVisita from "../models/RealtyVisita";
+import RealtyProposta from "../models/RealtyProposta";
+import RealtyLeadImovelEnvio from "../models/RealtyLeadImovelEnvio";
 import {
   RadarZapGrupo,
   RadarZapMensagem,
@@ -259,6 +263,10 @@ const models = [
   Proprietario,
   Imovel,
   Contrato,
+  RealtyFollowup,
+  RealtyVisita,
+  RealtyProposta,
+  RealtyLeadImovelEnvio,
   RadarZapGrupo,
   RadarZapMensagem,
   RadarZapLead,

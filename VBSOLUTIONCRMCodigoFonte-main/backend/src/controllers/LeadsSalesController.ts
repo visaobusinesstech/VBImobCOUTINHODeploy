@@ -95,7 +95,19 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     interestType,
     bedrooms,
     followUpAt,
-    ticketId
+    ticketId,
+    temperature,
+    purpose,
+    priceMin,
+    priceMax,
+    paymentMethod,
+    downPayment,
+    financing,
+    parkingSpots,
+    suitesDesired,
+    featuresDesired,
+    lostReason,
+    nextContactAt
   } = req.body;
 
   const record = await CreateService({
@@ -125,6 +137,18 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     bedrooms,
     followUpAt,
     ticketId,
+    temperature,
+    purpose,
+    priceMin,
+    priceMax,
+    paymentMethod,
+    downPayment,
+    financing,
+    parkingSpots,
+    suitesDesired,
+    featuresDesired,
+    lostReason,
+    nextContactAt,
     companyId
   });
 
@@ -167,7 +191,19 @@ export const update = async (req: Request, res: Response): Promise<Response> => 
     interestType,
     bedrooms,
     followUpAt,
-    ticketId
+    ticketId,
+    temperature,
+    purpose,
+    priceMin,
+    priceMax,
+    paymentMethod,
+    downPayment,
+    financing,
+    parkingSpots,
+    suitesDesired,
+    featuresDesired,
+    lostReason,
+    nextContactAt
   } = req.body;
 
   const record = await UpdateService({
@@ -197,7 +233,19 @@ export const update = async (req: Request, res: Response): Promise<Response> => 
     interestType,
     bedrooms,
     followUpAt,
-    ticketId
+    ticketId,
+    temperature,
+    purpose,
+    priceMin,
+    priceMax,
+    paymentMethod,
+    downPayment,
+    financing,
+    parkingSpots,
+    suitesDesired,
+    featuresDesired,
+    lostReason,
+    nextContactAt
   });
 
   const io = getIO();

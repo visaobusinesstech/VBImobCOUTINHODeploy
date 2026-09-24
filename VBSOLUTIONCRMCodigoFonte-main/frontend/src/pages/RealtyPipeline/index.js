@@ -18,10 +18,14 @@ import { formatBRL, groupLeadsByStage } from "../../helpers/realtyCrm";
 const DEFAULT_STAGES = [
   { key: "novo", label: "Novos" },
   { key: "contato", label: "Contato" },
+  { key: "qualificacao", label: "Qualificação" },
+  { key: "imoveis_enviados", label: "Imóveis enviados" },
   { key: "visita", label: "Visita" },
   { key: "proposta", label: "Proposta" },
+  { key: "negociacao", label: "Negociação" },
   { key: "fechado", label: "Fechado" },
   { key: "perdido", label: "Perdido" },
+  { key: "pos_venda", label: "Pós-venda" },
 ];
 
 const RealtyPipeline = () => {
@@ -101,6 +105,30 @@ const RealtyPipeline = () => {
     try {
       await leadsSalesService.update(selectedLead.id, { imovelId });
       toast.success("Imóvel vinculado ao lead");
+      setSelectedLead(null);
+      await load();
+    } catch (err) {
+      toastError(err);
+    }
+  };
+
+  const enviarWhatsApp = async () => {
+    if (!selectedLead) return;
+    try {
+      const ids = matches.map((m) => m.imovelId);
+      const data = await realtyService.sendMatchWhatsApp(selectedLead.id, ids);
+      if (data.sent) {
+        toast.success("Opções enviadas no WhatsApp");
+      } else {
+        toast.info(
+          data.ticketId
+            ? `Mensagem preparada (ticket #${data.ticketId}). Abra o atendimento se o envio automático falhou.`
+            : "Envio registrado. Vincule o lead a um ticket WhatsApp para disparo automático."
+        );
+      }
+      if (data.ticketId) {
+        history.push(`/tickets/${data.ticketId}`);
+      }
       setSelectedLead(null);
       await load();
     } catch (err) {
@@ -240,22 +268,32 @@ const RealtyPipeline = () => {
               {matches.length === 0 ? (
                 <p>Nenhum match. Cadastre imóveis com cidade/tipo próximos ao interesse do lead.</p>
               ) : (
-                matches.map((m) => (
-                  <div key={m.imovelId} className="realty-lead" style={{ marginTop: 8 }}>
-                    <strong>
-                      {m.imovel.title} · score {m.score}
-                    </strong>
-                    <span>{(m.reasons || []).join(", ")}</span>
-                    <button
-                      type="button"
-                      className="realty-page__btn"
-                      style={{ marginTop: 8 }}
-                      onClick={() => vincular(m.imovelId)}
-                    >
-                      Vincular
-                    </button>
-                  </div>
-                ))
+                <>
+                  {matches.map((m) => (
+                    <div key={m.imovelId} className="realty-lead" style={{ marginTop: 8 }}>
+                      <strong>
+                        {m.imovel.title} · score {m.score}
+                      </strong>
+                      <span>{(m.reasons || []).join(", ")}</span>
+                      <button
+                        type="button"
+                        className="realty-page__btn"
+                        style={{ marginTop: 8 }}
+                        onClick={() => vincular(m.imovelId)}
+                      >
+                        Vincular
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    className="realty-page__btn"
+                    style={{ marginTop: 16, width: "100%" }}
+                    onClick={enviarWhatsApp}
+                  >
+                    Enviar opções no WhatsApp
+                  </button>
+                </>
               )}
             </div>
           </div>

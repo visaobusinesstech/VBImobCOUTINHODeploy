@@ -34,6 +34,18 @@ interface Request {
   bedrooms?: number | null;
   followUpAt?: string | Date | null;
   ticketId?: number | null;
+  temperature?: string;
+  purpose?: string;
+  priceMin?: number | null;
+  priceMax?: number | null;
+  paymentMethod?: string;
+  downPayment?: number | null;
+  financing?: boolean;
+  parkingSpots?: number | null;
+  suitesDesired?: number | null;
+  featuresDesired?: string;
+  lostReason?: string;
+  nextContactAt?: string | Date | null;
 }
 
 const UpdateService = async ({
@@ -63,7 +75,19 @@ const UpdateService = async ({
   interestType,
   bedrooms,
   followUpAt,
-  ticketId
+  ticketId,
+  temperature,
+  purpose,
+  priceMin,
+  priceMax,
+  paymentMethod,
+  downPayment,
+  financing,
+  parkingSpots,
+  suitesDesired,
+  featuresDesired,
+  lostReason,
+  nextContactAt
 }: Request): Promise<LeadSale> => {
   const record = await LeadSale.findByPk(id as any);
   if (!record) {
@@ -121,7 +145,24 @@ const UpdateService = async ({
           ? new Date(followUpAt as any)
           : null
         : (record as any).followUpAt,
-    ticketId: ticketId !== undefined ? ticketId || null : (record as any).ticketId
+    ticketId: ticketId !== undefined ? ticketId || null : (record as any).ticketId,
+    temperature: temperature !== undefined ? temperature : (record as any).temperature,
+    purpose: purpose !== undefined ? purpose : (record as any).purpose,
+    priceMin: priceMin !== undefined ? priceMin : (record as any).priceMin,
+    priceMax: priceMax !== undefined ? priceMax : (record as any).priceMax,
+    paymentMethod: paymentMethod !== undefined ? paymentMethod : (record as any).paymentMethod,
+    downPayment: downPayment !== undefined ? downPayment : (record as any).downPayment,
+    financing: financing !== undefined ? financing : (record as any).financing,
+    parkingSpots: parkingSpots !== undefined ? parkingSpots : (record as any).parkingSpots,
+    suitesDesired: suitesDesired !== undefined ? suitesDesired : (record as any).suitesDesired,
+    featuresDesired: featuresDesired !== undefined ? featuresDesired : (record as any).featuresDesired,
+    lostReason: lostReason !== undefined ? lostReason : (record as any).lostReason,
+    nextContactAt:
+      nextContactAt !== undefined
+        ? nextContactAt
+          ? new Date(nextContactAt as any)
+          : null
+        : (record as any).nextContactAt
   } as any);
 
   return record;

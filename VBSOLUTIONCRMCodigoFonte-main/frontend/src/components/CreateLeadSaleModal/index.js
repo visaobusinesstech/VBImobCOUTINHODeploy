@@ -1742,7 +1742,24 @@ export default function CreateLeadSaleModal({ open, onClose, lead, onSave, pipel
       city: "",
       state: ""
     },
-    tags: []
+    tags: [],
+    interestCity: "",
+    interestNeighborhood: "",
+    interestType: "",
+    bedrooms: "",
+    temperature: "",
+    purpose: "",
+    priceMin: "",
+    priceMax: "",
+    paymentMethod: "",
+    downPayment: "",
+    financing: false,
+    parkingSpots: "",
+    suitesDesired: "",
+    featuresDesired: "",
+    lostReason: "",
+    followUpAt: "",
+    nextContactAt: ""
   });
 
   const initLeadIdRef = useRef(null);
@@ -1784,7 +1801,24 @@ export default function CreateLeadSaleModal({ open, onClose, lead, onSave, pipel
           city: lead.address?.city || "",
           state: lead.address?.state || ""
         },
-        tags: Array.isArray(lead.tags) ? lead.tags : []
+        tags: Array.isArray(lead.tags) ? lead.tags : [],
+        interestCity: lead.interestCity || "",
+        interestNeighborhood: lead.interestNeighborhood || "",
+        interestType: lead.interestType || "",
+        bedrooms: lead.bedrooms ?? "",
+        temperature: lead.temperature || "",
+        purpose: lead.purpose || "",
+        priceMin: lead.priceMin ?? "",
+        priceMax: lead.priceMax ?? "",
+        paymentMethod: lead.paymentMethod || "",
+        downPayment: lead.downPayment ?? "",
+        financing: !!lead.financing,
+        parkingSpots: lead.parkingSpots ?? "",
+        suitesDesired: lead.suitesDesired ?? "",
+        featuresDesired: lead.featuresDesired || "",
+        lostReason: lead.lostReason || "",
+        followUpAt: lead.followUpAt ? String(lead.followUpAt).slice(0, 16) : "",
+        nextContactAt: lead.nextContactAt ? String(lead.nextContactAt).slice(0, 16) : ""
       });
       setPhone(lead.phone || "");
       setEmail(lead.email || "");
@@ -2310,7 +2344,24 @@ export default function CreateLeadSaleModal({ open, onClose, lead, onSave, pipel
             ? undefined
             : Number(form.responsibleId),
         date: dateInputToStartISO(entryDate),
-        tags: Array.isArray(form.tags) ? form.tags : undefined
+        tags: Array.isArray(form.tags) ? form.tags : undefined,
+        interestCity: (form.interestCity || "").trim() || undefined,
+        interestNeighborhood: (form.interestNeighborhood || "").trim() || undefined,
+        interestType: (form.interestType || "").trim() || undefined,
+        bedrooms: form.bedrooms !== "" && form.bedrooms != null ? Number(form.bedrooms) : undefined,
+        temperature: (form.temperature || "").trim() || undefined,
+        purpose: (form.purpose || "").trim() || undefined,
+        priceMin: form.priceMin !== "" && form.priceMin != null ? Number(form.priceMin) : undefined,
+        priceMax: form.priceMax !== "" && form.priceMax != null ? Number(form.priceMax) : undefined,
+        paymentMethod: (form.paymentMethod || "").trim() || undefined,
+        downPayment: form.downPayment !== "" && form.downPayment != null ? Number(form.downPayment) : undefined,
+        financing: !!form.financing,
+        parkingSpots: form.parkingSpots !== "" && form.parkingSpots != null ? Number(form.parkingSpots) : undefined,
+        suitesDesired: form.suitesDesired !== "" && form.suitesDesired != null ? Number(form.suitesDesired) : undefined,
+        featuresDesired: (form.featuresDesired || "").trim() || undefined,
+        lostReason: (form.lostReason || "").trim() || undefined,
+        followUpAt: form.followUpAt || undefined,
+        nextContactAt: form.nextContactAt || undefined
       };
       let saved;
       const numericPipelineId = (() => {

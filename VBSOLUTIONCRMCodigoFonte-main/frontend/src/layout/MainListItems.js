@@ -867,7 +867,6 @@ const MainListItems = ({ collapsed, drawerClose, section }) => {
             <ListItemLink to="/nutricao" primary={translateUi("Nutrição")} icon={<AppIcon icon={Megaphone} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
             <ListItemLink to="/prospeccao" primary={translateUi("Prospecção diária")} icon={<AppIcon icon={CheckSquare} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
             <ListItemLink to="/activities" primary={translateUi("Atividades")} icon={<AppIcon icon={CheckSquare} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
-            <ListItemLink to="/projects" primary={translateUi("Projetos")} icon={<AppIcon icon={FolderKanban} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
             <ListItemLink to="/leads-landing" primary={translateUi("Leads de landing")} icon={<AppIcon icon={Megaphone} size={SIDEBAR_ICON_SIZE} />} tooltip={collapsed} collapsed={collapsed} />
           </MenuGroup>
 

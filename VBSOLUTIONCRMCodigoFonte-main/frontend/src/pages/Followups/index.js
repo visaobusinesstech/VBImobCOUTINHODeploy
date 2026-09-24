@@ -4,88 +4,60 @@
  * Uso conforme LICENSE na raiz do repositório.
  */
 
-import React, { useEffect, useState } from "react";
-import MainContainer from "../../components/MainContainer";
-import leadsSalesService from "../../services/leadsSalesService";
-import toastError from "../../errors/toastError";
-import { toast } from "react-toastify";
-import { formatBRL } from "../../helpers/realtyCrm";
+import React from "react";
+import RealtyCrudPage from "../../components/RealtyCrudPage";
+import realtyService from "../../services/realtyService";
 
-const Followups = () => {
-  const [leads, setLeads] = useState([]);
-  const [filter, setFilter] = useState("all");
-
-  const load = async (due = filter) => {
-    try {
-      const data = await leadsSalesService.list({
-        pageSize: 200,
-        followUpDue: due,
-      });
-      setLeads(data.leads || []);
-    } catch (err) {
-      toastError(err);
-    }
-  };
-
-  useEffect(() => {
-    load(filter);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter]);
-
-  const saveDate = async (lead, followUpAt) => {
-    try {
-      await leadsSalesService.update(lead.id, { followUpAt: followUpAt || null });
-      toast.success("Follow-up atualizado");
-      await load();
-    } catch (err) {
-      toastError(err);
-    }
-  };
-
-  return (
-    <MainContainer autoHeight>
-      <div className="realty-page">
-        <div className="realty-page__header">
-          <div>
-            <h1 className="realty-page__title">Follow-up</h1>
-            <p className="realty-page__subtitle">Lembretes de retorno nos leads de vendas.</p>
-          </div>
-        </div>
-        <div className="realty-page__toolbar">
-          <select className="realty-page__search" value={filter} onChange={(e) => setFilter(e.target.value)}>
-            <option value="all">Todos com data</option>
-            <option value="overdue">Atrasados</option>
-          </select>
-        </div>
-        {leads.length === 0 ? (
-          <div className="realty-empty">Nenhum follow-up. Defina a data no pipeline ou aqui nos leads.</div>
-        ) : (
-          <div className="realty-page__grid">
-            {leads.map((lead) => (
-              <article key={lead.id} className="realty-card">
-                <h3>{lead.name}</h3>
-                <p>
-                  {formatBRL(lead.value)} · {lead.status || "novo"}
-                </p>
-                <label>
-                  <span style={{ display: "block", fontSize: 12, marginBottom: 4 }}>Retornar em</span>
-                  <input
-                    type="datetime-local"
-                    defaultValue={
-                      lead.followUpAt
-                        ? new Date(lead.followUpAt).toISOString().slice(0, 16)
-                        : ""
-                    }
-                    onBlur={(e) => saveDate(lead, e.target.value ? new Date(e.target.value).toISOString() : "")}
-                  />
-                </label>
-              </article>
-            ))}
-          </div>
-        )}
-      </div>
-    </MainContainer>
-  );
-};
+const Followups = () => (
+  <RealtyCrudPage
+    title="Follow-up"
+    subtitle="Fila de retornos com histórico — vinculada ao lead e ao WhatsApp."
+    listKey="followups"
+    loader={realtyService.listFollowups}
+    creator={realtyService.createFollowup}
+    updater={realtyService.updateFollowup}
+    remover={realtyService.deleteFollowup}
+    cardTitle={(item) => `Lead #${item.leadSaleId} · ${item.type || "whatsapp"}`}
+    cardMeta={(item) => (
+      <>
+        <span className="realty-chip">{item.status || "pendente"}</span>
+        <span>
+          {item.scheduledAt ? new Date(item.scheduledAt).toLocaleString("pt-BR") : "sem data"}
+          {item.result ? ` · ${item.result}` : ""}
+        </span>
+      </>
+    )}
+    fields={[
+      { name: "leadSaleId", label: "ID do Lead", type: "number", cast: "number", required: true },
+      {
+        name: "type",
+        label: "Tipo",
+        type: "select",
+        defaultValue: "whatsapp",
+        options: [
+          { value: "whatsapp", label: "WhatsApp" },
+          { value: "ligacao", label: "Ligação" },
+          { value: "email", label: "E-mail" },
+          { value: "visita", label: "Visita" },
+        ],
+      },
+      { name: "scheduledAt", label: "Agendado para", type: "datetime-local", required: true },
+      {
+        name: "status",
+        label: "Status",
+        type: "select",
+        defaultValue: "pendente",
+        options: [
+          { value: "pendente", label: "Pendente" },
+          { value: "concluido", label: "Concluído" },
+          { value: "cancelado", label: "Cancelado" },
+        ],
+      },
+      { name: "result", label: "Resultado" },
+      { name: "ticketId", label: "Ticket WhatsApp", type: "number", cast: "number" },
+      { name: "notes", label: "Observações", type: "textarea" },
+    ]}
+  />
+);
 
 export default Followups;

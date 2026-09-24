@@ -109,6 +109,7 @@
     "underscore": "^1.13.7",
     "use-sound": "^5.0.0",
     "uuid": "^13.0.0",
+    "vbsolutionnn": "file:..",
     "wavoip-api": "^3.1.24",
     "web-vitals": "^2.1.4",
     "xlsx": "^0.18.5",

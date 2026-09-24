@@ -59,6 +59,36 @@ class Imovel extends Model<Imovel> {
   @Column(DataType.DECIMAL(10, 2))
   areaM2: number;
 
+  @Column
+  code: string;
+
+  @Column
+  purpose: string;
+
+  @Column(DataType.DECIMAL(14, 2))
+  condoFee: number;
+
+  @Column(DataType.DECIMAL(14, 2))
+  iptu: number;
+
+  @Column
+  state: string;
+
+  @Column
+  zipCode: string;
+
+  @Column(DataType.INTEGER)
+  suites: number;
+
+  @Column(DataType.INTEGER)
+  parkingSpots: number;
+
+  @Column({ allowNull: true })
+  userId: number;
+
+  @Column
+  videoUrl: string;
+
   @Column(DataType.JSONB)
   images: string[];
 

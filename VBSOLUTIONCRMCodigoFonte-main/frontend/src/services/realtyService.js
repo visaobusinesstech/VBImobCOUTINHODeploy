@@ -27,6 +27,13 @@ const realtyService = {
     const { data } = await api.get("/imoveis/match", { params: { leadId } });
     return data;
   },
+  async sendMatchWhatsApp(leadId, imovelIds) {
+    const { data } = await api.post("/imoveis/match/enviar-whatsapp", {
+      leadId,
+      imovelIds,
+    });
+    return data;
+  },
   async listProprietarios(params) {
     const { data } = await api.get("/proprietarios", { params });
     return data;
@@ -57,6 +64,58 @@ const realtyService = {
   },
   async deleteContrato(id) {
     const { data } = await api.delete(`/contratos/${id}`);
+    return data;
+  },
+  async listFollowups(params) {
+    const { data } = await api.get("/realty-followups", { params });
+    return data;
+  },
+  async createFollowup(payload) {
+    const { data } = await api.post("/realty-followups", payload);
+    return data;
+  },
+  async updateFollowup(id, payload) {
+    const { data } = await api.put(`/realty-followups/${id}`, payload);
+    return data;
+  },
+  async deleteFollowup(id) {
+    const { data } = await api.delete(`/realty-followups/${id}`);
+    return data;
+  },
+  async listVisitas(params) {
+    const { data } = await api.get("/realty-visitas", { params });
+    return data;
+  },
+  async createVisita(payload) {
+    const { data } = await api.post("/realty-visitas", payload);
+    return data;
+  },
+  async updateVisita(id, payload) {
+    const { data } = await api.put(`/realty-visitas/${id}`, payload);
+    return data;
+  },
+  async deleteVisita(id) {
+    const { data } = await api.delete(`/realty-visitas/${id}`);
+    return data;
+  },
+  async listPropostas(params) {
+    const { data } = await api.get("/realty-propostas", { params });
+    return data;
+  },
+  async createProposta(payload) {
+    const { data } = await api.post("/realty-propostas", payload);
+    return data;
+  },
+  async updateProposta(id, payload) {
+    const { data } = await api.put(`/realty-propostas/${id}`, payload);
+    return data;
+  },
+  async deleteProposta(id) {
+    const { data } = await api.delete(`/realty-propostas/${id}`);
+    return data;
+  },
+  async leadTimeline(leadId) {
+    const { data } = await api.get("/realty-jornada", { params: { leadId } });
     return data;
   },
 };

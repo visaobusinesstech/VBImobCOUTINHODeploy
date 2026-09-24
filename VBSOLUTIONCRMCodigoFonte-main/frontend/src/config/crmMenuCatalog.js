@@ -28,7 +28,6 @@ export const CRM_MENU_PATHS = [
   "/nutricao",
   "/prospeccao",
   "/activities",
-  "/projects",
   "/leads-landing",
   "/dashboard",
   "/imoveis",

@@ -119,6 +119,42 @@ class LeadSale extends Model<LeadSale> {
   @Column
   followUpAt: Date;
 
+  @Column
+  temperature: string;
+
+  @Column
+  purpose: string;
+
+  @Column(DataType.DECIMAL(14, 2))
+  priceMin: number;
+
+  @Column(DataType.DECIMAL(14, 2))
+  priceMax: number;
+
+  @Column
+  paymentMethod: string;
+
+  @Column(DataType.DECIMAL(14, 2))
+  downPayment: number;
+
+  @Column
+  financing: boolean;
+
+  @Column(DataType.INTEGER)
+  parkingSpots: number;
+
+  @Column(DataType.INTEGER)
+  suitesDesired: number;
+
+  @Column(DataType.TEXT)
+  featuresDesired: string;
+
+  @Column(DataType.TEXT)
+  lostReason: string;
+
+  @Column
+  nextContactAt: Date;
+
   @Column({ allowNull: true })
   ticketId: number | null;
 

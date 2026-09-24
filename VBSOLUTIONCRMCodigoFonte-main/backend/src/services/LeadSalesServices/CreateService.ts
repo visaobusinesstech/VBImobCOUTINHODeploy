@@ -34,6 +34,18 @@ interface Request {
   bedrooms?: number | null;
   followUpAt?: string | Date | null;
   ticketId?: number | null;
+  temperature?: string;
+  purpose?: string;
+  priceMin?: number | null;
+  priceMax?: number | null;
+  paymentMethod?: string;
+  downPayment?: number | null;
+  financing?: boolean;
+  parkingSpots?: number | null;
+  suitesDesired?: number | null;
+  featuresDesired?: string;
+  lostReason?: string;
+  nextContactAt?: string | Date | null;
   companyId: number;
 }
 
@@ -64,6 +76,18 @@ const CreateService = async ({
   bedrooms,
   followUpAt,
   ticketId,
+  temperature,
+  purpose,
+  priceMin,
+  priceMax,
+  paymentMethod,
+  downPayment,
+  financing,
+  parkingSpots,
+  suitesDesired,
+  featuresDesired,
+  lostReason,
+  nextContactAt,
   companyId
 }: Request): Promise<LeadSale> => {
   let finalPipelineId = pipelineId;
@@ -99,6 +123,18 @@ const CreateService = async ({
     bedrooms: bedrooms ?? null,
     followUpAt: followUpAt ? new Date(followUpAt as any) : null,
     ticketId: ticketId || null,
+    temperature: temperature || null,
+    purpose: purpose || null,
+    priceMin: priceMin ?? null,
+    priceMax: priceMax ?? null,
+    paymentMethod: paymentMethod || null,
+    downPayment: downPayment ?? null,
+    financing: financing ?? false,
+    parkingSpots: parkingSpots ?? null,
+    suitesDesired: suitesDesired ?? null,
+    featuresDesired: featuresDesired || null,
+    lostReason: lostReason || null,
+    nextContactAt: nextContactAt ? new Date(nextContactAt as any) : null,
     companyId
   } as any);
   return record;

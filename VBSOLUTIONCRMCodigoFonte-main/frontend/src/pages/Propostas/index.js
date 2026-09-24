@@ -4,53 +4,68 @@
  * Uso conforme LICENSE na raiz do repositório.
  */
 
-import React, { useEffect, useState } from "react";
-import MainContainer from "../../components/MainContainer";
-import leadsSalesService from "../../services/leadsSalesService";
-import toastError from "../../errors/toastError";
+import React from "react";
+import RealtyCrudPage from "../../components/RealtyCrudPage";
+import realtyService from "../../services/realtyService";
 import { formatBRL } from "../../helpers/realtyCrm";
 
-const Propostas = () => {
-  const [leads, setLeads] = useState([]);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const data = await leadsSalesService.list({ pageSize: 200, status: "proposta" });
-        setLeads(data.leads || []);
-      } catch (err) {
-        toastError(err);
-      }
-    })();
-  }, []);
-
-  return (
-    <MainContainer autoHeight>
-      <div className="realty-page">
-        <div className="realty-page__header">
-          <div>
-            <h1 className="realty-page__title">Propostas</h1>
-            <p className="realty-page__subtitle">Leads na etapa Proposta do funil de vendas.</p>
-          </div>
-        </div>
-        {leads.length === 0 ? (
-          <div className="realty-empty">Nenhuma proposta aberta. Mova um lead para Proposta no pipeline.</div>
-        ) : (
-          <div className="realty-page__grid">
-            {leads.map((lead) => (
-              <article key={lead.id} className="realty-card">
-                <h3>{lead.name}</h3>
-                <p>
-                  {formatBRL(lead.value)} · {lead.phone || "sem telefone"}
-                </p>
-                {lead.imovelId ? <span className="realty-chip">imóvel #{lead.imovelId}</span> : null}
-              </article>
-            ))}
-          </div>
-        )}
-      </div>
-    </MainContainer>
-  );
-};
+const Propostas = () => (
+  <RealtyCrudPage
+    title="Propostas"
+    subtitle="Documentos comerciais vinculados a lead e imóvel — envie e acompanhe no funil."
+    listKey="propostas"
+    loader={realtyService.listPropostas}
+    creator={realtyService.createProposta}
+    updater={realtyService.updateProposta}
+    remover={realtyService.deleteProposta}
+    cardTitle={(item) => item.title || `Proposta #${item.id}`}
+    cardMeta={(item) => (
+      <>
+        <span className="realty-chip">{item.status || "rascunho"}</span>
+        <span>
+          Lead #{item.leadSaleId}
+          {item.imovelId ? ` · Imóvel #${item.imovelId}` : ""} · {formatBRL(item.value)}
+        </span>
+      </>
+    )}
+    fields={[
+      { name: "title", label: "Título" },
+      { name: "leadSaleId", label: "ID do Lead", type: "number", cast: "number", required: true },
+      { name: "imovelId", label: "ID do Imóvel", type: "number", cast: "number" },
+      { name: "value", label: "Valor", type: "number", cast: "number" },
+      { name: "paymentMethod", label: "Forma de pagamento" },
+      { name: "downPayment", label: "Entrada", type: "number", cast: "number" },
+      {
+        name: "financing",
+        label: "Financiamento",
+        type: "select",
+        defaultValue: "false",
+        options: [
+          { value: "false", label: "Não" },
+          { value: "true", label: "Sim" },
+        ],
+        cast: "boolean",
+      },
+      {
+        name: "status",
+        label: "Status",
+        type: "select",
+        defaultValue: "rascunho",
+        options: [
+          { value: "rascunho", label: "Rascunho" },
+          { value: "enviada", label: "Enviada" },
+          { value: "em_negociacao", label: "Em negociação" },
+          { value: "aceita", label: "Aceita" },
+          { value: "recusada", label: "Recusada" },
+          { value: "expirada", label: "Expirada" },
+        ],
+      },
+      { name: "validUntil", label: "Validade", type: "datetime-local" },
+      { name: "ticketId", label: "Ticket WhatsApp", type: "number", cast: "number" },
+      { name: "conditions", label: "Condições", type: "textarea" },
+      { name: "notes", label: "Observações", type: "textarea" },
+    ]}
+  />
+);
 
 export default Propostas;

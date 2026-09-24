@@ -77,6 +77,12 @@ const RealtyCrudPage = ({
         if (f.cast === "number") {
           payload[f.name] = payload[f.name] === "" ? null : Number(payload[f.name]);
         }
+        if (f.cast === "boolean") {
+          payload[f.name] = payload[f.name] === true || payload[f.name] === "true";
+        }
+        if (f.type === "datetime-local" && payload[f.name]) {
+          payload[f.name] = new Date(payload[f.name]).toISOString();
+        }
       });
       if (editing) await updater(editing.id, payload);
       else await creator(payload);

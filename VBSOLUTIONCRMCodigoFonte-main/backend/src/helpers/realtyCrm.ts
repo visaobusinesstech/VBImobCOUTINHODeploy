@@ -22,11 +22,19 @@ export const CONTRATO_STATUSES = [
 export const REALTY_PIPELINE_STAGES = [
   { key: "novo", label: "Novos", order: 1 },
   { key: "contato", label: "Contato", order: 2 },
-  { key: "visita", label: "Visita", order: 3 },
-  { key: "proposta", label: "Proposta", order: 4 },
-  { key: "fechado", label: "Fechado", order: 5 },
-  { key: "perdido", label: "Perdido", order: 6 }
+  { key: "qualificacao", label: "Qualificação", order: 3 },
+  { key: "imoveis_enviados", label: "Imóveis enviados", order: 4 },
+  { key: "visita", label: "Visita", order: 5 },
+  { key: "proposta", label: "Proposta", order: 6 },
+  { key: "negociacao", label: "Negociação", order: 7 },
+  { key: "fechado", label: "Fechado", order: 8 },
+  { key: "perdido", label: "Perdido", order: 9 },
+  { key: "pos_venda", label: "Pós-venda", order: 10 }
 ] as const;
+
+export const FOLLOWUP_STATUSES = ["pendente", "concluido", "cancelado"] as const;
+export const VISITA_STATUSES = ["agendada", "confirmada", "realizada", "cancelada", "reagendada"] as const;
+export const PROPOSTA_STATUSES = ["rascunho", "enviada", "em_negociacao", "aceita", "recusada", "expirada"] as const;
 
 export type LeadMatchInput = {
   interestCity?: string | null;
