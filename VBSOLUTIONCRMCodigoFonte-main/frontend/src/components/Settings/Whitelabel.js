@@ -929,7 +929,7 @@ export default function Whitelabel(props) {
         value: appName
       });
       updateSettingsLoaded("appName", appName);
-      colorMode.setAppName(appName || "Visão Business");
+      colorMode.setAppName(appName || "Radar CRM");
       toast.success("Nome da aplicação salvo com sucesso.");
     } catch (e) {
       toast.error("Não foi possível salvar o nome da aplicação.");
@@ -1971,7 +1971,7 @@ export default function Whitelabel(props) {
                             letterSpacing: "-0.02em",
                           }}
                         >
-                          {appName || settingsLoaded.appName || colorMode.appName || "Visão Business"}
+                          {appName || settingsLoaded.appName || colorMode.appName || "Radar CRM"}
                         </Typography>
                       </div>
                     </Box>

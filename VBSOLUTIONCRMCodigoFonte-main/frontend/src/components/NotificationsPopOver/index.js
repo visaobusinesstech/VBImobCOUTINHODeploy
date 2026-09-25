@@ -456,12 +456,12 @@ const NotificationsPopOver = ({ volume = 1, hideTriggerButton = false, buttonCla
 		const numbers = "⓿➊➋➌➍➎➏➐➑➒➓⓫⓬⓭⓮⓯⓰⓱⓲⓳⓴";
 		if (badgeCount > 0) {
 			if (badgeCount < 21) {
-				document.title = numbers.substring(badgeCount, badgeCount + 1) + " - " + (String(theme.appName || "Visão Business"));
+				document.title = numbers.substring(badgeCount, badgeCount + 1) + " - " + (String(theme.appName || "Radar CRM"));
 			} else {
-				document.title = "(" + badgeCount + ") " + (String(theme.appName || "Visão Business"));
+				document.title = "(" + badgeCount + ") " + (String(theme.appName || "Radar CRM"));
 			}
 		} else {
-			document.title = String(theme.appName || "Visão Business");
+			document.title = String(theme.appName || "Radar CRM");
 		}
 		return (
 			<>

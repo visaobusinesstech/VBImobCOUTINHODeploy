@@ -417,7 +417,7 @@ const SignUp = () => {
     return (
         <React.Fragment>
             <Helmet>
-                <title>Visão Business - Cadastre-se</title>
+                <title>Radar CRM - Cadastre-se</title>
                 <link rel="icon" href="/favicon.png" />
             </Helmet>
 

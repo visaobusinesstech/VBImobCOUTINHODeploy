@@ -17,7 +17,7 @@ const Route = ({ component: Component, isPrivate = false, title, allowWhenAuth =
 	const { setPageTitle } = useContext(PageTitleContext);
 
 	useEffect(() => {
-		const baseTitle = "VB Solution CRM";
+		const baseTitle = "Radar CRM";
 		const pageTitle =
 			typeof title === "string" && title.trim() && title !== "[object Object]"
 				? title.trim()

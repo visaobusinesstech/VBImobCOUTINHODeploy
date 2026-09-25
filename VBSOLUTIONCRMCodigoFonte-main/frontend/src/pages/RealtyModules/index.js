@@ -1150,26 +1150,8 @@ export const RealtyDashboard = () => {
   };
 
   useEffect(() => {
-    (async () => {
-      try {
-        await realtyIntelService.seedDemo();
-      } catch (_) {
-        /* seed opcional — sem alerta */
-      }
-      await load();
-    })();
+    load();
   }, []);
-
-  const seed = async () => {
-    try {
-      const r = await realtyIntelService.seedDemo();
-      toast.success(r.message || `${r.created} registros criados`);
-      await load();
-    } catch (_) {
-      toast.success("Sincronizado com o banco (sem novos registros)");
-      await load();
-    }
-  };
 
   const k = data?.kpis || emptyKpis;
   const cards = [
@@ -1205,9 +1187,6 @@ export const RealtyDashboard = () => {
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <button type="button" className="realty-page__btn realty-page__btn--ghost" onClick={load}>
               {loading ? "Atualizando…" : "Atualizar"}
-            </button>
-            <button type="button" className="realty-page__btn" onClick={seed}>
-              Carregar dados estratégicos
             </button>
           </div>
         </div>

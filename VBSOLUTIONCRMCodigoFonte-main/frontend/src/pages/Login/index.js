@@ -338,7 +338,7 @@ const Login = () => {
     return (
         <>
             <Helmet>
-                <title>Visão Business - Login</title>
+                <title>Radar CRM - Login</title>
                 <link rel="icon" href="/favicon.png" />
             </Helmet>
 

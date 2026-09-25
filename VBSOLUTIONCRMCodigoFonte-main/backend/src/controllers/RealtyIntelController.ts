@@ -36,7 +36,6 @@ import {
   buildAvaliacaoLaudo,
   validarDescricaoBackendShape
 } from "../helpers/avaliacaoImovel";
-import { DEMO_BY_KIND } from "../helpers/realtyDemoSeed";
 import RealtyAvaliacaoHistorico from "../models/RealtyAvaliacaoHistorico";
 
 export const listGrupos = async (req: Request, res: Response) => {
@@ -397,25 +396,6 @@ export const listModulos = async (req: Request, res: Response) => {
   const kind = String(req.query.kind || "");
   const where: any = { companyId };
   if (kind) where.kind = kind;
-
-  // Auto-preenche kinds vazios com dados estratégicos do legado
-  if (kind) {
-    const count = await RealtyModulo.count({ where: { companyId, kind } });
-    if (count === 0) {
-      const demos = DEMO_BY_KIND[kind] || [];
-      for (const demo of demos) {
-        await RealtyModulo.create({
-          kind,
-          title: demo.title,
-          status: demo.status || "aberto",
-          notes: demo.notes || null,
-          value: demo.value ?? null,
-          payload: demo.payload || null,
-          companyId
-        } as any);
-      }
-    }
-  }
 
   const items = await RealtyModulo.findAll({
     where,
@@ -988,41 +968,7 @@ export const realtyDashboard = async (req: Request, res: Response) => {
   }
 };
 
-/** Seed estratégico (legado Radar/Coutinho) — só preenche kinds vazios da empresa. */
-export const seedRealtyDemo = async (req: Request, res: Response) => {
-  const { companyId } = req.user;
-  let created = 0;
-  for (const kind of Object.keys(DEMO_BY_KIND)) {
-    const existing = await RealtyModulo.count({ where: { companyId, kind } });
-    if (existing > 0) continue;
-    for (const demo of DEMO_BY_KIND[kind]) {
-      await RealtyModulo.create({
-        kind: demo.kind,
-        title: demo.title,
-        status: demo.status || "aberto",
-        notes: demo.notes || null,
-        value: demo.value ?? null,
-        payload: demo.payload || null,
-        companyId
-      } as any);
-      created += 1;
-    }
-  }
-
-  const fuCount = await RealtyFollowup.count({ where: { companyId } }).catch(() => 0);
-  const lead = await LeadSale.findOne({ where: { companyId }, order: [["id", "ASC"]] });
-  if (fuCount === 0 && lead) {
-    await RealtyFollowup.create({
-      type: "whatsapp",
-      scheduledAt: new Date(Date.now() + 2 * 60 * 60 * 1000),
-      status: "pendente",
-      notes: "Retorno estratégico pós-LP — confirmar interesse e cidade.",
-      result: "",
-      leadSaleId: lead.id,
-      companyId
-    } as any);
-    created += 1;
-  }
-
-  return res.json({ created, message: created ? "Dados estratégicos carregados" : "Já havia dados; nada a criar" });
+/** Seed de demonstração desativado — não cria dados fictícios. */
+export const seedRealtyDemo = async (_req: Request, res: Response) => {
+  return res.json({ created: 0, message: "Seed de demonstração desativado" });
 };

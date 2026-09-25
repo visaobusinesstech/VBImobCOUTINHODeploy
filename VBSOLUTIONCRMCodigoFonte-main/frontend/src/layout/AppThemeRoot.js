@@ -1112,7 +1112,7 @@ const AppThemeRoot = ({ children }) => {
           const name = pickVal(rows, "appName");
           const resolvedName =
             settingText(name) ||
-            settingText(await gp("appName", cid), "Visão Business");
+            settingText(await gp("appName", cid), "Radar CRM");
 
           if (cancelled) return;
 
@@ -1192,7 +1192,7 @@ const AppThemeRoot = ({ children }) => {
           setAppLogoDark(logoUrl(lDark) || defaultLogoDark);
           setAppLogoFavicon(logoUrl(lFav) || defaultLogoFavicon);
           setAppLogoTickets(logoUrl(lTick) || "");
-          setAppName(settingText(aName, "Visão Business"));
+          setAppName(settingText(aName, "Radar CRM"));
         });
       } catch (e) {
         console.log("Theme load error", e);
