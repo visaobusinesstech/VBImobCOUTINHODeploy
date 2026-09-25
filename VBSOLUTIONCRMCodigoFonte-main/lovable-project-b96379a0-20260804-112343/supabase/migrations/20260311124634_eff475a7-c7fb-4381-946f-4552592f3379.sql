@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Public can view imoveis_mercado" ON public.imoveis_mercado;

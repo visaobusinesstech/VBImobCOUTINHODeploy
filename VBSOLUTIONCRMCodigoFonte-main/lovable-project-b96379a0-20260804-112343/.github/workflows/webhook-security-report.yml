@@ -1,0 +1,390 @@
+name: webhookSecurity · consolidated coverage report
+
+on:
+  pull_request:
+    paths:
+      - "supabase/functions/_shared/webhookSecurity.ts"
+      - "supabase/functions/_shared/webhookSecurity.test.ts"
+      - "scripts/webhook-security-coverage.ts"
+      - "scripts/webhook-security-split-coverage.ts"
+      - "scripts/webhook-security-diff-coverage.ts"
+      - "scripts/webhook-security-diff-coverage-split.ts"
+      - ".github/workflows/webhook-security-report.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+  actions: read
+
+# Um comentário por PR: cancela runs anteriores da mesma branch pra evitar
+# corrida entre múltiplos pushes atualizando o mesmo sticky.
+concurrency:
+  group: webhook-security-report-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  report:
+    name: Consolidated coverage (absolute + diff, unit + integration)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      # --- Gates (continue-on-error para agregar tudo em um comentário só) ---
+
+      - name: Split coverage (absolute, per layer)
+        id: split
+        continue-on-error: true
+        env:
+          COVERAGE_MIN_UNIT_LINES: "75"
+          COVERAGE_MIN_UNIT_BRANCHES: "80"
+          COVERAGE_MIN_INTEGRATION_LINES: "55"
+          COVERAGE_MIN_INTEGRATION_BRANCHES: "60"
+        run: deno run -A scripts/webhook-security-split-coverage.ts
+
+      - name: Combined LCOV (for diff-combined gate)
+        id: combined-lcov
+        continue-on-error: true
+        env:
+          COVERAGE_MIN_LINES: "0"
+          COVERAGE_MIN_BRANCHES: "0"
+        run: deno run -A scripts/webhook-security-coverage.ts
+
+      - name: Diff coverage (combined)
+        id: diff-combined
+        continue-on-error: true
+        env:
+          DIFF_BASE_REF: origin/${{ github.event.pull_request.base.ref }}
+          DIFF_COVERAGE_MIN: "90"
+        run: deno run -A scripts/webhook-security-diff-coverage.ts
+
+      - name: Diff coverage (per layer)
+        id: diff-split
+        continue-on-error: true
+        env:
+          DIFF_BASE_REF: origin/${{ github.event.pull_request.base.ref }}
+          DIFF_COVERAGE_MIN_UNIT: "90"
+          DIFF_COVERAGE_MIN_INTEGRATION: "70"
+        run: deno run -A scripts/webhook-security-diff-coverage-split.ts
+
+      # --- Um único artefato consolidado ---
+
+      - name: Upload consolidated artifact
+        id: upload
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: webhook-security-coverage-report
+          path: |
+            coverage/webhook-security/lcov.info
+            coverage/webhook-security/diff-summary.json
+            coverage/webhook-security/diff-summary-split.json
+            coverage/webhook-security/unit/lcov.info
+            coverage/webhook-security/unit/summary.json
+            coverage/webhook-security/unit/diff-summary.json
+            coverage/webhook-security/integration/lcov.info
+            coverage/webhook-security/integration/summary.json
+            coverage/webhook-security/integration/diff-summary.json
+          retention-days: 14
+          if-no-files-found: warn
+
+      # --- Comentário sticky único, com todas as seções ---
+
+      - name: Post consolidated sticky comment
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        env:
+          OUTCOME_SPLIT: ${{ steps.split.outcome }}
+          OUTCOME_DIFF_COMBINED: ${{ steps.diff-combined.outcome }}
+          OUTCOME_DIFF_SPLIT: ${{ steps.diff-split.outcome }}
+          ARTIFACT_URL: ${{ steps.upload.outputs.artifact-url }}
+          ARTIFACT_ID: ${{ steps.upload.outputs.artifact-id }}
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            // Marcador único — substitui os stickies antigos por PR.
+            const MARKER = '<!-- webhookSecurity:coverage-report -->';
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const artifactUrl = process.env.ARTIFACT_URL;
+            const artifactId = process.env.ARTIFACT_ID;
+
+            const outcomes = {
+              split: process.env.OUTCOME_SPLIT,
+              diff_combined: process.env.OUTCOME_DIFF_COMBINED,
+              diff_split: process.env.OUTCOME_DIFF_SPLIT,
+            };
+            const allSuccess = Object.values(outcomes).every((o) => o === 'success');
+            const overall = allSuccess
+              ? '✅ Todos os gates passaram'
+              : '❌ Um ou mais gates falharam';
+
+            function readJson(p) {
+              try { return JSON.parse(fs.readFileSync(p, 'utf8')); }
+              catch { return null; }
+            }
+
+            // ---- Seção 1: cobertura absoluta por camada ----
+            const unit = readJson('coverage/webhook-security/unit/summary.json');
+            const integration = readJson('coverage/webhook-security/integration/summary.json');
+
+            function absCell(s, kind) {
+              if (!s) return '_sem dados_';
+              const v = s[kind];
+              const min = s.thresholds[kind === 'lines' ? 'lines' : 'branches'];
+              const ok = (v.pct + 1e-9) >= min;
+              return `${ok ? '✅' : '❌'} ${v.pct.toFixed(2)}% (${v.covered}/${v.total})`;
+            }
+            function absRow(name, s) {
+              if (!s) return `| **${name}** | _sem dados_ | – | – | – | – |`;
+              return `| **${name}** | ${s.tests_ran} | ${absCell(s, 'lines')} | ${s.thresholds.lines}% | ${absCell(s, 'branches')} | ${s.thresholds.branches}% |`;
+            }
+
+            function uncoveredBlock(name, s) {
+              if (!s || !s.failures || s.failures.length === 0) return null;
+              const lineRanges = (s.lines && s.lines.uncovered_ranges) || '';
+              const branchRanges = (s.branches && s.branches.uncovered_ranges) || '';
+              const lineCount = (s.lines && s.lines.uncovered || []).length;
+              const branchCount = (s.branches && s.branches.uncovered || []).length;
+              const MAX = 3500;
+              const clamp = (str) => str.length > MAX ? str.slice(0, MAX) + ` … (+${str.length - MAX} chars)` : str;
+              return [
+                `<details><summary>❌ <strong>${name}</strong> — ${lineCount} linhas · ${branchCount} branches descobertos</summary>`,
+                '',
+                `**Motivo:** ${s.failures.join(' · ')}`,
+                '',
+                lineCount > 0 ? `**Linhas não cobertas:**\n\n\`\`\`\n${clamp(lineRanges)}\n\`\`\`` : '_Todas as linhas cobertas — falha veio de branches._',
+                branchCount > 0 ? `\n**Branches não cobertos (linha):**\n\n\`\`\`\n${clamp(branchRanges)}\n\`\`\`` : '',
+                '',
+                '</details>',
+              ].filter(Boolean).join('\n');
+            }
+
+            const absStatus = outcomes.split === 'success' ? '✅' : '❌';
+            const absSection = [
+              `### ${absStatus} 1) Cobertura absoluta por camada`,
+              '',
+              'Thresholds isolados — regressão em uma camada **não** é absorvida pela outra.',
+              '',
+              '| Camada | Testes | Linhas | Mín. linhas | Branches | Mín. branches |',
+              '|--------|--------|--------|-------------|----------|---------------|',
+              absRow('unit', unit),
+              absRow('integration', integration),
+              '',
+              [uncoveredBlock('unit', unit), uncoveredBlock('integration', integration)].filter(Boolean).join('\n\n'),
+            ].filter(Boolean).join('\n');
+
+            // ---- Seção 2: diff coverage combinado ----
+            const diffCombined = readJson('coverage/webhook-security/diff-summary.json');
+            const diffCombStatus = outcomes.diff_combined === 'success' ? '✅' : '❌';
+            let diffCombinedSection;
+            if (diffCombined) {
+              const pct = Number(diffCombined.pct).toFixed(2);
+              const min = diffCombined.threshold;
+              const status = diffCombined.executable_changed_lines === 0
+                ? '➖' : ((Number(diffCombined.pct) + 1e-9) >= min ? '✅' : '❌');
+              const uncovList = (diffCombined.uncovered_lines || []).slice(0, 80).join(', ') +
+                ((diffCombined.uncovered_lines || []).length > 80
+                  ? ` … (+${diffCombined.uncovered_lines.length - 80})` : '');
+              diffCombinedSection = [
+                `### ${diffCombStatus} 2) Diff coverage (linhas alteradas — combinado)`,
+                '',
+                '| Métrica | Valor |',
+                '|---------|-------|',
+                `| Base | \`${diffCombined.base_ref}\` |`,
+                `| Linhas alteradas | ${diffCombined.changed_lines} |`,
+                `| Executáveis | ${diffCombined.executable_changed_lines} |`,
+                `| Cobertas | ${diffCombined.covered} |`,
+                `| Diff coverage | ${status} **${pct}%** (mín. ${min}%) |`,
+                (diffCombined.uncovered_lines || []).length > 0
+                  ? `\n<details><summary>Linhas alteradas sem cobertura</summary>\n\n\`\`\`\n${uncovList}\n\`\`\`\n\n</details>` : '',
+              ].join('\n');
+            } else {
+              diffCombinedSection = `### ${diffCombStatus} 2) Diff coverage (combinado)\n\n_diff-summary.json não gerado — veja o log do run._`;
+            }
+
+            // ---- Seção 3: diff coverage por camada ----
+            const diffSplit = readJson('coverage/webhook-security/diff-summary-split.json');
+            const diffSplitStatus = outcomes.diff_split === 'success' ? '✅' : '❌';
+            let diffSplitSection;
+            if (diffSplit && Array.isArray(diffSplit.layers)) {
+              const rows = diffSplit.layers.map((r) => {
+                const status = r.failed ? '❌' : (r.executable_changed === 0 ? '➖' : '✅');
+                const list = (r.uncovered_lines && r.uncovered_lines.length)
+                  ? r.uncovered_lines.slice(0, 40).join(', ') +
+                    (r.uncovered_lines.length > 40 ? ' …' : '')
+                  : '—';
+                return `| ${status} **${r.layer}** | ${r.executable_changed} | ${r.covered} | ${Number(r.pct).toFixed(2)}% | ${r.threshold}% | ${list} |`;
+              }).join('\n');
+              diffSplitSection = [
+                `### ${diffSplitStatus} 3) Diff coverage por camada`,
+                '',
+                `Base: \`${diffSplit.base_ref}\` · Linhas alteradas: **${diffSplit.changed_lines}**. Cada camada falha **somente** se as linhas alteradas exercitáveis por ela ficarem abaixo do seu mínimo.`,
+                '',
+                '| Camada | Executáveis | Cobertas | Diff cov. | Mínimo | Linhas alteradas sem cobertura |',
+                '|--------|-------------|----------|-----------|--------|--------------------------------|',
+                rows,
+              ].join('\n');
+            } else {
+              diffSplitSection = `### ${diffSplitStatus} 3) Diff coverage por camada\n\n_diff-summary-split.json não gerado — veja o log do run._`;
+            }
+
+            // ---- Seção 4: Top missed (maiores gaps de cobertura combinada) ----
+            // Usa o LCOV combinado (todas as camadas) — um trecho só entra aqui
+            // se NENHUMA camada o exercita, ou seja, é o gap mais prioritário.
+            const TARGET = 'supabase/functions/_shared/webhookSecurity.ts';
+            function parseCombinedLcov(p) {
+              try {
+                const txt = fs.readFileSync(p, 'utf8');
+                const uncovered = [];
+                let inTarget = false;
+                for (const raw of txt.split('\n')) {
+                  const line = raw.trim();
+                  if (line.startsWith('SF:')) {
+                    const sf = line.slice(3).replace(/\\/g, '/');
+                    inTarget = sf.endsWith(TARGET) || sf === TARGET;
+                    continue;
+                  }
+                  if (!inTarget) continue;
+                  if (line === 'end_of_record') { inTarget = false; continue; }
+                  if (line.startsWith('DA:')) {
+                    const [ln, hits] = line.slice(3).split(',').map(Number);
+                    if (hits === 0) uncovered.push(ln);
+                  }
+                }
+                return uncovered.sort((a, b) => a - b);
+              } catch { return []; }
+            }
+            function groupRanges(nums) {
+              const out = [];
+              for (const n of nums) {
+                const last = out[out.length - 1];
+                if (last && n === last.end + 1) last.end = n;
+                else out.push({ start: n, end: n });
+              }
+              return out;
+            }
+
+            const combinedUncovered = parseCombinedLcov('coverage/webhook-security/lcov.info');
+            const ranges = groupRanges(combinedUncovered)
+              .map((r) => ({ ...r, size: r.end - r.start + 1 }))
+              .sort((a, b) => b.size - a.size);
+            const TOP_N = 5;
+            const top = ranges.slice(0, TOP_N);
+            const blobBase = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/blob/${context.sha}/${TARGET}`;
+
+            let topMissedSection;
+            if (top.length === 0) {
+              topMissedSection = `### ✅ 4) Top missed\n\n_Nenhuma linha descoberta pelo conjunto combinado de testes._`;
+            } else {
+              const rows = top.map((r, i) => {
+                const span = r.start === r.end ? `L${r.start}` : `L${r.start}-L${r.end}`;
+                const link = r.start === r.end
+                  ? `${blobBase}#L${r.start}`
+                  : `${blobBase}#L${r.start}-L${r.end}`;
+                // Marca em qual(is) camada(s) o gap ocorre — ajuda a priorizar teste.
+                const missedByUnit = unit && (unit.lines.uncovered || []).some((l) => l >= r.start && l <= r.end);
+                const missedByInt = integration && (integration.lines.uncovered || []).some((l) => l >= r.start && l <= r.end);
+                const layers = [missedByUnit ? 'unit' : null, missedByInt ? 'integration' : null].filter(Boolean).join(' + ') || '—';
+                return `| ${i + 1} | [\`${span}\`](${link}) | ${r.size} | ${layers} |`;
+              }).join('\n');
+              const totalMissed = combinedUncovered.length;
+              topMissedSection = [
+                `### 🎯 4) Top missed — maiores gaps de cobertura combinada`,
+                '',
+                `**${totalMissed}** linhas sem cobertura por *nenhuma* camada em \`${TARGET}\`. Priorize os ranges maiores primeiro:`,
+                '',
+                '| # | Range | Linhas | Descoberto por |',
+                '|---|-------|--------|----------------|',
+                rows,
+                '',
+                ranges.length > TOP_N ? `_+${ranges.length - TOP_N} outros ranges menores — veja o \`lcov.info\` no artefato._` : '',
+              ].filter(Boolean).join('\n');
+            }
+
+            // ---- Links de artefatos e relatório detalhado ----
+            const artifactLine = artifactUrl
+              ? `📦 [Baixar relatório consolidado (\`webhook-security-coverage-report\`)](${artifactUrl}) — inclui LCOVs, \`summary.json\` (unit/integration) e ambos os \`diff-summary\`.`
+              : `📦 Artefato: \`webhook-security-coverage-report\` (id \`${artifactId ?? 'n/a'}\`) — aba **Artifacts** do [run](${runUrl}).`;
+
+            const detailedReportLine = [
+              `📊 **Relatório detalhado:**`,
+              `[step summary](${runUrl}#step-summary) · [job logs](${runUrl}) · [Files changed (annotations inline)](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/pull/${context.issue.number}/files)`,
+            ].join(' ');
+
+            const statusList = [
+              `- Split coverage (absoluto por camada): **${outcomes.split}**`,
+              `- Diff coverage (combinado): **${outcomes.diff_combined}**`,
+              `- Diff coverage (por camada): **${outcomes.diff_split}**`,
+            ].join('\n');
+
+            const body = [
+              MARKER,
+              `## ${overall} · webhookSecurity coverage`,
+              '',
+              statusList,
+              '',
+              absSection,
+              '',
+              diffCombinedSection,
+              '',
+              diffSplitSection,
+              '',
+              topMissedSection,
+              '',
+              '---',
+              '',
+              detailedReportLine,
+              '',
+              artifactLine,
+              '',
+              `🔗 [Ver run completo](${runUrl}) · commit \`${context.sha.substring(0, 7)}\``,
+              '',
+              '<sub>Comentário único gerado por **webhookSecurity · consolidated coverage report**. Substitui os stickies antigos de split/diff.</sub>',
+            ].join('\n');
+
+            // Upsert do sticky.
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              per_page: 100,
+            });
+            const existing = comments.find((c) => c.body && c.body.includes(MARKER));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+              core.info(`Comentário consolidado atualizado (id=${existing.id}).`);
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+              core.info('Comentário consolidado criado.');
+            }
+
+      # --- Falha o job se qualquer gate reprovou (após já ter comentado) ---
+      - name: Fail if any gate failed
+        if: always()
+        run: |
+          set -e
+          fail=0
+          [ "${{ steps.split.outcome }}"        = "success" ] || { echo "split coverage falhou"; fail=1; }
+          [ "${{ steps.diff-combined.outcome }}" = "success" ] || { echo "diff coverage combinado falhou"; fail=1; }
+          [ "${{ steps.diff-split.outcome }}"    = "success" ] || { echo "diff coverage por camada falhou"; fail=1; }
+          exit $fail

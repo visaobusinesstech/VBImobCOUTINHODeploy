@@ -1,0 +1,104 @@
+# Dependabot — abre PRs automáticos de atualização de dependências.
+#
+# • Security updates: SEMPRE ativos por padrão no GitHub (independente das
+#   entradas abaixo) assim que o Dependabot Alerts estiver habilitado no repo.
+#   Este arquivo apenas define como/quando os PRs devem ser abertos e agrupados.
+# • Version updates: rodam no schedule definido em cada ecosystem.
+#
+# Requisitos no GitHub (uma vez):
+#   Settings → Code security and analysis →
+#     - Dependency graph: Enabled
+#     - Dependabot alerts: Enabled
+#     - Dependabot security updates: Enabled
+#     - Dependabot version updates: Enabled (lê este arquivo)
+version: 2
+
+updates:
+  # ---------------------- NPM (app front + edge functions) ----------------------
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "07:00"
+      timezone: "America/Sao_Paulo"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "npm"
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+      include: "scope"
+    # Agrupa updates NÃO relacionados a segurança para reduzir ruído.
+    # PRs de vulnerabilidade continuam sendo abertos individualmente e
+    # com prioridade — Dependabot NÃO agrupa security alerts por padrão.
+    groups:
+      radix-ui:
+        patterns:
+          - "@radix-ui/*"
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+      tanstack:
+        patterns:
+          - "@tanstack/*"
+      supabase:
+        patterns:
+          - "@supabase/*"
+      vite-tooling:
+        patterns:
+          - "vite"
+          - "@vitejs/*"
+          - "vitest"
+          - "@vitest/*"
+      tailwind:
+        patterns:
+          - "tailwindcss"
+          - "tailwindcss-*"
+          - "@tailwindcss/*"
+          - "autoprefixer"
+          - "postcss"
+      linters:
+        patterns:
+          - "eslint"
+          - "eslint-*"
+          - "@eslint/*"
+          - "typescript-eslint"
+          - "prettier"
+      types:
+        patterns:
+          - "@types/*"
+        exclude-patterns:
+          - "@types/react"
+          - "@types/react-dom"
+    ignore:
+      # Nunca fazer bump automático de major do React sem revisão manual.
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
+
+  # ------------------------------- GitHub Actions -------------------------------
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "07:00"
+      timezone: "America/Sao_Paulo"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "chore(ci)"
+      include: "scope"
+    groups:
+      actions-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"

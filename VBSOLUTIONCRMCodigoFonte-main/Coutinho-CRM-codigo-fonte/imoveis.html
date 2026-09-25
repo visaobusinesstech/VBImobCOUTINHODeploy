@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfólio de Imóveis · Coutinho Imóveis DF</title>
+<meta name="description" content="Apartamentos, casas e coberturas à venda em Brasília — Noroeste, Sudoeste, Águas Claras, Vicente Pires. Atendimento direto no WhatsApp.">
+<meta property="og:title" content="Portfólio de Imóveis · Coutinho Imóveis">
+<meta property="og:type" content="website">
+<link rel="canonical" href="/imoveis.html">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }</style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+
+<nav class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+    <a href="/imoveis.html" class="flex items-center gap-2">
+      <span class="w-8 h-8 rounded-lg bg-amber-400 text-slate-950 flex items-center justify-center font-black">C</span>
+      <span class="font-bold text-slate-900">Coutinho <span class="text-amber-500">Imóveis</span></span>
+    </a>
+    <div class="flex items-center gap-3 text-sm">
+      <a href="/blog.html" class="text-slate-600 hover:text-slate-900 font-semibold hidden sm:inline">Blog</a>
+      <a id="wa-nav" href="#" target="_blank" class="bg-emerald-500 text-white px-3 py-1.5 rounded-lg font-bold text-xs hover:bg-emerald-600">Falar no WhatsApp</a>
+    </div>
+  </div>
+</nav>
+
+<header class="bg-gradient-to-br from-slate-900 to-indigo-950 text-white">
+  <div class="max-w-7xl mx-auto px-4 py-10">
+    <p class="text-xs font-bold text-amber-400 uppercase tracking-wider">Portfólio Coutinho · Distrito Federal</p>
+    <h1 class="text-3xl md:text-4xl font-black mt-2">Encontre o imóvel certo em Brasília</h1>
+    <p class="text-indigo-100 text-sm mt-2 max-w-2xl">Apartamentos, coberturas, casas e salas comerciais nas melhores regiões do DF. Filtre por tipo, região, quartos e valor.</p>
+  </div>
+</header>
+
+<div class="max-w-7xl mx-auto px-4 py-6">
+  <div id="filters" class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
+    <div>
+      <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Finalidade</label>
+      <select id="f-purpose" class="w-full p-2 border rounded-lg text-xs">
+        <option value="">Todas</option>
+        <option value="VENDA">Venda</option>
+        <option value="ALUGUEL">Aluguel</option>
+      </select>
+    </div>
+    <div>
+      <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tipo</label>
+      <select id="f-type" class="w-full p-2 border rounded-lg text-xs"><option value="">Todos</option></select>
+    </div>
+    <div>
+      <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Região</label>
+      <select id="f-region" class="w-full p-2 border rounded-lg text-xs"><option value="">Todas</option></select>
+    </div>
+    <div>
+      <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Quartos (mín.)</label>
+      <select id="f-bedrooms" class="w-full p-2 border rounded-lg text-xs">
+        <option value="">Qualquer</option><option value="1">1+</option><option value="2">2+</option>
+        <option value="3">3+</option><option value="4">4+</option>
+      </select>
+    </div>
+    <div>
+      <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Valor até (R$)</label>
+      <input id="f-max" type="number" placeholder="Ex: 800000" class="w-full p-2 border rounded-lg text-xs">
+    </div>
+  </div>
+  <div id="count" class="mt-3 text-xs text-slate-500 font-semibold"></div>
+
+  <div id="grid" class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+</div>
+
+<footer class="bg-slate-900 text-slate-300 mt-16">
+  <div class="max-w-7xl mx-auto px-4 py-8 text-sm text-center">
+    <p class="font-bold text-white mb-1" id="footer-name">Coutinho Imóveis</p>
+    <p class="text-xs" id="footer-address">Brasília — DF</p>
+    <p class="text-[11px] mt-3 text-slate-500">© <span id="year"></span> · Powered by <strong class="text-amber-400">Radar Imob Tech</strong></p>
+  </div>
+</footer>
+
+<div id="modal-root"></div>
+
+<script>
+  const STORAGE_KEY = 'coutinho_crm_database_v5';
+  let db = {};
+  try { db = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch(e) {}
+  const settings = db.settings || { tradingName: 'Coutinho Imóveis', address: 'Brasília — DF', whatsapp: '61999999999' };
+  const waPhone = (settings.whatsapp || '61999999999').replace(/\D/g, '');
+  const properties = (db.properties || []).filter(p => p.status === 'DISPONIVEL' || p.status === 'PROPOSTA');
+
+  document.getElementById('footer-name').textContent = settings.tradingName || 'Coutinho Imóveis';
+  document.getElementById('footer-address').textContent = settings.address || 'Brasília — DF';
+  document.getElementById('year').textContent = new Date().getFullYear();
+  document.getElementById('wa-nav').href = `https://wa.me/55${waPhone}?text=${encodeURIComponent('Olá! Vim pelo portal de imóveis.')}`;
+
+  function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+  function money(v) { return v ? 'R$ ' + Number(v).toLocaleString('pt-BR') : 'Consulte'; }
+
+  // Popular selects
+  const types = [...new Set(properties.map(p => p.type).filter(Boolean))].sort();
+  const regions = [...new Set(properties.map(p => p.region).filter(Boolean))].sort();
+  document.getElementById('f-type').insertAdjacentHTML('beforeend', types.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join(''));
+  document.getElementById('f-region').insertAdjacentHTML('beforeend', regions.map(r => `<option value="${esc(r)}">${esc(r)}</option>`).join(''));
+
+  function render() {
+    const fp = document.getElementById('f-purpose').value;
+    const ft = document.getElementById('f-type').value;
+    const fr = document.getElementById('f-region').value;
+    const fb = Number(document.getElementById('f-bedrooms').value) || 0;
+    const fm = Number(document.getElementById('f-max').value) || Infinity;
+
+    const filtered = properties.filter(p => {
+      if (fp && (p.purpose || 'VENDA') !== fp) return false;
+      if (ft && p.type !== ft) return false;
+      if (fr && p.region !== fr) return false;
+      if ((p.bedrooms || 0) < fb) return false;
+      const price = p.salePrice || p.rentPrice || 0;
+      if (price > fm) return false;
+      return true;
+    });
+
+    document.getElementById('count').textContent = filtered.length + ' imóveis encontrados';
+
+    const grid = document.getElementById('grid');
+    if (!filtered.length) {
+      grid.innerHTML = `<div class="col-span-full bg-white border border-slate-200 rounded-2xl p-8 text-center text-slate-500 text-sm">Nenhum imóvel corresponde aos filtros. Ajuste os critérios acima.</div>`;
+      return;
+    }
+
+    grid.innerHTML = filtered.map(p => {
+      const photo = (p.photos && p.photos[0]) || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&auto=format&fit=crop&q=80';
+      return `
+        <article class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition group cursor-pointer" data-id="${esc(p.id)}">
+          <div class="relative aspect-[4/3] bg-slate-100 overflow-hidden">
+            <img src="${esc(photo)}" alt="${esc(p.title || '')}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" loading="lazy">
+            <span class="absolute top-3 left-3 bg-slate-900/90 text-white text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">${esc(p.code || 'REF')}</span>
+            <span class="absolute top-3 right-3 bg-amber-400 text-slate-950 text-[10px] font-black px-2 py-1 rounded uppercase">${esc(p.purpose || 'Venda')}</span>
+          </div>
+          <div class="p-4">
+            <p class="text-[10px] font-bold text-indigo-700 uppercase tracking-wider">${esc(p.type || '')} · ${esc(p.region || 'DF')}</p>
+            <h3 class="font-bold text-slate-900 mt-1 leading-snug text-sm line-clamp-2">${esc(p.title || '')}</h3>
+            <div class="mt-3 text-2xl font-black text-emerald-600">${money(p.salePrice || p.rentPrice)}</div>
+            <div class="mt-1 flex items-center gap-3 text-[11px] text-slate-500">
+              <span>${p.bedrooms || 0} qts</span><span>·</span>
+              <span>${p.area || '?'}m²</span><span>·</span>
+              <span>${p.parkingSpots || 0} vagas</span>
+            </div>
+          </div>
+        </article>`;
+    }).join('');
+
+    grid.querySelectorAll('[data-id]').forEach(el => {
+      el.addEventListener('click', () => openDetails(el.getAttribute('data-id')));
+    });
+  }
+
+  function openDetails(id) {
+    const p = properties.find(x => x.id === id);
+    if (!p) return;
+    const photo = (p.photos && p.photos[0]) || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1200&auto=format&fit=crop&q=80';
+    const msg = `Olá! Tenho interesse no imóvel ${p.code || ''} — ${p.title || ''} (${money(p.salePrice || p.rentPrice)}). Pode me passar mais informações?`;
+    const wa = `https://wa.me/55${waPhone}?text=${encodeURIComponent(msg)}`;
+
+    const modal = document.getElementById('modal-root');
+    modal.innerHTML = `
+      <div class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-3xl w-full shadow-2xl overflow-hidden my-8">
+          <div class="relative aspect-video bg-slate-100">
+            <img src="${esc(photo)}" alt="${esc(p.title || '')}" class="w-full h-full object-cover">
+            <button id="close-modal" class="absolute top-3 right-3 bg-white/90 hover:bg-white text-slate-900 w-9 h-9 rounded-full font-bold text-xl">×</button>
+          </div>
+          <div class="p-6">
+            <p class="text-[10px] font-bold text-indigo-700 uppercase tracking-wider">${esc(p.type || '')} · ${esc(p.region || 'DF')} · ${esc(p.code || '')}</p>
+            <h2 class="text-2xl font-black text-slate-900 mt-1">${esc(p.title || '')}</h2>
+            <div class="mt-3 flex flex-wrap items-baseline gap-3">
+              <span class="text-3xl font-black text-emerald-600">${money(p.salePrice || p.rentPrice)}</span>
+              <span class="text-xs text-slate-500">${esc(p.purpose || 'Venda')}</span>
+            </div>
+
+            <div class="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3 text-center border-y border-slate-100 py-4">
+              <div><div class="font-bold text-slate-900">${p.bedrooms || 0}</div><div class="text-[10px] text-slate-500 uppercase">Quartos</div></div>
+              <div><div class="font-bold text-slate-900">${p.suites || 0}</div><div class="text-[10px] text-slate-500 uppercase">Suítes</div></div>
+              <div><div class="font-bold text-slate-900">${p.area || '?'}m²</div><div class="text-[10px] text-slate-500 uppercase">Área</div></div>
+              <div><div class="font-bold text-slate-900">${p.parkingSpots || 0}</div><div class="text-[10px] text-slate-500 uppercase">Vagas</div></div>
+            </div>
+
+            ${p.description ? `<div class="mt-5"><h3 class="font-bold text-slate-900 text-sm mb-2">Descrição</h3><p class="text-sm text-slate-600 leading-relaxed">${esc(p.description)}</p></div>` : ''}
+
+            ${Array.isArray(p.features) && p.features.length ? `
+              <div class="mt-5">
+                <h3 class="font-bold text-slate-900 text-sm mb-2">Diferenciais</h3>
+                <div class="flex flex-wrap gap-2">
+                  ${p.features.map(f => `<span class="text-[11px] bg-slate-100 text-slate-700 px-2 py-1 rounded font-semibold">${esc(f)}</span>`).join('')}
+                </div>
+              </div>` : ''}
+
+            <div class="mt-6 pt-5 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <a href="${wa}" target="_blank" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-lg text-center text-sm">
+                Falar no WhatsApp
+              </a>
+              <button id="btn-lead" class="bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-lg text-sm">
+                Quero ser contatado
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+
+    const close = () => { modal.innerHTML = ''; };
+    document.getElementById('close-modal').addEventListener('click', close);
+
+    document.getElementById('btn-lead').addEventListener('click', () => {
+      const name = prompt('Seu nome:');
+      if (!name) return;
+      const phone = prompt('Seu WhatsApp (com DDD):');
+      if (!phone) return;
+      const clients = db.clients || [];
+      clients.push({
+        id: 'cli_portal_' + Date.now(),
+        name, phone, whatsapp: phone.replace(/\D/g, ''),
+        type: 'LEAD',
+        propertyType: p.type || 'APARTAMENTO',
+        interestRegion: p.region || '',
+        priceRangeMax: p.salePrice || p.rentPrice || 0,
+        temperature: 'QUENTE',
+        leadSource: 'PORTAL_IMOVEIS',
+        notes: `Interesse no imóvel ${p.code || ''} — ${p.title || ''}`,
+        status: 'ATIVO',
+        lastContactAt: new Date().toISOString(),
+        createdAt: new Date().toISOString()
+      });
+      db.clients = clients;
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); } catch(err) {}
+      alert('Contato recebido! Um corretor entrará em contato em breve.');
+      close();
+    });
+  }
+
+  document.querySelectorAll('#filters select, #filters input').forEach(el => {
+    el.addEventListener('change', render);
+    el.addEventListener('input', render);
+  });
+  render();
+</script>
+</body>
+</html>

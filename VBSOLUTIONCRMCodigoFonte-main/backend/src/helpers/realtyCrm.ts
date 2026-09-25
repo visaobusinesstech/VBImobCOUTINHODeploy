@@ -9,13 +9,19 @@ export const IMOVEL_STATUSES = [
   "reservado",
   "vendido",
   "alugado",
-  "captacao"
+  "captacao",
+  "inativo"
 ] as const;
 
 export const CONTRATO_STATUSES = [
   "rascunho",
-  "aguardando_assinatura",
+  "aguardando",
+  "assinado",
   "ativo",
+  "inativo",
+  "vencendo",
+  "cancelado",
+  "aguardando_assinatura",
   "encerrado"
 ] as const;
 
@@ -32,9 +38,54 @@ export const REALTY_PIPELINE_STAGES = [
   { key: "pos_venda", label: "Pós-venda", order: 10 }
 ] as const;
 
-export const FOLLOWUP_STATUSES = ["pendente", "concluido", "cancelado"] as const;
+export const FOLLOWUP_STATUSES = [
+  "pendente",
+  "aguardando",
+  "visita_realizada",
+  "proposta",
+  "negociacao",
+  "concluido",
+  "perdido",
+  "cancelado"
+] as const;
+
+export const FOLLOWUP_INACTIVE_LEAD_STATUSES = [
+  "fechado",
+  "perdido",
+  "descartado",
+  "inativo"
+] as const;
+
+export const FOLLOWUP_INACTIVE_CONTRATO_STATUSES = [
+  "inativo",
+  "cancelado",
+  "encerrado",
+  "finalizado",
+  "distratado"
+] as const;
 export const VISITA_STATUSES = ["agendada", "confirmada", "realizada", "cancelada", "reagendada"] as const;
-export const PROPOSTA_STATUSES = ["rascunho", "enviada", "em_negociacao", "aceita", "recusada", "expirada"] as const;
+
+/** Status da agenda Lovable (compromissos) */
+export const COMPROMISSO_STATUSES = ["pendente", "concluido", "cancelado"] as const;
+export const COMPROMISSO_TIPOS = [
+  "visita",
+  "reuniao",
+  "tarefa",
+  "ligacao",
+  "assinatura",
+  "outro"
+] as const;
+export const COMPROMISSO_PRIORIDADES = ["alta", "media", "baixa"] as const;
+export const COMPROMISSO_RESULTADO_CLIENTE = ["gostou", "mais_opcoes", "nao_gostou"] as const;
+export const PROPOSTA_STATUSES = [
+  "em_negociacao",
+  "aceita",
+  "recusada",
+  "cancelada",
+  "rascunho",
+  "enviada",
+  "expirada"
+] as const;
 
 export type LeadMatchInput = {
   interestCity?: string | null;

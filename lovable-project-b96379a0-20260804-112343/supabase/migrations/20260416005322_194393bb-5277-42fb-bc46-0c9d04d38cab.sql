@@ -1,0 +1,1 @@
+ALTER TABLE public.imobiliaria_config ADD COLUMN IF NOT EXISTS video_demo_url text;

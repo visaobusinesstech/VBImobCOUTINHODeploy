@@ -27,6 +27,16 @@ const realtyIntelService = {
   updateModulo: async (id, payload) => (await api.put(`/realty-modulos/${id}`, payload)).data,
   deleteModulo: async (id) => (await api.delete(`/realty-modulos/${id}`)).data,
   avaliar: async (payload) => (await api.post("/avaliacao", payload)).data,
+  extrairLinkAvaliacao: async (payload) =>
+    (await api.post("/avaliacao/extrair-link", payload, { timeout: 60000 })).data,
+  listAvaliacoesHistorico: async (params) =>
+    (await api.get("/avaliacoes-historico", { params })).data,
+  salvarAvaliacaoHistorico: async (payload) =>
+    (await api.post("/avaliacoes-historico", payload)).data,
+  updateAvaliacaoHistorico: async (id, payload) =>
+    (await api.put(`/avaliacoes-historico/${id}`, payload)).data,
+  deleteAvaliacaoHistorico: async (id) =>
+    (await api.delete(`/avaliacoes-historico/${id}`)).data,
   jornada: async () => (await api.get("/jornada")).data,
   inteligencia: async () => (await api.get("/inteligencia")).data,
   dashboard: async () => (await api.get("/realty-dashboard")).data,

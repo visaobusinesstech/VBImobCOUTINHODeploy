@@ -1,0 +1,1 @@
+ALTER TABLE public.compromissos ADD COLUMN IF NOT EXISTS lembrete_enviado boolean NOT NULL DEFAULT false;

@@ -1,0 +1,1 @@
+ALTER TABLE public.transacoes ADD COLUMN IF NOT EXISTS recorrencia text DEFAULT null;

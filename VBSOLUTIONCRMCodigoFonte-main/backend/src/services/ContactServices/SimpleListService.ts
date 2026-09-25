@@ -14,9 +14,16 @@ export interface SearchContactParams {
   name?: string;
   userId?: number;
   tagId?: number;
+  queueId?: number;
 }
 
-const SimpleListService = async ({ name, companyId, userId, tagId }: SearchContactParams): Promise<Contact[]> => {
+const SimpleListService = async ({
+  name,
+  companyId,
+  userId,
+  tagId,
+  queueId
+}: SearchContactParams): Promise<Contact[]> => {
 
   let options: FindOptions = {
     order: [
@@ -38,6 +45,17 @@ const SimpleListService = async ({ name, companyId, userId, tagId }: SearchConta
     whereCondition[Op.and] = [
       ...(Array.isArray(whereCondition[Op.and]) ? whereCondition[Op.and] : []),
       Sequelize.literal(`id IN (SELECT "contactId" FROM "ContactTags" WHERE "tagId" = ${Number(tagId)})`)
+    ];
+  }
+
+  if (queueId) {
+    whereCondition[Op.and] = [
+      ...(Array.isArray(whereCondition[Op.and]) ? whereCondition[Op.and] : []),
+      Sequelize.literal(
+        `id IN (SELECT "contactId" FROM "ContactWallets" WHERE "queueId" = ${Number(queueId)} AND "companyId" = ${Number(
+          companyId
+        )})`
+      )
     ];
   }
 

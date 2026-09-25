@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.get_followup_counts(boolean, integer) FROM PUBLIC, anon;

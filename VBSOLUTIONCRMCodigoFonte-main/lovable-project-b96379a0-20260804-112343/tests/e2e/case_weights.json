@@ -1,0 +1,7 @@
+{
+  "_comment": "Historical p75 duration in seconds per E2E case. Used by plan_shards.py to balance the matrix. Update from CI runs over time.",
+  "invalid-params": 9.0,
+  "shared-link": 12.0,
+  "named-view": 7.0,
+  "clean-url": 4.5
+}

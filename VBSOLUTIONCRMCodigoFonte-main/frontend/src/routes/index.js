@@ -76,17 +76,19 @@ import Activities from "../pages/Activities/";
 import AiBrain from "../pages/AiBrain";
 import Projects from "../pages/Projects/";
 import LeadsSales from "../pages/LeadsSales/";
-import RealtyPipeline from "../pages/RealtyPipeline/";
+
+import Followups from "../pages/Followups/";
+import Propostas from "../pages/Propostas/";
 import Imoveis from "../pages/Imoveis/";
 import Proprietarios from "../pages/Proprietarios/";
-import Contratos from "../pages/Contratos/";
-import Followups from "../pages/Followups/";
 import Captacao from "../pages/Captacao/";
-import Propostas from "../pages/Propostas/";
+import Contratos from "../pages/Contratos/";
+import Comparativo from "../pages/Comparativo/";
 import RadarZap from "../pages/RadarZap/";
 import PortalScraping from "../pages/PortalScraping/";
 import ConteudoSEO from "../pages/ConteudoSEO/";
 import QCapture from "../pages/QCapture/";
+import RealtyPipeline from "../pages/RealtyPipeline/";
 import {
   AgendaImobiliaria,
   AnunciarImovel,
@@ -101,7 +103,6 @@ import {
   BuscaAvancadaCaptacao,
   CaptacaoAllowlist,
   CaptacaoAvaliacaoLp,
-  ComparativoImoveis,
   ConfiguracoesImobiliaria,
   ConfigurarIA,
   Condominios,
@@ -363,76 +364,75 @@ const RoutesContent = () => {
                 <Route exact path="/leads-sales" component={LeadsSales} isPrivate title="Leads e Vendas" />
                 <Route exact path="/pipeline" component={RealtyPipeline} isPrivate title="CRM Pipeline" />
                 <Route exact path="/portais" component={PortalScraping} isPrivate title="Portais" />
-                <Route exact path="/integracao-portais" component={PortalScraping} isPrivate title="Portais" />
                 <Route exact path="/inteligencia" component={Inteligencia} isPrivate title="Inteligência" />
                 <Route exact path="/configurar-ia" component={ConfigurarIA} isPrivate title="Configuração da IA" />
                 <Route exact path="/seguranca" component={Seguranca} isPrivate title="Segurança" />
+                <Route exact path="/followups" component={Followups} isPrivate title="Follow-up" />
                 <Route exact path="/imoveis" component={Imoveis} isPrivate title="Imóveis" />
                 <Route exact path="/proprietarios" component={Proprietarios} isPrivate title="Proprietários" />
-                <Route exact path="/contratos" component={Contratos} isPrivate title="Contratos" />
-                <Route exact path="/followups" component={Followups} isPrivate title="Follow-up" />
                 <Route exact path="/captacao" component={Captacao} isPrivate title="Captação" />
+                <Route exact path="/contratos" component={Contratos} isPrivate title="Contratos" />
                 <Route exact path="/propostas" component={Propostas} isPrivate title="Propostas" />
                 <Route exact path="/agenda" component={AgendaImobiliaria} isPrivate title="Agenda" />
                 <Route exact path="/corretores" component={Corretores} isPrivate title="Corretores" />
                 <Route exact path="/radarzap" component={RadarZap} isPrivate title="RadarZAP" />
                 <Route exact path="/radarzap-grupos" component={RadarZapGrupos} isPrivate title="RadarZAP grupos" />
-                <Route exact path="/conteudo-seo" component={ConteudoSEO} isPrivate title="Conteúdo SEO" />
-                <Route exact path="/qcapture" component={QCapture} isPrivate title="Q-Capture" />
-                <Route exact path="/condominios" component={Condominios} isPrivate title="CRM Condomínios" />
-                <Route exact path="/avaliacao" component={Avaliacao} isPrivate title="Avaliação" />
-                <Route exact path="/comparativo" component={ComparativoImoveis} isPrivate title="Comparativo" />
-                <Route exact path="/relacionamento" component={Relacionamento} isPrivate title="Relacionamento" />
-                <Route exact path="/inadimplencia" component={Inadimplencia} isPrivate title="Inadimplência" />
-                <Route exact path="/jornada" component={JornadaCliente} isPrivate title="Jornada do cliente" />
-                <Route exact path="/fila-distribuicao" component={FilaDistribuicao} isPrivate title="Fila de distribuição" />
-                <Route exact path="/nutricao" component={Nutricao} isPrivate title="Nutrição" />
-                <Route exact path="/prospeccao" component={ProspeccaoDiaria} isPrivate title="Prospecção diária" />
-                <Route exact path="/produtividade" component={Produtividade} isPrivate title="Produtividade" />
-                <Route exact path="/relatorios-agendados" component={RelatoriosAgendados} isPrivate title="Relatórios agendados" />
-                <Route exact path="/monitoramento" component={Monitoramento} isPrivate title="Monitoramento" />
-                <Route exact path="/pipeline-captacao" component={PipelineCaptacao} isPrivate title="Pipeline de captação" />
-                <Route exact path="/feed" component={Feed} isPrivate title="Feed" />
-                <Route exact path="/curadoria" component={CuradoriaViral} isPrivate title="Curadoria viral" />
-                <Route exact path="/curadoria-viral" component={CuradoriaViral} isPrivate title="Curadoria viral" />
-                <Route exact path="/automacoes-followup" component={AutomacoesFollowup} isPrivate title="Automações follow-up" />
-                <Route exact path="/automacoes" component={Automacoes} isPrivate title="Automações" />
-                <Route exact path="/dashboard" component={RealtyDashboard} isPrivate title="Dashboard imobiliário" />
-                <Route exact path="/whatsapp" component={WhatsappImobiliario} isPrivate title="WhatsApp imobiliário" />
-                <Route exact path="/auditoria-extracao" component={AuditoriaExtracao} isPrivate title="Auditoria extração" />
-                <Route exact path="/metricas-extracao" component={MetricasExtracao} isPrivate title="Métricas extração" />
-                <Route exact path="/auditoria-requests" component={AuditoriaRequests} isPrivate title="Auditoria requests" />
-                <Route exact path="/auditoria-monitoramento" component={AuditoriaMonitoramento} isPrivate title="Auditoria monitoramento" />
-                <Route exact path="/auditoria-leads" component={AuditoriaLeads} isPrivate title="Auditoria leads" />
-                <Route exact path="/configuracoes-imobiliaria" component={ConfiguracoesImobiliaria} isPrivate title="Configurações imobiliária" />
-                <Route exact path="/diagnostico-avaliacao" component={DiagnosticoAvaliacao} isPrivate title="Diagnóstico avaliação" />
-                <Route exact path="/diagnostico-captacao" component={DiagnosticoCaptacao} isPrivate title="Diagnóstico captação" />
-                <Route exact path="/leads-landing" component={LeadsLanding} isPrivate title="CRM Landing" />
-                <Route exact path="/webhook-metrics" component={WebhookMetrics} isPrivate title="Métricas webhook" />
-                <Route exact path="/webhook-alerts" component={WebhookAlerts} isPrivate title="Alertas webhook" />
-                <Route exact path="/whatsapp-templates-captacao" component={WhatsappTemplatesCaptacao} isPrivate title="Templates captação" />
-                <Route exact path="/whatsapp-consentimentos" component={WhatsappConsentimentos} isPrivate title="Consentimentos WhatsApp" />
-                <Route exact path="/lgpd-solicitacoes" component={LgpdSolicitacoes} isPrivate title="LGPD" />
-                <Route exact path="/lgpd/meus-dados" component={LgpdPortalTitular} isPrivate title="Portal titular" />
-                <Route exact path="/busca-avancada-captacao" component={BuscaAvancadaCaptacao} isPrivate title="Busca avançada captação" />
-                <Route exact path="/seo-auditoria" component={SeoAuditoria} isPrivate title="Auditoria SEO" />
-                <Route exact path="/captacao-allowlist" component={CaptacaoAllowlist} isPrivate title="Allowlist captação" />
-                <Route exact path="/consulta-cpf" component={ConsultaCPF} isPrivate title="Consulta CPF" />
                 <Route exact path="/radarzap/scoring" component={RadarZapScoring} isPrivate title="RadarZAP scoring" />
                 <Route exact path="/radarzap/onboarding" component={RadarZapOnboarding} isPrivate title="RadarZAP onboarding" />
                 <Route exact path="/radarzap/status" component={RadarZapStatusPage} isPrivate title="RadarZAP status" />
                 <Route exact path="/radarzap/acessos" component={RadarZapAcessos} isPrivate title="RadarZAP acessos" />
-                <Route exact path="/captacao-pipeline" component={PipelineCaptacao} isPrivate title="Pipeline de captação" />
+                <Route exact path="/conteudo-seo" component={ConteudoSEO} isPrivate title="Conteúdo SEO" />
+                <Route exact path="/qcapture" component={QCapture} isPrivate title="Q-Capture" />
+                <Route exact path="/condominios" component={Condominios} isPrivate title="CRM Condomínios" />
                 <Route exact path="/crm-condominios" component={Condominios} isPrivate title="CRM Condomínios" />
-                <Route exact path="/prospeccao-diaria" component={ProspeccaoDiaria} isPrivate title="Prospecção diária" />
+                <Route exact path="/avaliacao" component={Avaliacao} isPrivate title="Avaliação" />
+                <Route exact path="/comparativo" component={Comparativo} isPrivate title="Comparativo" />
+                <Route exact path="/relacionamento" component={Relacionamento} isPrivate title="Relacionamento" />
+                <Route exact path="/inadimplencia" component={Inadimplencia} isPrivate title="Inadimplência" />
+                <Route exact path="/monitoramento" component={Monitoramento} isPrivate title="Monitoramento" />
+                <Route exact path="/pipeline-captacao" component={PipelineCaptacao} isPrivate title="Pipeline de captação" />
+                <Route exact path="/captacao-pipeline" component={PipelineCaptacao} isPrivate title="Pipeline de captação" />
+                <Route exact path="/feed" component={Feed} isPrivate title="Feed" />
+                <Route exact path="/curadoria" component={CuradoriaViral} isPrivate title="Curadoria viral" />
+                <Route exact path="/curadoria-viral" component={CuradoriaViral} isPrivate title="Curadoria viral" />
+                <Route exact path="/dashboard" component={RealtyDashboard} isPrivate title="Dashboard imobiliário" />
+                <Route exact path="/whatsapp" component={WhatsappImobiliario} isPrivate title="WhatsApp imobiliário" />
+                <Route exact path="/whatsapp-templates-captacao" component={WhatsappTemplatesCaptacao} isPrivate title="Templates captação" />
+                <Route exact path="/whatsapp-consentimentos" component={WhatsappConsentimentos} isPrivate title="Consentimentos WhatsApp" />
+                <Route exact path="/seo-auditoria" component={SeoAuditoria} isPrivate title="Auditoria SEO" />
+                <Route exact path="/captacao-allowlist" component={CaptacaoAllowlist} isPrivate title="Allowlist captação" />
+                <Route exact path="/consulta-cpf" component={ConsultaCPF} isPrivate title="Consulta CPF" />
                 <Route exact path="/captacao-avaliacao" component={CaptacaoAvaliacaoLp} isPrivate title="LP Captação" />
                 <Route exact path="/venda-crm" component={VendaCrmLp} isPrivate title="LP Venda CRM" />
                 <Route exact path="/portal" component={PortalImoveisPublico} isPrivate title="Portal de imóveis" />
                 <Route exact path="/blog" component={BlogImobiliario} isPrivate title="Blog" />
                 <Route exact path="/anunciar-imovel" component={AnunciarImovel} isPrivate title="Anunciar imóvel" />
+                <Route exact path="/diagnostico-captacao" component={DiagnosticoCaptacao} isPrivate title="Diagnóstico captação" />
+                <Route exact path="/diagnostico-avaliacao" component={DiagnosticoAvaliacao} isPrivate title="Diagnóstico avaliação" />
+                <Route exact path="/busca-avancada-captacao" component={BuscaAvancadaCaptacao} isPrivate title="Busca avançada captação" />
+                <Route exact path="/configuracoes-imobiliaria" component={ConfiguracoesImobiliaria} isPrivate title="Configurações imobiliária" />
+                <Route exact path="/radar-oportunidades" component={RadarOportunidades} isPrivate title="Radar oportunidades" />
+                <Route exact path="/auditoria-leads" component={AuditoriaLeads} isPrivate title="Auditoria leads" />
+                <Route exact path="/auditoria-extracao" component={AuditoriaExtracao} isPrivate title="Auditoria extração" />
+                <Route exact path="/metricas-extracao" component={MetricasExtracao} isPrivate title="Métricas extração" />
+                <Route exact path="/auditoria-requests" component={AuditoriaRequests} isPrivate title="Auditoria requests" />
+                <Route exact path="/auditoria-monitoramento" component={AuditoriaMonitoramento} isPrivate title="Auditoria monitoramento" />
+                <Route exact path="/webhook-metrics" component={WebhookMetrics} isPrivate title="Métricas webhook" />
+                <Route exact path="/webhook-alerts" component={WebhookAlerts} isPrivate title="Alertas webhook" />
+                <Route exact path="/jornada" component={JornadaCliente} isPrivate title="Jornada do cliente" />
+                <Route exact path="/fila-distribuicao" component={FilaDistribuicao} isPrivate title="Fila de Distribuição" />
+                <Route exact path="/nutricao" component={Nutricao} isPrivate title="Nutrição" />
+                <Route exact path="/prospeccao" component={ProspeccaoDiaria} isPrivate title="Prospecção diária" />
+                <Route exact path="/produtividade" component={Produtividade} isPrivate title="Produtividade" />
+                <Route exact path="/relatorios-agendados" component={RelatoriosAgendados} isPrivate title="Relatórios agendados" />
+                <Route exact path="/automacoes-followup" component={AutomacoesFollowup} isPrivate title="Automações follow-up" />
+                <Route exact path="/automacoes" component={Automacoes} isPrivate title="Automações" />
+                <Route exact path="/leads-landing" component={LeadsLanding} isPrivate title="CRM Landing" />
+                <Route exact path="/lgpd-solicitacoes" component={LgpdSolicitacoes} isPrivate title="LGPD" />
+                <Route exact path="/lgpd/meus-dados" component={LgpdPortalTitular} isPrivate title="Portal titular" />
+                <Route exact path="/prospeccao-diaria" component={ProspeccaoDiaria} isPrivate title="Prospecção diária" />
                 <Route exact path="/consentimento" component={Consentimentos} isPrivate title="Consentimentos" />
                 <Route exact path="/pagamentos-publicos" component={PagamentosPublicos} isPrivate title="Pagamento público" />
-                <Route exact path="/radar-oportunidades" component={RadarOportunidades} isPrivate title="Radar oportunidades" />
                 <Route exact path="/inventory" component={Inventory} isPrivate title="Inventários" />
                 <Route exact path="/arquivos" component={FilesPage} isPrivate title="Arquivos" />
                 <Route exact path="/email" component={EmailPage} isPrivate title="Email" />

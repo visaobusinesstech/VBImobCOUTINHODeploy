@@ -1,0 +1,18 @@
+# radarimobtech
+
+> CRM imobiliário inteligente com IA para avaliação de imóveis (SAS), captação proativa de proprietários e automação de follow-up para corretores e imobiliárias no Brasil.
+
+radarimobtech é uma plataforma SaaS que combina CRM, motor de captação direta de proprietários, análise comparativa de mercado (CMA) e automações de WhatsApp/e-mail para acelerar vendas e locações. Foco em Brasília (DF) e principais capitais brasileiras.
+
+## Pages
+
+- [Home](/): Visão geral do produto e planos.
+- [Anunciar imóvel](/anunciar-imovel): Diretório de cidades para proprietários que querem anunciar direto, sem comissão.
+- [Anunciar em Brasília](/anunciar-imovel/brasilia): Landing com dados de mercado de Brasília e como anunciar em 4 minutos.
+- [Anunciar em Águas Claras](/anunciar-imovel/aguas-claras): Landing com dados de mercado de Águas Claras.
+- [Portal público de imóveis](/portal): Vitrine pública de imóveis anunciados por corretores e proprietários na plataforma.
+- [Portal LGPD do titular](/lgpd/meus-dados): Portal público para exercer direitos LGPD (acesso, exclusão, correção).
+
+## Optional
+
+- [Login / cadastro](/auth): Acesso da conta.

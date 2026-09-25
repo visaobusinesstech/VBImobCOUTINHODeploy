@@ -1,0 +1,1 @@
+ALTER TABLE public.radarzap_descoberta_execucoes ADD COLUMN IF NOT EXISTS motivo_reprocessamento text;

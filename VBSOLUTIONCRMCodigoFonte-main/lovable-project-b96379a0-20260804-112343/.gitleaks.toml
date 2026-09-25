@@ -1,0 +1,47 @@
+# Configuração do Gitleaks para varredura de segredos em CI.
+# Baseline: regras default + entradas específicas do stack Lovable/Supabase.
+
+title = "radarimobtech secret scan"
+
+[extend]
+useDefault = true
+
+# ─────────────────────────────────────────────────────────────
+# Regras adicionais específicas do projeto
+# ─────────────────────────────────────────────────────────────
+
+[[rules]]
+id = "supabase-service-role-jwt"
+description = "Supabase service_role JWT (nunca deve entrar no repositório)"
+regex = '''eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}'''
+tags = ["supabase", "jwt"]
+# Deixa o anon key publicável passar (aparece no .env por design)
+[rules.allowlist]
+regexTarget = "match"
+regexes = [
+  '''"role":"anon"''',
+]
+
+[[rules]]
+id = "lovable-api-key"
+description = "LOVABLE_API_KEY vazado em código-fonte"
+regex = '''LOVABLE_API_KEY\s*[:=]\s*["'][A-Za-z0-9_\-\.]{20,}["']'''
+tags = ["lovable"]
+
+# ─────────────────────────────────────────────────────────────
+# Allowlist global — arquivos e caminhos que legitimamente contêm
+# strings parecidas com segredos mas são públicas.
+# ─────────────────────────────────────────────────────────────
+[allowlist]
+description = "Arquivos com chaves públicas (anon key) e docs"
+paths = [
+  '''\.env$''',                         # anon key publicável do Supabase
+  '''src/integrations/supabase/.*''',   # arquivos gerados com anon key
+  '''docs/.*\.md$''',
+  '''README\.md$''',
+  '''\.github/workflows/.*''',          # este arquivo referencia segredos por nome
+]
+regexes = [
+  # anon JWT publicável (role:anon)
+  '''"role":"anon"''',
+]

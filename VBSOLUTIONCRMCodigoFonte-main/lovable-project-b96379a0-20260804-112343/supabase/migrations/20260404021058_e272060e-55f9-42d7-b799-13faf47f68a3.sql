@@ -1,0 +1,1 @@
+CREATE POLICY "contatos_delete" ON public.contatos_landing FOR DELETE TO authenticated USING (is_master(auth.uid()));

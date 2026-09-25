@@ -1,0 +1,1 @@
+CREATE POLICY "avaliacoes_historico_update" ON public.avaliacoes_historico FOR UPDATE TO authenticated USING (can_access_imobiliaria(imobiliaria_id) AND is_approved(auth.uid()));

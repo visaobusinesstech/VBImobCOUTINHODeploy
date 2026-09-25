@@ -1,0 +1,40 @@
+/**
+ * Tokens compartilhados — alinhados à landing VBSolution (attio-landing.css).
+ * Usados pelo Tailwind (@theme) e pelo premium-design-system (MUI).
+ */
+:root {
+  /* Marca landing */
+  --vb-ink: #0b1b3b;
+  --vb-ink-soft: #0f2b8f;
+  --vb-crm-blue: #1d4ed8;
+  --vb-border: #e4e7ec;
+  --vb-muted: #6f7988;
+  --vb-overcast: #8f99a8;
+  --vb-ash: #f8fafc;
+  --vb-surface: #ffffff;
+
+  /* Tipografia (landing: Plus Jakarta + Inter fallback no app) */
+  --font-display: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
+  --font-ui: "Inter", "Plus Jakarta Sans", system-ui, sans-serif;
+
+  /* shadcn / app (light) */
+  --background: 0 0% 100%;
+  --foreground: 222 47% 11%;
+  --primary: 221 83% 53%;
+  --primary-foreground: 210 40% 98%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 16% 47%;
+  --border: 214 32% 91%;
+  --radius: 0.5rem;
+}
+
+.dark,
+[data-theme="dark"],
+:root[style*="color-scheme: dark"] {
+  --vb-ink: #f8fafc;
+  --vb-muted: #94a3b8;
+  --vb-overcast: #64748b;
+  --vb-border: rgba(255, 255, 255, 0.1);
+  --vb-ash: #0f172a;
+  --vb-surface: #1e293b;
+}

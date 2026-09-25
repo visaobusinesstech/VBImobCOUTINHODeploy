@@ -92,6 +92,60 @@ class Imovel extends Model<Imovel> {
   @Column(DataType.JSONB)
   images: string[];
 
+  @Column({ defaultValue: false })
+  exclusivo: boolean;
+
+  @Column({ defaultValue: false })
+  destaque: boolean;
+
+  @Column({ defaultValue: false })
+  aceitaPermuta: boolean;
+
+  @Column({ defaultValue: false })
+  aceitaFinanciamento: boolean;
+
+  @Column({ defaultValue: false })
+  aceitaFgts: boolean;
+
+  @Column({ defaultValue: false })
+  temEscritura: boolean;
+
+  @Column
+  andar: string;
+
+  @Column
+  posicaoSolar: string;
+
+  @Column(DataType.DECIMAL(5, 2))
+  comissaoPercentual: number;
+
+  @Column(DataType.DATEONLY)
+  exclusividadeInicio: string;
+
+  @Column(DataType.DATEONLY)
+  exclusividadeFim: string;
+
+  @Column
+  portalOrigem: string;
+
+  @Column
+  urlAnuncio: string;
+
+  @Column(DataType.INTEGER)
+  fotoCapaIndex: number;
+
+  @Column(DataType.JSONB)
+  documentosMatricula: string[];
+
+  @Column(DataType.JSONB)
+  documentosIptu: string[];
+
+  @Column(DataType.JSONB)
+  documentosOutros: string[];
+
+  @Column(DataType.JSONB)
+  videos: string[];
+
   @ForeignKey(() => Proprietario)
   @Column({ allowNull: true })
   proprietarioId: number;

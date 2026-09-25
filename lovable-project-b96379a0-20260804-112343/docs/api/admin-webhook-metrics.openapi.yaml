@@ -1,0 +1,575 @@
+openapi: 3.1.0
+info:
+  title: Admin Webhook Metrics API
+  version: 1.0.0
+  description: |
+    Endpoint protegido (Super Admin / `is_master`) para consultar métricas agregadas
+    de validação de webhooks por tenant e provider, com filtros de período,
+    ordenação e paginação.
+
+    Autenticação: Bearer JWT do Supabase Auth. O usuário precisa ter
+    `profiles.is_master = true`. Toda chamada é registrada em
+    `security_audit_log` via `log_service_role_call`, correlacionada pelo
+    header `X-Request-Id` (gerado se ausente).
+servers:
+  - url: https://{project_ref}.functions.supabase.co
+    variables:
+      project_ref:
+        default: ugxnxztecfsklijmhhmo
+        description: Referência do projeto Supabase.
+paths:
+  /admin-webhook-metrics:
+    parameters:
+      - $ref: "#/components/parameters/RequestId"
+    get:
+      summary: Consulta métricas agregadas (querystring)
+      operationId: getWebhookMetrics
+      security:
+        - bearerAuth: []
+      description: |
+        Combinações comuns de filtros (querystring):
+
+        - **Sem filtros (defaults):** últimos 7 dias, `group_by=both`, `include_live=true`, `limit=100`, `offset=0`, `sort_by=validations_total`, `sort_dir=desc`.
+          `GET /admin-webhook-metrics`
+        - **Um tenant, todos os providers:**
+          `GET /admin-webhook-metrics?tenant_id=11111111-1111-1111-1111-111111111111`
+        - **Um provider em todos os tenants:**
+          `GET /admin-webhook-metrics?provider=stripe&group_by=tenant`
+        - **Tenant + provider + janela custom:**
+          `GET /admin-webhook-metrics?tenant_id=11111111-1111-1111-1111-111111111111&provider=stripe&start=2026-06-01T00:00:00Z&end=2026-06-30T23:59:59Z`
+        - **Ranking por cache_hit_rate crescente (piores primeiro):**
+          `GET /admin-webhook-metrics?sort_by=cache_hit_rate&sort_dir=asc&group_by=both`
+        - **Paginação — página 2 (offset=100, limit=100):**
+          `GET /admin-webhook-metrics?limit=100&offset=100&sort_by=validation_ms_avg&sort_dir=desc`
+        - **Só histórico persistido (sem snapshot in-memory):**
+          `GET /admin-webhook-metrics?include_live=false&start=2026-06-01T00:00:00Z&end=2026-06-08T00:00:00Z`
+      parameters:
+        - in: query
+          name: tenant_id
+          schema: { type: string, format: uuid }
+          examples:
+            single_tenant: { value: 11111111-1111-1111-1111-111111111111, summary: "UUID de imobiliária" }
+        - in: query
+          name: provider
+          schema: { type: string, minLength: 1, maxLength: 64 }
+          examples:
+            stripe:   { value: stripe }
+            asaas:    { value: asaas }
+            omnileads:{ value: omnileads }
+        - in: query
+          name: start
+          schema: { type: string, format: date-time }
+          examples:
+            month_start: { value: "2026-06-01T00:00:00Z" }
+        - in: query
+          name: end
+          schema: { type: string, format: date-time }
+          examples:
+            month_end:   { value: "2026-06-30T23:59:59Z" }
+        - { in: query, name: group_by,     schema: { $ref: "#/components/schemas/GroupBy" } }
+        - { in: query, name: include_live, schema: { type: boolean, default: true } }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 500, default: 100 }
+          examples:
+            default:   { value: 100 }
+            page_size: { value: 50 }
+        - in: query
+          name: offset
+          schema: { type: integer, minimum: 0, maximum: 100000, default: 0 }
+          examples:
+            first_page:  { value: 0 }
+            second_page: { value: 100 }
+        - { in: query, name: sort_by,  schema: { $ref: "#/components/schemas/SortBy" } }
+        - { in: query, name: sort_dir, schema: { $ref: "#/components/schemas/SortDir" } }
+      responses:
+        "200": { $ref: "#/components/responses/MetricsOk" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "500": { $ref: "#/components/responses/ServerError" }
+    post:
+      summary: Consulta métricas agregadas (JSON body)
+      operationId: postWebhookMetrics
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MetricsQuery" }
+            examples:
+              defaults:
+                summary: Sem filtros — últimos 7 dias, agrupado por tenant+provider
+                value: {}
+              tenant_only:
+                summary: Um tenant, todos providers
+                value:
+                  tenant_id: 11111111-1111-1111-1111-111111111111
+              provider_only:
+                summary: Um provider em todos tenants
+                value:
+                  provider: stripe
+                  group_by: tenant
+              tenant_and_provider_window:
+                summary: Tenant + provider + janela custom
+                value:
+                  tenant_id: 11111111-1111-1111-1111-111111111111
+                  provider: stripe
+                  start: "2026-06-01T00:00:00Z"
+                  end:   "2026-06-30T23:59:59Z"
+              ranking_worst_cache:
+                summary: Piores cache_hit_rate primeiro
+                value:
+                  sort_by: cache_hit_rate
+                  sort_dir: asc
+                  group_by: both
+              paginated_page_2:
+                summary: Página 2 (offset=100, limit=100) ordenado por latência
+                value:
+                  limit: 100
+                  offset: 100
+                  sort_by: validation_ms_avg
+                  sort_dir: desc
+              historical_only:
+                summary: Só histórico persistido, sem snapshot in-memory
+                value:
+                  include_live: false
+                  start: "2026-06-01T00:00:00Z"
+                  end:   "2026-06-08T00:00:00Z"
+      responses:
+        "200": { $ref: "#/components/responses/MetricsOk" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "500": { $ref: "#/components/responses/ServerError" }
+    options:
+      summary: CORS preflight
+      operationId: optionsWebhookMetrics
+      security: []
+      responses:
+        "200":
+          description: CORS OK
+          headers:
+            X-Request-Id: { schema: { type: string, format: uuid } }
+        "400":
+          description: Preflight inválido
+          headers:
+            X-Request-Id: { schema: { type: string, format: uuid } }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Supabase access token (usuário com `profiles.is_master = true`).
+  parameters:
+    RequestId:
+      in: header
+      name: X-Request-Id
+      required: false
+      schema: { type: string, format: uuid }
+      description: |
+        Correlaciona a requisição com o log de auditoria. Se ausente,
+        o servidor gera um UUID v4 e o devolve no header de resposta.
+  schemas:
+    GroupBy:
+      type: string
+      enum: [tenant, provider, both]
+      default: both
+    SortBy:
+      type: string
+      enum:
+        - validations_total
+        - denied
+        - cache_hit_rate
+        - validation_ms_avg
+        - tenant_id
+        - provider
+      default: validations_total
+    SortDir:
+      type: string
+      enum: [asc, desc]
+      default: desc
+    MetricsQuery:
+      type: object
+      additionalProperties: false
+      properties:
+        tenant_id:    { type: string, format: uuid }
+        provider:     { type: string, minLength: 1, maxLength: 64 }
+        start:        { type: string, format: date-time, description: "Default: end - 7d" }
+        end:          { type: string, format: date-time, description: "Default: now" }
+        group_by:     { $ref: "#/components/schemas/GroupBy" }
+        include_live: { type: boolean, default: true }
+        limit:        { type: integer, minimum: 1, maximum: 500, default: 100 }
+        offset:       { type: integer, minimum: 0, maximum: 100000, default: 0 }
+        sort_by:      { $ref: "#/components/schemas/SortBy" }
+        sort_dir:     { $ref: "#/components/schemas/SortDir" }
+    Aggregate:
+      type: object
+      required:
+        - tenant_id
+        - provider
+        - validations_total
+        - allowed
+        - denied
+        - cache_hits
+        - cache_misses
+        - cache_hit_rate
+        - keys_loaded_avg
+        - keys_loaded_max
+        - keys_tested_avg
+        - keys_tested_max
+        - validation_ms_avg
+        - validation_ms_max
+      properties:
+        tenant_id:          { type: [string, "null"], format: uuid }
+        provider:           { type: [string, "null"] }
+        validations_total:  { type: integer, minimum: 0 }
+        allowed:            { type: integer, minimum: 0 }
+        denied:             { type: integer, minimum: 0 }
+        cache_hits:         { type: integer, minimum: 0 }
+        cache_misses:       { type: integer, minimum: 0 }
+        cache_hit_rate:     { type: number, minimum: 0, maximum: 1 }
+        keys_loaded_avg:    { type: number, minimum: 0 }
+        keys_loaded_max:    { type: integer, minimum: 0 }
+        keys_tested_avg:    { type: number, minimum: 0 }
+        keys_tested_max:    { type: integer, minimum: 0 }
+        validation_ms_avg:  { type: number, minimum: 0 }
+        validation_ms_max:  { type: number, minimum: 0 }
+    LiveSnapshot:
+      type: object
+      description: Snapshot in-memory retornado por `getWebhookMetrics()`. Volátil por isolate.
+      properties:
+        tenantId:      { type: string, format: uuid }
+        provider:      { type: string }
+        cacheHits:     { type: integer }
+        cacheMisses:   { type: integer }
+        keysTested:    { type: integer }
+        validationMs:  { type: number }
+      additionalProperties: true
+    Pagination:
+      type: object
+      required: [limit, offset, total, returned, next_offset, has_more, sort_by, sort_dir]
+      properties:
+        limit:       { type: integer }
+        offset:      { type: integer }
+        total:       { type: integer, description: Total de buckets após agregação. }
+        returned:    { type: integer }
+        next_offset: { type: [integer, "null"] }
+        has_more:    { type: boolean }
+        sort_by:     { $ref: "#/components/schemas/SortBy" }
+        sort_dir:    { $ref: "#/components/schemas/SortDir" }
+    MetricsResponse:
+      type: object
+      required: [period, filters, sample_size, pagination, aggregates, request_id]
+      properties:
+        period:
+          type: object
+          required: [start, end]
+          properties:
+            start: { type: string, format: date-time }
+            end:   { type: string, format: date-time }
+        filters:
+          type: object
+          properties:
+            tenant_id: { type: [string, "null"], format: uuid }
+            provider:  { type: [string, "null"] }
+            group_by:  { $ref: "#/components/schemas/GroupBy" }
+        sample_size: { type: integer, description: Linhas cruas lidas em `webhook_metrics`. }
+        pagination:  { $ref: "#/components/schemas/Pagination" }
+        aggregates:
+          type: array
+          items: { $ref: "#/components/schemas/Aggregate" }
+        live:
+          type: array
+          items: { $ref: "#/components/schemas/LiveSnapshot" }
+        live_total: { type: integer }
+        request_id: { type: string, format: uuid }
+    ErrorResponse:
+      description: |
+        Formato **único** de erro deste endpoint — schema compartilhado por
+        TODOS os endpoints admin (ver `./_shared/errorResponse.yaml`).
+        Este endpoint restringe `error_code` ao subconjunto abaixo via `allOf`.
+      allOf:
+        - $ref: "./_shared/errorResponse.yaml#/components/schemas/ErrorResponse"
+        - type: object
+          properties:
+            error_code:
+              type: string
+              enum:
+                - missing_authorization
+                - unauthenticated
+                - forbidden
+                - invalid_params
+                - invalid_period
+                - query_failed
+  
+  responses:
+    MetricsOk:
+      description: Sucesso
+      headers:
+        X-Request-Id: { schema: { type: string, format: uuid } }
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/MetricsResponse" }
+          examples:
+            defaults:
+              summary: Sem filtros — group_by=both, sample cross-tenant
+              value:
+                period: { start: "2026-07-07T00:00:00Z", end: "2026-07-14T00:00:00Z" }
+                filters: { tenant_id: null, provider: null, group_by: both }
+                sample_size: 4213
+                pagination:
+                  limit: 100
+                  offset: 0
+                  total: 12
+                  returned: 12
+                  next_offset: null
+                  has_more: false
+                  sort_by: validations_total
+                  sort_dir: desc
+                aggregates:
+                  - tenant_id: 11111111-1111-1111-1111-111111111111
+                    provider: stripe
+                    validations_total: 1820
+                    allowed: 1810
+                    denied: 10
+                    cache_hits: 1794
+                    cache_misses: 26
+                    cache_hit_rate: 0.9857
+                    keys_loaded_avg: 1.02
+                    keys_loaded_max: 2
+                    keys_tested_avg: 1.14
+                    keys_tested_max: 3
+                    validation_ms_avg: 4.71
+                    validation_ms_max: 38
+                  - tenant_id: 22222222-2222-2222-2222-222222222222
+                    provider: asaas
+                    validations_total: 902
+                    allowed: 899
+                    denied: 3
+                    cache_hits: 875
+                    cache_misses: 27
+                    cache_hit_rate: 0.9700
+                    keys_loaded_avg: 1.0
+                    keys_loaded_max: 1
+                    keys_tested_avg: 1.03
+                    keys_tested_max: 2
+                    validation_ms_avg: 5.9
+                    validation_ms_max: 61
+                live:
+                  - { tenantId: 11111111-1111-1111-1111-111111111111, provider: stripe, cacheHits: 41, cacheMisses: 0, keysTested: 41, validationMs: 3.8 }
+                live_total: 1
+                request_id: 6b3b1d84-2f6e-4b1e-9c4e-1c9f7a5a2d10
+            tenant_and_provider_window:
+              summary: Tenant+provider+janela — 1 linha agregada
+              value:
+                period: { start: "2026-06-01T00:00:00Z", end: "2026-06-30T23:59:59Z" }
+                filters:
+                  tenant_id: 11111111-1111-1111-1111-111111111111
+                  provider: stripe
+                  group_by: both
+                sample_size: 7841
+                pagination:
+                  limit: 100
+                  offset: 0
+                  total: 1
+                  returned: 1
+                  next_offset: null
+                  has_more: false
+                  sort_by: validations_total
+                  sort_dir: desc
+                aggregates:
+                  - tenant_id: 11111111-1111-1111-1111-111111111111
+                    provider: stripe
+                    validations_total: 7841
+                    allowed: 7833
+                    denied: 8
+                    cache_hits: 7712
+                    cache_misses: 129
+                    cache_hit_rate: 0.9835
+                    keys_loaded_avg: 1.04
+                    keys_loaded_max: 3
+                    keys_tested_avg: 1.18
+                    keys_tested_max: 4
+                    validation_ms_avg: 4.62
+                    validation_ms_max: 42
+                live: []
+                live_total: 0
+                request_id: 9df0c3aa-8f22-4a3c-b9e0-33f8b3d7f1aa
+            paginated_page_2:
+              summary: Página 2 — has_more=true, next_offset=200
+              value:
+                period: { start: "2026-07-07T00:00:00Z", end: "2026-07-14T00:00:00Z" }
+                filters: { tenant_id: null, provider: null, group_by: both }
+                sample_size: 51230
+                pagination:
+                  limit: 100
+                  offset: 100
+                  total: 342
+                  returned: 100
+                  next_offset: 200
+                  has_more: true
+                  sort_by: validation_ms_avg
+                  sort_dir: desc
+                aggregates:
+                  - tenant_id: 33333333-3333-3333-3333-333333333333
+                    provider: omnileads
+                    validations_total: 214
+                    allowed: 210
+                    denied: 4
+                    cache_hits: 180
+                    cache_misses: 34
+                    cache_hit_rate: 0.8411
+                    keys_loaded_avg: 1.7
+                    keys_loaded_max: 4
+                    keys_tested_avg: 2.1
+                    keys_tested_max: 5
+                    validation_ms_avg: 22.8
+                    validation_ms_max: 143
+                live: []
+                live_total: 0
+                request_id: 2a1b6f0e-77c9-4a8a-8d2c-51f0f88a0e11
+            ranking_worst_cache:
+              summary: sort_by=cache_hit_rate asc — piores primeiro
+              value:
+                period: { start: "2026-07-07T00:00:00Z", end: "2026-07-14T00:00:00Z" }
+                filters: { tenant_id: null, provider: null, group_by: both }
+                sample_size: 12040
+                pagination:
+                  limit: 100
+                  offset: 0
+                  total: 27
+                  returned: 27
+                  next_offset: null
+                  has_more: false
+                  sort_by: cache_hit_rate
+                  sort_dir: asc
+                aggregates:
+                  - tenant_id: 44444444-4444-4444-4444-444444444444
+                    provider: hotmart
+                    validations_total: 61
+                    allowed: 55
+                    denied: 6
+                    cache_hits: 38
+                    cache_misses: 23
+                    cache_hit_rate: 0.6229
+                    keys_loaded_avg: 2.1
+                    keys_loaded_max: 4
+                    keys_tested_avg: 2.8
+                    keys_tested_max: 5
+                    validation_ms_avg: 18.4
+                    validation_ms_max: 92
+                live: []
+                live_total: 0
+                request_id: 4c7a11cd-90a4-4d2f-af57-b8e5f8b31234
+            historical_only:
+              summary: include_live=false — sem `live`
+              value:
+                period: { start: "2026-06-01T00:00:00Z", end: "2026-06-08T00:00:00Z" }
+                filters: { tenant_id: null, provider: null, group_by: both }
+                sample_size: 9012
+                pagination:
+                  limit: 100
+                  offset: 0
+                  total: 9
+                  returned: 9
+                  next_offset: null
+                  has_more: false
+                  sort_by: validations_total
+                  sort_dir: desc
+                aggregates:
+                  - tenant_id: 11111111-1111-1111-1111-111111111111
+                    provider: stripe
+                    validations_total: 6120
+                    allowed: 6112
+                    denied: 8
+                    cache_hits: 6003
+                    cache_misses: 117
+                    cache_hit_rate: 0.9809
+                    keys_loaded_avg: 1.02
+                    keys_loaded_max: 2
+                    keys_tested_avg: 1.11
+                    keys_tested_max: 3
+                    validation_ms_avg: 4.9
+                    validation_ms_max: 55
+                request_id: 71e1a2b0-6c11-4f2b-8ec7-92a3ff0b7788
+    BadRequest:
+      description: |
+        Parâmetros inválidos. `error` = `invalid_params` (schema Zod)
+        ou `invalid_period` (start > end / datas inválidas).
+      headers:
+        X-Request-Id: { schema: { type: string, format: uuid } }
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+          examples:
+            invalid_params:
+              summary: Zod flatten (limit fora de faixa, provider vazio)
+              value:
+                error_code: invalid_params
+                message: "Um ou mais parâmetros da requisição são inválidos."
+                details:
+                  fieldErrors:
+                    limit: ["Number must be less than or equal to 500"]
+                    provider: ["String must contain at least 1 character(s)"]
+                  formErrors: []
+                request_id: 8a9c05bb-1b23-4a4e-b0dc-9e33d54a2211
+            invalid_period:
+              summary: start > end
+              value:
+                error_code: invalid_period
+                message: "Período inválido: 'start' deve ser anterior a 'end' e ambos devem ser datas válidas."
+                details:
+                  start: "2026-07-14T00:00:00.000Z"
+                  end:   "2026-07-01T00:00:00.000Z"
+                request_id: 2c1a55e9-3f7c-4c65-8dc6-6cf9a1d0aa02
+    Unauthorized:
+      description: |
+        `missing_authorization` (sem Bearer) ou `unauthenticated`
+        (token inválido/expirado). Log com `outcome=denied`.
+      headers:
+        X-Request-Id: { schema: { type: string, format: uuid } }
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+          examples:
+            missing_authorization:
+              value:
+                error_code: missing_authorization
+                message: "Authorization header ausente. Envie 'Bearer <access_token>'."
+                request_id: 5eb1a2f0-c22a-4bcd-901a-1f4dabf0e0c1
+            unauthenticated:
+              value:
+                error_code: unauthenticated
+                message: "Access token inválido ou expirado."
+                request_id: 6fc2b3e1-d33b-5cde-a12b-2f5ebcf1f1d2
+    Forbidden:
+      description: Usuário autenticado sem `is_master`. Log com `outcome=denied`, `reason=forbidden`.
+      headers:
+        X-Request-Id: { schema: { type: string, format: uuid } }
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+          examples:
+            forbidden:
+              value:
+                error_code: forbidden
+                message: "Usuário autenticado não possui privilégio de Super Admin (is_master)."
+                request_id: 7fd3c4f2-e44c-6def-b23c-30f6cd02f2e3
+    ServerError:
+      description: Falha ao consultar `webhook_metrics`. `error_code` = `query_failed`.
+      headers:
+        X-Request-Id: { schema: { type: string, format: uuid } }
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+          examples:
+            query_failed:
+              value:
+                error_code: query_failed
+                message: "Falha ao consultar métricas de webhook."
+                details:
+                  reason: "relation \"webhook_metrics\" does not exist"
+                request_id: 8fe4d503-f55d-7ef0-c34d-41f7de13f3f4

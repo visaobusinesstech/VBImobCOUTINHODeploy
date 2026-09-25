@@ -1,0 +1,1 @@
+ALTER TABLE public.leads ADD COLUMN motivo_perda text;

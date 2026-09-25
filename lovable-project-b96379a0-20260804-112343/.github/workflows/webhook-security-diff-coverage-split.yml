@@ -1,0 +1,69 @@
+name: webhookSecurity · diff coverage (split)
+
+on:
+  pull_request:
+    paths:
+      - "supabase/functions/_shared/webhookSecurity.ts"
+      - "supabase/functions/_shared/webhookSecurity.test.ts"
+      - "scripts/webhook-security-split-coverage.ts"
+      - "scripts/webhook-security-diff-coverage-split.ts"
+      - ".github/workflows/webhook-security-diff-coverage-split.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+  actions: read
+
+jobs:
+  diff-coverage-split:
+    name: Diff coverage gate (unit + integration)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Generate per-layer LCOV
+        # O gate absoluto de cada camada é aplicado pelo workflow
+        # `webhook-security-split-coverage.yml`. Aqui só precisamos dos LCOVs
+        # por camada — thresholds absolutos zerados para não reprovar por aqui.
+        env:
+          COVERAGE_MIN_UNIT_LINES: "0"
+          COVERAGE_MIN_UNIT_BRANCHES: "0"
+          COVERAGE_MIN_INTEGRATION_LINES: "0"
+          COVERAGE_MIN_INTEGRATION_BRANCHES: "0"
+        # `|| true` porque o script pode sair !=0 se um marcador for renomeado —
+        # o passo seguinte falha explicitamente se o LCOV não existir.
+        run: deno run -A scripts/webhook-security-split-coverage.ts || true
+
+      - name: Run per-layer diff coverage gate
+        id: gate
+        env:
+          DIFF_BASE_REF: origin/${{ github.event.pull_request.base.ref }}
+          DIFF_COVERAGE_MIN_UNIT: "90"
+          DIFF_COVERAGE_MIN_INTEGRATION: "70"
+        run: deno run -A scripts/webhook-security-diff-coverage-split.ts
+
+      - name: Upload diff coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: webhook-security-diff-coverage-split
+          path: |
+            coverage/webhook-security/diff-summary-split.json
+            coverage/webhook-security/unit/diff-summary.json
+            coverage/webhook-security/unit/lcov.info
+            coverage/webhook-security/integration/diff-summary.json
+            coverage/webhook-security/integration/lcov.info
+          retention-days: 14
+
+      # Comentário no PR consolidado em `webhook-security-report.yml`.
+      # Este workflow permanece apenas como gate de diff coverage por camada.
+

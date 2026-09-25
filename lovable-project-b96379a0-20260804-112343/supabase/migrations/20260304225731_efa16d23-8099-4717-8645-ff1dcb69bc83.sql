@@ -1,0 +1,1 @@
+UPDATE profiles SET approved = true WHERE id = '6e8157ea-802b-41e2-ba76-ffb2e06b82e0';

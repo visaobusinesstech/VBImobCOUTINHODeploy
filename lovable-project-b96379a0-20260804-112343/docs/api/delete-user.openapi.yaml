@@ -1,0 +1,82 @@
+openapi: 3.0.3
+info:
+  title: Admin — delete-user
+  version: "1.0.0"
+  description: |
+    Exclui um usuário (`auth.users`) e recursos associados. Requer usuário
+    autenticado com `is_master = true`. Todas as respostas de erro seguem o
+    formato admin compartilhado (`error_code`, `message`, `details?`, `request_id`).
+
+servers:
+  - url: https://{project_ref}.functions.supabase.co
+    variables:
+      project_ref: { default: "your-project-ref" }
+
+paths:
+  /delete-user:
+    post:
+      operationId: deleteUser
+      summary: Exclui um usuário
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: header
+          name: X-Request-Id
+          schema: { type: string, format: uuid }
+          required: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id]
+              additionalProperties: false
+              properties:
+                user_id: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Usuário excluído
+          headers:
+            X-Request-Id: { schema: { type: string, format: uuid } }
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, request_id]
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  request_id: { type: string, format: uuid }
+        "400":
+          description: Requisição inválida (`invalid_params`, `invalid_json`, `cannot_delete_self`).
+          content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } }
+        "401":
+          description: Não autenticado (`missing_authorization`, `unauthenticated`).
+          content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } }
+        "403":
+          description: Sem privilégio (`forbidden`, `cannot_delete_master`).
+          content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } }
+        "500":
+          description: Falha interna (`delete_failed`, `internal_error`).
+          content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } }
+
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+  schemas:
+    ErrorResponse:
+      allOf:
+        - $ref: "./_shared/errorResponse.yaml#/components/schemas/ErrorResponse"
+        - type: object
+          properties:
+            error_code:
+              type: string
+              enum:
+                - missing_authorization
+                - unauthenticated
+                - forbidden
+                - invalid_params
+                - invalid_json
+                - cannot_delete_self
+                - cannot_delete_master
+                - delete_failed
+                - internal_error

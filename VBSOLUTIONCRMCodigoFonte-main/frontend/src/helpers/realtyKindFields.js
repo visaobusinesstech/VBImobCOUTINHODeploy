@@ -310,15 +310,11 @@ export const KIND_FIELDS = {
   ],
   corretor: [
     { name: "email", label: "E-mail" },
-    { name: "telefone", label: "Telefone / WhatsApp" },
+    { name: "telefone", label: "Telefone" },
     { name: "creci", label: "CRECI" },
-    select("statusCorretor", "Status", ["ativo", "inativo", "ferias"], "ativo"),
-    { name: "cidade", label: "Cidade / região de atuação" },
+    /** Mantidos para fila/capacidade — não aparecem no formulário Lovable da página dedicada */
+    select("statusCorretor", "Status", ["ativo", "inativo"], "ativo"),
     { name: "limite", label: "Limite leads ativos", type: "number", cast: "number", defaultValue: 20 },
-    { name: "metaDiaria", label: "Meta diária (prospecção)", type: "number", cast: "number", defaultValue: 10 },
-    select("canalPreferido", "Canal preferido", ["whatsapp", "ligacao", "email", "presencial"], "whatsapp"),
-    { name: "especialidades", label: "Especialidades / regiões", type: "textarea" },
-    { name: "agendaNotas", label: "Notas de agenda / disponibilidade", type: "textarea" },
     { name: "userId", label: "ID usuário CRM (opcional)", type: "number", cast: "number" },
   ],
 };
@@ -344,13 +340,7 @@ export const kindCardMeta = (kind, item, display) => {
     corretor: () => (
       <>
         {chip(d("statusCorretor") || item.status || "ativo")}
-        {line(
-          `CRECI ${d("creci") || "—"}`,
-          d("telefone") || d("email"),
-          d("cidade"),
-          d("limite") ? `limite ${d("limite")}` : "",
-          d("metaDiaria") ? `meta ${d("metaDiaria")}` : ""
-        )}
+        {line(`CRECI ${d("creci") || "—"}`, d("telefone") || d("email"))}
       </>
     ),
     condominio: () => (

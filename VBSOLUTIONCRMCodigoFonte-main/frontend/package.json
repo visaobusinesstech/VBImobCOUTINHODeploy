@@ -51,6 +51,8 @@
     "html2pdf.js": "^0.14.0",
     "i18next": "^21.6.11",
     "i18next-browser-languagedetector": "^6.1.3",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
     "jssip": "^3.13.4",
     "lodash": "^4.17.21",
     "lucide-react": "^0.575.0",

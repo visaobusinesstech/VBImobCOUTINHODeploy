@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:media="http://search.yahoo.com/mrss/" xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/">
+  <channel>
+    <title>Blog radarimobtech</title>
+    <link>https://radarimobtech.shop/blog</link>
+    <atom:link href="https://radarimobtech.shop/functions/v1/blog-rss?format=rss" rel="self" type="application/rss+xml"/>
+    <atom:link href="https://radarimobtech.shop/functions/v1/blog-rss?format=rss&amp;page=1" rel="first"/>
+    <atom:link href="https://radarimobtech.shop/functions/v1/blog-rss?format=rss&amp;page=1" rel="last"/>
+    <opensearch:totalResults>0</opensearch:totalResults>
+    <opensearch:startIndex>1</opensearch:startIndex>
+    <opensearch:itemsPerPage>50</opensearch:itemsPerPage>
+    <description>Artigos, guias e análises sobre captação, CRM imobiliário, avaliação de imóveis e mercado brasileiro.</description>
+    <language>pt-BR</language>
+    <lastBuildDate>Fri, 25 Sep 2026 19:14:20 GMT</lastBuildDate>
+
+  </channel>
+</rss>

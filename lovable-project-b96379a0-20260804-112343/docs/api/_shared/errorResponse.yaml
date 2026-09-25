@@ -1,0 +1,102 @@
+# Schema compartilhado por TODOS os endpoints admin.
+# Uso em cada spec:
+#   $ref: "./_shared/errorResponse.yaml#/components/schemas/ErrorResponse"
+#
+# Contrato único de resposta de erro:
+#   { error_code, message, details?, request_id }
+#
+# `error_code` é a chave estável (usada por clientes/monitoramento);
+# `message` é human-readable (pt-BR); `details` é OMITIDO quando não aplicável;
+# `request_id` é ecoado no header `X-Request-Id` e no body de toda resposta.
+
+openapi: 3.0.3
+info:
+  title: Admin ErrorResponse (shared)
+  version: "1.0.0"
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      description: |
+        Formato **único** de erro em TODOS os endpoints admin. Toda resposta
+        não-2xx segue este schema.
+
+        - `error_code` — chave estável (contrato público). Não muda entre versões.
+        - `message`    — mensagem human-readable em pt-BR.
+        - `details`    — contexto opcional (object | array | string | null).
+                        **Omitido** quando não aplicável (ex.: erros puros de
+                        autenticação/autorização não têm `details`).
+        - `request_id` — correlação com `security_audit_log` e com o header
+                        `X-Request-Id` da resposta.
+      required: [error_code, message, request_id]
+      additionalProperties: false
+      properties:
+        error_code:
+          type: string
+          description: |
+            Chave estável do erro. Códigos comuns compartilhados entre endpoints
+            admin (cada endpoint pode declarar códigos adicionais via `enum`
+            local ou `x-error-codes` na sua própria spec):
+
+            **Auth / autorização**
+              - `missing_authorization` — 401
+              - `unauthenticated`       — 401
+              - `forbidden`             — 403
+
+            **Validação de request**
+              - `invalid_params`        — 400 (details = Zod flatten)
+              - `invalid_json`          — 400
+              - `invalid_input`         — 400
+              - `invalid_period`        — 400 (details = { start, end })
+              - `method_not_allowed`    — 405
+
+            **Regras de negócio (admin)**
+              - `cannot_delete_self`    — 400
+              - `cannot_delete_master`  — 403
+              - `weak_password`         — 400
+
+            **Falhas internas**
+              - `query_failed`          — 500 (details = { reason })
+              - `rotation_failed`       — 400 (details = { reason, correlation_id })
+              - `delete_failed`         — 500 (details = { reason })
+              - `update_failed`         — 400/500 (details = { reason })
+              - `internal_error`        — 500 (details = { reason })
+        message:
+          type: string
+          description: Mensagem human-readable (pt-BR) correspondente ao `error_code`.
+        details:
+          description: |
+            Contexto opcional do erro. Estrutura definida por `error_code`:
+            - `invalid_params`   → object `{ fieldErrors, formErrors }` (Zod flatten).
+            - `invalid_period`   → object `{ start, end }` (ISO-8601 ou null).
+            - `query_failed`     → object `{ reason }`.
+            - `rotation_failed`  → object `{ reason, correlation_id }`.
+            - `delete_failed`    → object `{ reason }`.
+            - `update_failed`    → object `{ reason }`.
+            - `internal_error`   → object `{ reason }`.
+            Ausente para erros de autenticação/autorização puros
+            (`missing_authorization`, `unauthenticated`, `forbidden`,
+            `cannot_delete_self`, `cannot_delete_master`, `weak_password`,
+            `invalid_json`, `method_not_allowed`).
+          
+          oneOf:
+            - type: object
+              additionalProperties: true
+            - type: array
+              items: {}
+            - type: string
+        request_id:
+          type: string
+          description: |
+            UUID de correlação. Ecoado no header `X-Request-Id` e igual ao
+            valor gravado em `security_audit_log.metadata.request_id` quando
+            aplicável.
+      example:
+        error_code: invalid_params
+        message: Um ou mais parâmetros da requisição são inválidos.
+        details:
+          fieldErrors:
+            user_id: ["deve ser um UUID válido"]
+          formErrors: []
+        request_id: 3c9e1e6b-2b4b-4a3c-8a41-9e7d3b1fbb01

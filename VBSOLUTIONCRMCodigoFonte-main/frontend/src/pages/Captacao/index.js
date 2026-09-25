@@ -1,168 +1,209 @@
 /**
  * Copyright (c) Visão Business. Todos os direitos reservados.
  * VB Solution CRM — propriedade intelectual da Visão Business.
- * Uso conforme LICENSE na raiz do repositório.
+ *
+ * Captação de Imóveis — paridade de inputs/opções com Lovable Captacao.tsx
+ * (canais porteiro/construtor/construtora/síndico/indicação + ViaCEP).
+ * Visual: padrão VBSolution (realty-theme).
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useHistory } from "react-router-dom";
 import MainContainer from "../../components/MainContainer";
 import realtyService from "../../services/realtyService";
-import { formatBRL, IMOVEL_STATUSES } from "../../helpers/realtyCrm";
 import toastError from "../../errors/toastError";
 import { toast } from "react-toastify";
+import {
+  CAPTACAO_TIPOS,
+  CAPTACAO_STATUS_OPTIONS,
+  CAPTACAO_TIPOS_IMOVEL,
+  CAPTACAO_OPERACOES,
+  extractIndicadoPor,
+  isCaptacaoSubmittable,
+  computeCaptacaoKpis,
+  buildCaptacaoSavePayload,
+  captacaoRecordToForm,
+  rankCaptacaoByOperacao,
+} from "../../helpers/captacaoIndicacao";
 
-const TIPOS = [
-  "apartamento",
-  "casa",
-  "cobertura",
-  "terreno",
-  "sala",
-  "loja",
-  "galpao",
-  "outro",
-];
-
-const emptyForm = () => ({
-  title: "",
-  code: "",
-  type: "apartamento",
-  purpose: "venda",
-  status: "captacao",
-  price: "",
-  address: "",
-  neighborhood: "",
-  city: "",
-  state: "SP",
-  bedrooms: "",
-  suites: "",
-  parkingSpots: "",
-  areaM2: "",
-  proprietarioId: "",
-  userId: "",
-  description: "",
+const emptyForm = (tipo = "porteiro") => ({
+  tipo,
+  nomeContato: "",
+  telefoneContato: "",
+  emailContato: "",
+  cep: "",
+  enderecoImovel: "",
+  bairro: "",
+  cidade: "",
+  estado: "SP",
+  tipoImovel: "Apartamento",
+  operacao: "Venda",
+  nomeConstrutora: "",
+  nomeCondominio: "",
+  indicadoPor: "",
+  aceitaCorretor: false,
+  observacoes: "",
+  status: "pendente",
 });
 
+const statusLabel = (id) =>
+  CAPTACAO_STATUS_OPTIONS.find((s) => s.id === id)?.label || id || "—";
+
+const statusChipClass = (id) => {
+  switch (id) {
+    case "pendente":
+      return "realty-chip realty-chip--warn";
+    case "em_andamento":
+      return "realty-chip realty-chip--info";
+    case "concluida":
+      return "realty-chip realty-chip--ok";
+    case "cancelada":
+      return "realty-chip realty-chip--danger";
+    default:
+      return "realty-chip";
+  }
+};
+
+const formatDateBR = (iso) => {
+  if (!iso) return "—";
+  try {
+    return new Date(iso).toLocaleDateString("pt-BR");
+  } catch {
+    return "—";
+  }
+};
+
 const Captacao = () => {
-  const [items, setItems] = useState([]);
+  const history = useHistory();
+  const [captacoes, setCaptacoes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [busca, setBusca] = useState("");
-  const [filtroCidade, setFiltroCidade] = useState("");
-  const [filtroTipo, setFiltroTipo] = useState("");
-  const [filtroStatus, setFiltroStatus] = useState("captacao");
+  const [activeTab, setActiveTab] = useState("porteiro");
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState(emptyForm());
+  const [form, setForm] = useState(emptyForm("porteiro"));
   const [saving, setSaving] = useState(false);
+  const [buscandoCep, setBuscandoCep] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const params = { pageSize: 200 };
-      if (filtroStatus) params.status = filtroStatus;
-      if (busca.trim()) params.searchParam = busca.trim();
-      const data = await realtyService.listImoveis(params);
-      setItems(data.imoveis || []);
+      const data = await realtyService.listCaptacoes({ pageSize: 500 });
+      setCaptacoes(data.captacoes || []);
     } catch (err) {
       toastError(err);
     } finally {
       setLoading(false);
     }
-  }, [busca, filtroStatus]);
+  }, []);
 
   useEffect(() => {
     load();
   }, [load]);
 
-  const cidades = useMemo(() => {
+  const construtoras = useMemo(() => {
     const set = new Set();
-    items.forEach((i) => {
-      if (i.city) set.add(i.city);
+    captacoes.forEach((c) => {
+      if (c.nomeConstrutora) set.add(c.nomeConstrutora);
     });
     return Array.from(set).sort((a, b) => a.localeCompare(b, "pt-BR"));
-  }, [items]);
+  }, [captacoes]);
 
-  const filtered = useMemo(() => {
-    return items.filter((i) => {
-      if (filtroCidade && i.city !== filtroCidade) return false;
-      if (filtroTipo && String(i.type || "").toLowerCase() !== filtroTipo) return false;
-      return true;
+  const counts = useMemo(() => {
+    const acc = {};
+    CAPTACAO_TIPOS.forEach((t) => {
+      acc[t.id] = captacoes.filter((c) => c.tipo === t.id).length;
     });
-  }, [items, filtroCidade, filtroTipo]);
+    return acc;
+  }, [captacoes]);
 
-  const kpis = useMemo(() => {
-    const total = filtered.length;
-    const valor = filtered.reduce((s, i) => s + (Number(i.price) || 0), 0);
-    const cidadesUnicas = new Set(filtered.map((i) => i.city).filter(Boolean)).size;
-    return { total, valor, cidadesUnicas };
-  }, [filtered]);
+  const filtered = useMemo(
+    () => captacoes.filter((c) => c.tipo === activeTab),
+    [captacoes, activeTab]
+  );
+
+  const kpis = useMemo(() => computeCaptacaoKpis(captacoes), [captacoes]);
+
+  const rankingVenda = useMemo(
+    () => rankCaptacaoByOperacao(captacoes, "Venda"),
+    [captacoes]
+  );
+  const rankingLocacao = useMemo(
+    () => rankCaptacaoByOperacao(captacoes, "Locação"),
+    [captacoes]
+  );
+
+  const tipoLabel =
+    CAPTACAO_TIPOS.find((t) => t.id === activeTab)?.label || activeTab;
+  const formTipo = form.tipo || activeTab;
+  const formTipoLabel =
+    CAPTACAO_TIPOS.find((t) => t.id === formTipo)?.label || formTipo;
+
+  const setField = (name, value) => setForm((f) => ({ ...f, [name]: value }));
+
+  const buscarCep = async (cepVal) => {
+    const clean = String(cepVal || "").replace(/\D/g, "");
+    if (clean.length !== 8) return;
+    setBuscandoCep(true);
+    try {
+      const resp = await fetch(`https://viacep.com.br/ws/${clean}/json/`);
+      const data = await resp.json();
+      if (!data.erro) {
+        setForm((f) => ({
+          ...f,
+          enderecoImovel: data.logradouro || f.enderecoImovel,
+          bairro: data.bairro || f.bairro,
+          cidade: data.localidade || f.cidade,
+          estado: data.uf || f.estado || "SP",
+        }));
+      }
+    } catch {
+      /* silent — paridade Lovable */
+    } finally {
+      setBuscandoCep(false);
+    }
+  };
 
   const openNew = () => {
     setEditing(null);
-    setForm(emptyForm());
+    setForm(emptyForm(activeTab));
     setFormOpen(true);
   };
 
   const openEdit = (item) => {
     setEditing(item);
-    setForm({
-      title: item.title || "",
-      code: item.code || "",
-      type: item.type || "apartamento",
-      purpose: item.purpose || "venda",
-      status: item.status || "captacao",
-      price: item.price != null ? String(item.price) : "",
-      address: item.address || "",
-      neighborhood: item.neighborhood || "",
-      city: item.city || "",
-      state: item.state || "SP",
-      bedrooms: item.bedrooms != null ? String(item.bedrooms) : "",
-      suites: item.suites != null ? String(item.suites) : "",
-      parkingSpots: item.parkingSpots != null ? String(item.parkingSpots) : "",
-      areaM2: item.areaM2 != null ? String(item.areaM2) : "",
-      proprietarioId: item.proprietarioId != null ? String(item.proprietarioId) : "",
-      userId: item.userId != null ? String(item.userId) : "",
-      description: item.description || "",
-    });
+    setForm(captacaoRecordToForm(item, activeTab));
     setFormOpen(true);
   };
 
-  const numOrNull = (v) => (v === "" || v == null ? null : Number(v));
+  const closeForm = () => {
+    if (saving) return;
+    setFormOpen(false);
+    setEditing(null);
+  };
 
   const save = async (e) => {
     e.preventDefault();
-    if (!form.title.trim()) {
-      toast.error("Informe o título / referência");
+    const tipo = form.tipo || activeTab;
+    if (!isCaptacaoSubmittable({ tipo, nome: form.nomeContato, indicadoPor: form.indicadoPor })) {
+      if (!String(form.nomeContato || "").trim()) {
+        toast.error(`Informe o nome do ${formTipoLabel.toLowerCase()}`);
+      } else if (tipo === "indicacao") {
+        toast.error("Informe quem indicou");
+      }
       return;
     }
     setSaving(true);
     try {
-      const payload = {
-        title: form.title.trim(),
-        code: form.code || null,
-        type: form.type,
-        purpose: form.purpose,
-        status: form.status || "captacao",
-        price: numOrNull(form.price),
-        address: form.address || null,
-        neighborhood: form.neighborhood || null,
-        city: form.city || null,
-        state: form.state || null,
-        bedrooms: numOrNull(form.bedrooms),
-        suites: numOrNull(form.suites),
-        parkingSpots: numOrNull(form.parkingSpots),
-        areaM2: numOrNull(form.areaM2),
-        proprietarioId: numOrNull(form.proprietarioId),
-        userId: numOrNull(form.userId),
-        description: form.description || null,
-      };
+      const payload = buildCaptacaoSavePayload(form, activeTab);
       if (editing?.id) {
-        await realtyService.updateImovel(editing.id, payload);
-        toast.success("Captação atualizada");
+        await realtyService.updateCaptacao(editing.id, payload);
+        toast.success("Captação atualizada!");
       } else {
-        await realtyService.createImovel({ ...payload, status: payload.status || "captacao" });
-        toast.success("Captação criada");
+        await realtyService.createCaptacao(payload);
+        toast.success("Captação registrada!");
       }
       setFormOpen(false);
+      setEditing(null);
       await load();
     } catch (err) {
       toastError(err);
@@ -172,260 +213,509 @@ const Captacao = () => {
   };
 
   const remove = async (item) => {
-    if (!window.confirm(`Remover "${item.title}"?`)) return;
+    if (!window.confirm(`Excluir captação de "${item.nomeContato}"? Esta ação não pode ser desfeita.`)) {
+      return;
+    }
     try {
-      await realtyService.deleteImovel(item.id);
-      toast.success("Removido");
+      await realtyService.deleteCaptacao(item.id);
+      toast.success("Captação excluída!");
       await load();
     } catch (err) {
       toastError(err);
     }
   };
 
-  const setField = (name, value) => setForm((f) => ({ ...f, [name]: value }));
+  const renderRanking = (data, title) => {
+    if (!data.length) return null;
+    const maxCount = Math.max(...data.map((d) => d.count), 1);
+    return (
+      <article className="realty-card" style={{ padding: 16 }}>
+        <h4 style={{ margin: "0 0 12px", fontSize: 14 }}>{title}</h4>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {data.slice(0, 8).map((item, i) => (
+            <div key={item.canal} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, width: 20, color: "#737d8c" }}>
+                {i + 1}.
+              </span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    marginBottom: 2,
+                    gap: 8,
+                  }}
+                >
+                  <span style={{ fontSize: 12, overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {item.canal}
+                  </span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: "#2673d9" }}>
+                    {item.count}
+                  </span>
+                </div>
+                <div
+                  style={{
+                    height: 6,
+                    background: "#e8eef6",
+                    borderRadius: 999,
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    style={{
+                      height: "100%",
+                      width: `${(item.count / maxCount) * 100}%`,
+                      background: "#2673d9",
+                      borderRadius: 999,
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </article>
+    );
+  };
+
+  const canSubmit = isCaptacaoSubmittable({
+    tipo: formTipo,
+    nome: form.nomeContato,
+    indicadoPor: form.indicadoPor,
+  });
 
   return (
     <MainContainer autoHeight>
       <div className="realty-page">
         <div className="realty-page__header">
           <div>
-            <h1 className="realty-page__title">Captação</h1>
+            <h1 className="realty-page__title">Captação de Imóveis</h1>
             <p className="realty-page__subtitle">
-              Imóveis em captação — listagem, filtros e cadastro (endereço, operação, valor estimado, corretor).
+              {captacoes.length} captação{captacoes.length === 1 ? "" : "ões"} registrada
+              {captacoes.length === 1 ? "" : "s"} — canais porteiro, construtor, construtora,
+              síndico e indicação.
             </p>
           </div>
           <div className="realty-page__header-actions">
+            <button
+              type="button"
+              className="realty-page__btn realty-page__btn--ghost"
+              onClick={() => history.push("/proprietarios")}
+            >
+              Lista de Proprietários
+            </button>
             <button type="button" className="realty-page__btn realty-page__btn--ghost" onClick={load}>
               {loading ? "Atualizando…" : "Atualizar"}
             </button>
             <button type="button" className="realty-page__btn" onClick={openNew}>
-              Nova captação
+              Nova Captação
             </button>
           </div>
         </div>
 
-        <div className="realty-page__grid" style={{ marginBottom: 16 }}>
-          <article className="realty-card">
-            <p style={{ margin: 0, fontSize: 12 }}>Total filtrado</p>
-            <h2 style={{ margin: "6px 0 0", fontSize: 28 }}>{kpis.total}</h2>
-          </article>
-          <article className="realty-card">
-            <p style={{ margin: 0, fontSize: 12 }}>Valor estimado</p>
-            <h2 style={{ margin: "6px 0 0", fontSize: 22 }}>{formatBRL(kpis.valor)}</h2>
-          </article>
-          <article className="realty-card">
-            <p style={{ margin: 0, fontSize: 12 }}>Cidades</p>
-            <h2 style={{ margin: "6px 0 0", fontSize: 28 }}>{kpis.cidadesUnicas}</h2>
-          </article>
-        </div>
-
-        <div className="realty-filters-panel">
-          <label className="realty-filter-field">
-            Busca
-            <input
-              placeholder="Título, cidade, bairro…"
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-            />
-          </label>
-          <label className="realty-filter-field">
-            Status
-            <select value={filtroStatus} onChange={(e) => setFiltroStatus(e.target.value)}>
-              <option value="">Todos</option>
-              {IMOVEL_STATUSES.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="realty-filter-field">
-            Cidade
-            <select value={filtroCidade} onChange={(e) => setFiltroCidade(e.target.value)}>
-              <option value="">Todas</option>
-              {cidades.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="realty-filter-field">
-            Tipo
-            <select value={filtroTipo} onChange={(e) => setFiltroTipo(e.target.value)}>
-              <option value="">Todos</option>
-              {TIPOS.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-
-        {loading && <div className="realty-empty">Carregando…</div>}
-        {!loading && filtered.length === 0 && (
-          <div className="realty-empty">Nenhuma captação encontrada. Clique em Nova captação.</div>
+        {captacoes.length > 0 && (
+          <div className="realty-page__grid" style={{ marginBottom: 16 }}>
+            <article className="realty-card">
+              <p style={{ margin: 0, fontSize: 12 }}>Total</p>
+              <h2 style={{ margin: "6px 0 0", fontSize: 28 }}>{kpis.total}</h2>
+            </article>
+            <article className="realty-card">
+              <p style={{ margin: 0, fontSize: 12 }}>Pendentes</p>
+              <h2 style={{ margin: "6px 0 0", fontSize: 28 }}>{kpis.pendentes}</h2>
+            </article>
+            <article className="realty-card">
+              <p style={{ margin: 0, fontSize: 12 }}>Em andamento</p>
+              <h2 style={{ margin: "6px 0 0", fontSize: 28 }}>{kpis.andamento}</h2>
+            </article>
+            <article className="realty-card">
+              <p style={{ margin: 0, fontSize: 12 }}>Concluídas</p>
+              <h2 style={{ margin: "6px 0 0", fontSize: 28 }}>{kpis.concluidas}</h2>
+            </article>
+            <article className="realty-card">
+              <p style={{ margin: 0, fontSize: 12 }}>Conversão</p>
+              <h2 style={{ margin: "6px 0 0", fontSize: 28 }}>{kpis.taxa}%</h2>
+            </article>
+          </div>
         )}
 
-        <div className="realty-page__grid">
-          {filtered.map((item) => (
-            <article key={item.id} className="realty-card">
-              <h3>{item.title}</h3>
-              <p>
-                <span className="realty-chip">{item.status || "captacao"}</span>
-                {item.type || "—"} · {item.purpose || "venda"}
-              </p>
-              <p>
-                {item.city || "—"}
-                {item.neighborhood ? ` · ${item.neighborhood}` : ""}
-                {item.address ? ` · ${item.address}` : ""}
-              </p>
-              <p>
-                {item.bedrooms != null ? `${item.bedrooms} quartos` : "—"}
-                {item.areaM2 != null ? ` · ${item.areaM2} m²` : ""}
-              </p>
-              <strong style={{ display: "block", marginTop: 8, color: "#2b3340" }}>
-                {formatBRL(item.price)}
-              </strong>
-              <div className="realty-card__actions">
-                <button
-                  type="button"
-                  className="realty-page__btn realty-page__btn--ghost"
-                  onClick={() => openEdit(item)}
-                >
-                  Editar
-                </button>
-                <button type="button" className="realty-page__btn realty-page__btn--ghost" onClick={() => remove(item)}>
-                  Remover
-                </button>
-              </div>
-            </article>
+        {captacoes.length > 0 && (rankingVenda.length > 0 || rankingLocacao.length > 0) && (
+          <div
+            className="realty-page__grid"
+            style={{ marginBottom: 16, gridTemplateColumns: "1fr 1fr" }}
+          >
+            {renderRanking(rankingVenda, "Ranking Captação — Venda")}
+            {renderRanking(rankingLocacao, "Ranking Captação — Locação")}
+          </div>
+        )}
+
+        <div className="realty-tabs" style={{ marginBottom: 16, flexWrap: "wrap" }}>
+          {CAPTACAO_TIPOS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              className={`realty-tab${activeTab === t.id ? " realty-tab--active" : ""}`}
+              onClick={() => setActiveTab(t.id)}
+            >
+              {t.label}
+              {counts[t.id] > 0 ? ` (${counts[t.id]})` : ""}
+            </button>
           ))}
         </div>
 
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: 12,
+            gap: 12,
+            flexWrap: "wrap",
+          }}
+        >
+          <p style={{ margin: 0, fontSize: 13, color: "#737d8c" }}>
+            {filtered.length} captação{filtered.length === 1 ? "" : "ões"} via{" "}
+            {tipoLabel.toLowerCase()}
+          </p>
+          <button type="button" className="realty-page__btn" onClick={openNew}>
+            Nova Captação
+          </button>
+        </div>
+
+        {loading && <div className="realty-empty">Carregando…</div>}
+
+        {!loading && filtered.length === 0 && (
+          <div className="realty-empty">
+            <p>Nenhuma captação via {tipoLabel.toLowerCase()} registrada.</p>
+            <button
+              type="button"
+              className="realty-page__btn realty-page__btn--ghost"
+              style={{ marginTop: 12 }}
+              onClick={openNew}
+            >
+              Registrar primeira captação
+            </button>
+          </div>
+        )}
+
+        {!loading && filtered.length > 0 && (
+          <div className="realty-card" style={{ overflowX: "auto", padding: 0 }}>
+            <table className="realty-table" style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr>
+                  <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 12 }}>Nome</th>
+                  <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 12 }}>Telefone</th>
+                  {(activeTab === "construtora" || activeTab === "construtor") && (
+                    <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 12 }}>
+                      Construtora
+                    </th>
+                  )}
+                  {activeTab === "sindico" && (
+                    <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 12 }}>
+                      Condomínio
+                    </th>
+                  )}
+                  {activeTab === "indicacao" && (
+                    <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 12 }}>
+                      Indicado por
+                    </th>
+                  )}
+                  <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 12 }}>Endereço</th>
+                  <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 12 }}>Bairro</th>
+                  <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 12 }}>Status</th>
+                  <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 12 }}>Data</th>
+                  <th style={{ width: 120, padding: "10px 12px" }} />
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((c) => (
+                  <tr key={c.id} style={{ borderTop: "1px solid #e8eef6" }}>
+                    <td style={{ padding: "10px 12px", fontWeight: 600 }}>{c.nomeContato}</td>
+                    <td style={{ padding: "10px 12px" }}>{c.telefoneContato || "—"}</td>
+                    {(activeTab === "construtora" || activeTab === "construtor") && (
+                      <td style={{ padding: "10px 12px" }}>{c.nomeConstrutora || "—"}</td>
+                    )}
+                    {activeTab === "sindico" && (
+                      <td style={{ padding: "10px 12px" }}>{c.nomeCondominio || "—"}</td>
+                    )}
+                    {activeTab === "indicacao" && (
+                      <td style={{ padding: "10px 12px", fontSize: 12 }}>
+                        {extractIndicadoPor(c.observacoes) || "—"}
+                      </td>
+                    )}
+                    <td
+                      style={{
+                        padding: "10px 12px",
+                        maxWidth: 200,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {c.enderecoImovel || "—"}
+                    </td>
+                    <td style={{ padding: "10px 12px" }}>{c.bairro || "—"}</td>
+                    <td style={{ padding: "10px 12px" }}>
+                      <span className={statusChipClass(c.status)}>{statusLabel(c.status)}</span>
+                    </td>
+                    <td style={{ padding: "10px 12px", fontSize: 12, color: "#737d8c" }}>
+                      {formatDateBR(c.createdAt)}
+                    </td>
+                    <td style={{ padding: "10px 12px" }}>
+                      <div className="realty-card__actions" style={{ justifyContent: "flex-end" }}>
+                        <button
+                          type="button"
+                          className="realty-page__btn realty-page__btn--ghost"
+                          onClick={() => openEdit(c)}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          className="realty-page__btn realty-page__btn--ghost"
+                          onClick={() => remove(c)}
+                        >
+                          Excluir
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
         {formOpen && (
-          <div className="realty-modal-backdrop" onClick={() => !saving && setFormOpen(false)}>
+          <div className="realty-modal-backdrop" onClick={closeForm}>
             <form
               className="realty-card realty-modal realty-form"
               onClick={(e) => e.stopPropagation()}
               onSubmit={save}
+              style={{ maxWidth: 560, maxHeight: "90vh", overflowY: "auto" }}
             >
-              <h3>{editing ? "Editar captação" : "Nova captação"}</h3>
+              <h3>
+                {editing ? "Editar" : "Nova"} Captação via {formTipoLabel}
+              </h3>
+
               <label>
-                Título / referência *
-                <input value={form.title} onChange={(e) => setField("title", e.target.value)} required />
-              </label>
-              <label>
-                Código
-                <input value={form.code} onChange={(e) => setField("code", e.target.value)} />
-              </label>
-              <label>
-                Tipo
-                <select value={form.type} onChange={(e) => setField("type", e.target.value)}>
-                  {TIPOS.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Operação
-                <select value={form.purpose} onChange={(e) => setField("purpose", e.target.value)}>
-                  <option value="venda">Venda</option>
-                  <option value="aluguel">Aluguel</option>
-                </select>
-              </label>
-              <label>
-                Status
-                <select value={form.status} onChange={(e) => setField("status", e.target.value)}>
-                  {IMOVEL_STATUSES.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Valor estimado (R$)
+                Nome do {formTipoLabel} *
                 <input
-                  type="number"
-                  value={form.price}
-                  onChange={(e) => setField("price", e.target.value)}
+                  value={form.nomeContato}
+                  onChange={(e) => setField("nomeContato", e.target.value)}
+                  placeholder={`Nome do ${formTipoLabel.toLowerCase()}`}
+                  maxLength={100}
+                  required
                 />
               </label>
+
+              {formTipo === "construtora" && (
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: 10,
+                    borderRadius: 8,
+                    background: "#f0fdf4",
+                    border: "1px solid #bbf7d0",
+                    cursor: "pointer",
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={form.aceitaCorretor}
+                    onChange={(e) => setField("aceitaCorretor", e.target.checked)}
+                  />
+                  <span style={{ fontSize: 12 }}>
+                    Aceita qualquer corretor/imobiliária para vender ou alugar
+                  </span>
+                </label>
+              )}
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <label>
+                  Telefone
+                  <input
+                    value={form.telefoneContato}
+                    onChange={(e) => setField("telefoneContato", e.target.value)}
+                    placeholder="(00) 00000-0000"
+                  />
+                </label>
+                <label>
+                  Email
+                  <input
+                    type="email"
+                    value={form.emailContato}
+                    onChange={(e) => setField("emailContato", e.target.value)}
+                    placeholder="email@exemplo.com"
+                  />
+                </label>
+              </div>
+
+              {(formTipo === "construtora" || formTipo === "construtor") && (
+                <label>
+                  Nome da Construtora
+                  <input
+                    value={form.nomeConstrutora}
+                    onChange={(e) => setField("nomeConstrutora", e.target.value)}
+                    placeholder="Buscar ou digitar nome da construtora..."
+                    list="captacao-construtoras-list"
+                  />
+                  <datalist id="captacao-construtoras-list">
+                    {construtoras.map((c) => (
+                      <option key={c} value={c} />
+                    ))}
+                  </datalist>
+                </label>
+              )}
+
+              {formTipo === "sindico" && (
+                <label>
+                  Nome do Condomínio
+                  <input
+                    value={form.nomeCondominio}
+                    onChange={(e) => setField("nomeCondominio", e.target.value)}
+                    placeholder="Nome do condomínio"
+                  />
+                </label>
+              )}
+
+              {formTipo === "indicacao" && (
+                <div
+                  style={{
+                    padding: 12,
+                    borderRadius: 8,
+                    background: "#e8f0fc",
+                    border: "1px solid #c5d8f5",
+                    marginBottom: 4,
+                  }}
+                >
+                  <label style={{ margin: 0 }}>
+                    Indicado por *
+                    <input
+                      value={form.indicadoPor}
+                      onChange={(e) => setField("indicadoPor", e.target.value)}
+                      placeholder="Nome de quem indicou (cliente, parceiro, corretor...)"
+                      required
+                    />
+                  </label>
+                  <p style={{ margin: "6px 0 0", fontSize: 11, color: "#737d8c" }}>
+                    Registramos a fonte da indicação para você reconhecer e recompensar quem traz
+                    negócios.
+                  </p>
+                </div>
+              )}
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 12 }}>
+                <label>
+                  CEP
+                  <input
+                    value={form.cep}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setField("cep", v);
+                      if (String(v).replace(/\D/g, "").length === 8) buscarCep(v);
+                    }}
+                    placeholder="70000-000"
+                    maxLength={9}
+                  />
+                  {buscandoCep && (
+                    <span style={{ fontSize: 11, color: "#737d8c" }}>Buscando CEP…</span>
+                  )}
+                </label>
+                <label>
+                  Endereço do Imóvel
+                  <input
+                    value={form.enderecoImovel}
+                    onChange={(e) => setField("enderecoImovel", e.target.value)}
+                    placeholder="Endereço"
+                  />
+                </label>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <label>
+                  Bairro
+                  <input
+                    value={form.bairro}
+                    onChange={(e) => setField("bairro", e.target.value)}
+                    placeholder="Bairro"
+                  />
+                </label>
+                <label>
+                  Cidade
+                  <input
+                    value={form.cidade}
+                    onChange={(e) => setField("cidade", e.target.value)}
+                    placeholder="Cidade"
+                  />
+                </label>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+                <label>
+                  Tipo
+                  <select
+                    value={form.tipoImovel}
+                    onChange={(e) => setField("tipoImovel", e.target.value)}
+                  >
+                    {CAPTACAO_TIPOS_IMOVEL.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Operação
+                  <select
+                    value={form.operacao}
+                    onChange={(e) => setField("operacao", e.target.value)}
+                  >
+                    {CAPTACAO_OPERACOES.map((o) => (
+                      <option key={o} value={o}>
+                        {o}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Status
+                  <select value={form.status} onChange={(e) => setField("status", e.target.value)}>
+                    {CAPTACAO_STATUS_OPTIONS.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
               <label>
-                Endereço
-                <input value={form.address} onChange={(e) => setField("address", e.target.value)} />
-              </label>
-              <label>
-                Bairro
-                <input value={form.neighborhood} onChange={(e) => setField("neighborhood", e.target.value)} />
-              </label>
-              <label>
-                Cidade
-                <input value={form.city} onChange={(e) => setField("city", e.target.value)} />
-              </label>
-              <label>
-                UF
-                <input value={form.state} onChange={(e) => setField("state", e.target.value)} maxLength={2} />
-              </label>
-              <label>
-                Quartos
-                <input
-                  type="number"
-                  value={form.bedrooms}
-                  onChange={(e) => setField("bedrooms", e.target.value)}
-                />
-              </label>
-              <label>
-                Suítes
-                <input type="number" value={form.suites} onChange={(e) => setField("suites", e.target.value)} />
-              </label>
-              <label>
-                Vagas
-                <input
-                  type="number"
-                  value={form.parkingSpots}
-                  onChange={(e) => setField("parkingSpots", e.target.value)}
-                />
-              </label>
-              <label>
-                Área m²
-                <input type="number" value={form.areaM2} onChange={(e) => setField("areaM2", e.target.value)} />
-              </label>
-              <label>
-                ID Proprietário
-                <input
-                  type="number"
-                  value={form.proprietarioId}
-                  onChange={(e) => setField("proprietarioId", e.target.value)}
-                />
-              </label>
-              <label>
-                Corretor captador (ID user)
-                <input type="number" value={form.userId} onChange={(e) => setField("userId", e.target.value)} />
-              </label>
-              <label>
-                Observações / origem
+                Observações
                 <textarea
                   rows={3}
-                  value={form.description}
-                  onChange={(e) => setField("description", e.target.value)}
+                  value={form.observacoes}
+                  onChange={(e) => setField("observacoes", e.target.value)}
+                  placeholder="Informações adicionais..."
                 />
               </label>
+
               <div className="realty-card__actions">
                 <button
                   type="button"
                   className="realty-page__btn realty-page__btn--ghost"
-                  onClick={() => setFormOpen(false)}
+                  onClick={closeForm}
                   disabled={saving}
                 >
                   Cancelar
                 </button>
-                <button type="submit" className="realty-page__btn" disabled={saving}>
-                  {saving ? "Salvando…" : "Salvar"}
+                <button type="submit" className="realty-page__btn" disabled={saving || !canSubmit}>
+                  {saving
+                    ? "Salvando…"
+                    : editing
+                      ? "Salvar Alterações"
+                      : "Registrar Captação"}
                 </button>
               </div>
             </form>

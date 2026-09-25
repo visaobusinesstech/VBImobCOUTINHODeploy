@@ -1,0 +1,1 @@
+ALTER TABLE public.contratos ADD COLUMN comissao_tipo text DEFAULT 'mensal';

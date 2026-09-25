@@ -1,0 +1,1 @@
+ALTER TABLE public.propostas ALTER COLUMN imobiliaria_id SET DEFAULT public.get_master_user_id();

@@ -1,0 +1,1 @@
+DELETE FROM imoveis_mercado WHERE bairro IS NULL OR bairro = 'no Centro';

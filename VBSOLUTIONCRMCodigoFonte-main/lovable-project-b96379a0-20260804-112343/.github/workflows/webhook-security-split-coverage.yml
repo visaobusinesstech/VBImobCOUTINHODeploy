@@ -1,0 +1,60 @@
+name: webhookSecurity · split coverage (unit + integration)
+
+on:
+  pull_request:
+    paths:
+      - "supabase/functions/_shared/webhookSecurity.ts"
+      - "supabase/functions/_shared/webhookSecurity.test.ts"
+      - "scripts/webhook-security-split-coverage.ts"
+      - ".github/workflows/webhook-security-split-coverage.yml"
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write   # necessário para criar/atualizar o comentário no PR
+  actions: read          # leitura da API de artifacts
+
+jobs:
+  split-coverage:
+    name: Unit + Integration coverage gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      artifact_id: ${{ steps.upload.outputs.artifact-id }}
+      artifact_url: ${{ steps.upload.outputs.artifact-url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Run split coverage gate
+        id: gate
+        env:
+          # Thresholds independentes — ajustar aqui, nunca abaixo do observado em main.
+          COVERAGE_MIN_UNIT_LINES: "75"
+          COVERAGE_MIN_UNIT_BRANCHES: "80"
+          COVERAGE_MIN_INTEGRATION_LINES: "55"
+          COVERAGE_MIN_INTEGRATION_BRANCHES: "60"
+        run: deno run -A scripts/webhook-security-split-coverage.ts
+
+      - name: Upload coverage artifacts
+        id: upload
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: webhook-security-split-coverage
+          path: |
+            coverage/webhook-security/unit/lcov.info
+            coverage/webhook-security/unit/summary.json
+            coverage/webhook-security/integration/lcov.info
+            coverage/webhook-security/integration/summary.json
+          retention-days: 14
+
+      # Comentário no PR consolidado em `webhook-security-report.yml`.
+      # Este workflow permanece apenas como gate absoluto por camada.
+

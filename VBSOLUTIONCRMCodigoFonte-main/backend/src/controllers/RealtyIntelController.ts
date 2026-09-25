@@ -32,8 +32,12 @@ import RealtyProposta from "../models/RealtyProposta";
 import Ticket from "../models/Ticket";
 import User from "../models/User";
 import { Op } from "sequelize";
-import { estimateAvaliacao } from "../helpers/avaliacaoImovel";
+import {
+  buildAvaliacaoLaudo,
+  validarDescricaoBackendShape
+} from "../helpers/avaliacaoImovel";
 import { DEMO_BY_KIND } from "../helpers/realtyDemoSeed";
+import RealtyAvaliacaoHistorico from "../models/RealtyAvaliacaoHistorico";
 
 export const listGrupos = async (req: Request, res: Response) => {
   const { companyId } = req.user;
@@ -464,13 +468,27 @@ export const removeModulo = async (req: Request, res: Response) => {
 
 export const avaliarImovel = async (req: Request, res: Response) => {
   const { companyId } = req.user;
+  const modo = String(req.body?.modo || "manual").toLowerCase();
+  const requireDescricao = modo === "manual" || modo === "link";
+  const descricao = req.body?.descricao != null ? String(req.body.descricao) : "";
+
+  if (requireDescricao) {
+    const descErr = validarDescricaoBackendShape(descricao);
+    if (descErr) return res.status(400).json(descErr);
+  }
+
   let preco = Number(req.body?.preco) || 0;
   let area = Number(req.body?.area) || 0;
   let m2 = Number(req.body?.precoM2Mercado) || 0;
   let cidade = String(req.body?.cidade || req.body?.city || "").trim();
   let bairro = String(req.body?.bairro || req.body?.neighborhood || "").trim();
   let tipo = String(req.body?.tipo || req.body?.type || "").trim();
+  let operacao = String(req.body?.operacao || "Venda").trim();
   let quartos = req.body?.quartos != null ? Number(req.body.quartos) : null;
+  let suites = req.body?.suites != null ? Number(req.body.suites) : null;
+  let banheiros = req.body?.banheiros != null ? Number(req.body.banheiros) : null;
+  let vagas = req.body?.vagas != null ? Number(req.body.vagas) : null;
+  let imovelDescricao = descricao;
 
   if (req.body?.imovelId) {
     const im = await Imovel.findOne({ where: { id: req.body.imovelId, companyId } });
@@ -480,11 +498,17 @@ export const avaliarImovel = async (req: Request, res: Response) => {
       cidade = cidade || String(im.city || "");
       bairro = bairro || String(im.neighborhood || "");
       tipo = tipo || String(im.type || "");
+      operacao = operacao || String((im as any).purpose || "Venda");
       if (quartos == null || !Number.isFinite(quartos)) {
         quartos = im.bedrooms != null ? Number(im.bedrooms) : null;
       }
+      if (!imovelDescricao) {
+        imovelDescricao = String((im as any).description || (im as any).descricao || "");
+      }
     }
   }
+
+  let comparaveisCount = 0;
   if (!m2) {
     const mercado = await ImovelMercado.findAll({ where: { companyId }, limit: 400 });
     const norm = (s: string) =>
@@ -511,16 +535,212 @@ export const avaliarImovel = async (req: Request, res: Response) => {
         return { m2: p / a, w };
       })
       .filter(Boolean) as { m2: number; w: number }[];
+    comparaveisCount = scored.length;
     if (scored.length) {
       const tw = scored.reduce((s, x) => s + x.w, 0);
       m2 = scored.reduce((s, x) => s + x.m2 * x.w, 0) / tw;
     }
+  } else if (Array.isArray(req.body?.comparaveis)) {
+    comparaveisCount = req.body.comparaveis.length;
   }
-  const result = estimateAvaliacao(preco, area, m2);
+
+  const result = buildAvaliacaoLaudo({
+    preco,
+    area,
+    precoM2Mercado: m2,
+    tipo,
+    operacao,
+    bairro,
+    cidade,
+    quartos,
+    suites,
+    banheiros,
+    vagas,
+    descricao: imovelDescricao,
+    comparaveisCount
+  });
+
   return res.json({
     ...result,
-    inputs: { preco, area, cidade, bairro, tipo, quartos, precoM2Mercado: Math.round(m2) }
+    inputs: {
+      preco,
+      area,
+      cidade,
+      bairro,
+      tipo,
+      operacao,
+      quartos,
+      suites,
+      banheiros,
+      vagas,
+      precoM2Mercado: Math.round(m2),
+      modo,
+      comparaveisCount
+    }
   });
+};
+
+export const extrairDadosAnuncio = async (req: Request, res: Response) => {
+  const url = String(req.body?.url || req.body?.link || "").trim();
+  if (!url || !/^https?:\/\//i.test(url)) {
+    return res.status(400).json({ error: "Informe uma URL válida do anúncio" });
+  }
+  try {
+    const { data: html } = await axios.get(url, {
+      timeout: 15000,
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        Accept: "text/html"
+      },
+      maxRedirects: 3,
+      validateStatus: s => s < 500
+    });
+    const host = new URL(url).host;
+    const parsed = parseListingHtml(String(html || ""), url, host);
+    const links = extractListingLinks(String(html || ""), host);
+    const fotos = Array.from(
+      String(html || "").matchAll(/<img[^>]+src=["']([^"']+)["']/gi)
+    )
+      .map(m => m[1])
+      .filter(src => /^https?:\/\//i.test(src) && !/logo|icon|sprite/i.test(src))
+      .slice(0, 12);
+
+    const descMatch =
+      String(html || "").match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)/i) ||
+      String(html || "").match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)/i);
+
+    return res.json({
+      success: true,
+      dados: {
+        titulo: parsed.titulo,
+        tipo: parsed.tipo || "Apartamento",
+        operacao: /alug/i.test(url) ? "Aluguel" : "Venda",
+        area: parsed.area != null ? String(parsed.area) : "",
+        quartos: parsed.quartos != null ? String(parsed.quartos) : "",
+        bairro: parsed.bairro || "",
+        cidade: parsed.cidade || "",
+        preco: parsed.preco != null ? String(parsed.preco) : "",
+        descricao: descMatch ? String(descMatch[1]).slice(0, 2000) : "",
+        link_imovel: url,
+        fotos,
+        caracteristicas: [] as string[]
+      },
+      linksDetectados: links.filter(l => l !== url).slice(0, 10)
+    });
+  } catch (e: any) {
+    return res.status(502).json({
+      error: `Falha ao extrair anúncio: ${e?.message || "erro de rede"}`,
+      code: "EXTRACAO_FALHOU"
+    });
+  }
+};
+
+export const listAvaliacoesHistorico = async (req: Request, res: Response) => {
+  const { companyId } = req.user;
+  const cidade = String(req.query?.cidade || "").trim();
+  const bairro = String(req.query?.bairro || "").trim();
+  const where: any = { companyId };
+  if (cidade) where.cidade = { [Op.iLike]: `%${cidade}%` };
+  if (bairro) where.bairro = { [Op.iLike]: `%${bairro}%` };
+  const rows = await RealtyAvaliacaoHistorico.findAll({
+    where,
+    order: [["createdAt", "DESC"]],
+    limit: Math.min(Number(req.query?.limit) || 100, 300)
+  });
+  return res.json({ historico: rows });
+};
+
+export const storeAvaliacaoHistorico = async (req: Request, res: Response) => {
+  const { companyId, id: userId } = req.user;
+  const b = req.body || {};
+  const row = await RealtyAvaliacaoHistorico.create({
+    companyId,
+    userId,
+    imovelId: b.imovelId || null,
+    titulo: String(b.titulo || "").slice(0, 255),
+    tipo: String(b.tipo || "Apartamento"),
+    operacao: String(b.operacao || "Venda"),
+    area: Number(b.area) || 0,
+    quartos: Number(b.quartos) || 0,
+    bairro: b.bairro || null,
+    cidade: b.cidade || null,
+    estado: b.estado || null,
+    precoInformado: Number(b.precoInformado ?? b.preco_informado) || 0,
+    valorMinimo: Number(b.valorMinimo ?? b.valor_minimo) || 0,
+    valorIdeal: Number(b.valorIdeal ?? b.valor_ideal) || 0,
+    valorMaximo: Number(b.valorMaximo ?? b.valor_maximo) || 0,
+    precoM2Estimado: Number(b.precoM2Estimado ?? b.preco_m2_estimado) || 0,
+    precoM2Regiao: Number(b.precoM2Regiao ?? b.preco_m2_regiao) || 0,
+    scoreLiquidez: Number(b.scoreLiquidez ?? b.score_liquidez) || 0,
+    classificacaoLiquidez: String(
+      b.classificacaoLiquidez ?? b.classificacao_liquidez ?? "media"
+    ),
+    analiseResumo: b.analiseResumo ?? b.analise_resumo ?? null,
+    pontosFortes: b.pontosFortes ?? b.pontos_fortes ?? [],
+    pontosAtencao: b.pontosAtencao ?? b.pontos_atencao ?? [],
+    estrategiaVenda: b.estrategiaVenda ?? b.estrategia_venda ?? null,
+    portaisRecomendados: b.portaisRecomendados ?? b.portais_recomendados ?? [],
+    sugestaoPrecoInicial: Number(b.sugestaoPrecoInicial ?? b.sugestao_preco_inicial) || 0,
+    probabilidadeVenda30dias:
+      Number(b.probabilidadeVenda30dias ?? b.probabilidade_venda_30dias) || 0,
+    probabilidadeVenda60dias:
+      Number(b.probabilidadeVenda60dias ?? b.probabilidade_venda_60dias) || 0,
+    probabilidadeVenda90dias:
+      Number(b.probabilidadeVenda90dias ?? b.probabilidade_venda_90dias) || 0,
+    precoCompetitivo: Boolean(b.precoCompetitivo ?? b.preco_competitivo),
+    modo: String(b.modo || "manual"),
+    comparaveisCount: Number(b.comparaveisCount ?? b.comparaveis_count) || 0,
+    descricao: b.descricao || null,
+    dadosCompletos: b.dadosCompletos ?? b.dados_completos ?? {}
+  });
+  return res.status(201).json(row);
+};
+
+export const updateAvaliacaoHistorico = async (req: Request, res: Response) => {
+  const { companyId } = req.user;
+  const id = Number(req.params.id);
+  const row = await RealtyAvaliacaoHistorico.findOne({ where: { id, companyId } });
+  if (!row) return res.status(404).json({ error: "Avaliação não encontrada" });
+  const b = req.body || {};
+  const map: Record<string, string> = {
+    titulo: "titulo",
+    tipo: "tipo",
+    operacao: "operacao",
+    area: "area",
+    quartos: "quartos",
+    bairro: "bairro",
+    cidade: "cidade",
+    estado: "estado",
+    precoInformado: "precoInformado",
+    preco_informado: "precoInformado",
+    valorMinimo: "valorMinimo",
+    valor_minimo: "valorMinimo",
+    valorIdeal: "valorIdeal",
+    valor_ideal: "valorIdeal",
+    valorMaximo: "valorMaximo",
+    valor_maximo: "valorMaximo",
+    descricao: "descricao",
+    dadosCompletos: "dadosCompletos",
+    dados_completos: "dadosCompletos",
+    analiseResumo: "analiseResumo",
+    analise_resumo: "analiseResumo"
+  };
+  const patch: any = {};
+  for (const [k, field] of Object.entries(map)) {
+    if (b[k] !== undefined) patch[field] = b[k];
+  }
+  await row.update(patch);
+  return res.json(row);
+};
+
+export const removeAvaliacaoHistorico = async (req: Request, res: Response) => {
+  const { companyId } = req.user;
+  const id = Number(req.params.id);
+  const row = await RealtyAvaliacaoHistorico.findOne({ where: { id, companyId } });
+  if (!row) return res.status(404).json({ error: "Avaliação não encontrada" });
+  await row.destroy();
+  return res.json({ ok: true });
 };
 
 export const jornadaCliente = async (req: Request, res: Response) => {

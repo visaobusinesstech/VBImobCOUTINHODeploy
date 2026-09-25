@@ -161,7 +161,7 @@ const RealtyLeadTicketPanel = ({ contact, ticket }) => {
         <Button size="small" component={RouterLink} to="/jornada">
           Ver jornada
         </Button>
-        <Button size="small" component={RouterLink} to="/pipeline">
+        <Button size="small" component={RouterLink} to="/leads-sales">
           Pipeline
         </Button>
         <Button size="small" component={RouterLink} to="/followups">

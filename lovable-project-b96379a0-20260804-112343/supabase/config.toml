@@ -1,0 +1,81 @@
+project_id = "ugxnxztecfsklijmhhmo"
+
+[functions.radarzap-webhook-evolution]
+verify_jwt = false
+
+
+[functions.scrape-portais-imoveis]
+verify_jwt = false
+
+[functions.feedback-visita-ia]
+verify_jwt = false
+
+[functions.gerar-confirmacao]
+verify_jwt = false
+
+[functions.resposta-confirmacao]
+verify_jwt = false
+
+[functions.avaliacao-imovel]
+verify_jwt = false
+
+[functions.alertas-imoveis]
+verify_jwt = false
+
+[functions.previsao-valorizacao]
+verify_jwt = false
+
+[functions.gerar-conteudo-seo]
+verify_jwt = false
+
+[functions.analise-proprietario]
+verify_jwt = false
+
+[functions.gerar-transacoes-recorrentes]
+verify_jwt = false
+
+[functions.xml-feed-imoveis]
+verify_jwt = false
+
+[functions.webhook-leads-portal]
+verify_jwt = false
+
+[functions.webhook-pagamentos]
+verify_jwt = false
+
+[functions.automacao-reengajamento]
+verify_jwt = false
+
+[functions.alertas-contratos]
+verify_jwt = false
+
+[functions.alertas-followup-atrasado]
+verify_jwt = false
+
+[functions.atualizar-carga-portais]
+verify_jwt = false
+[functions.avaliacao-wizard-ia]
+verify_jwt = true
+
+[functions.lgpd-portal-titular]
+verify_jwt = false
+
+[functions.mercado-publico]
+verify_jwt = false
+
+
+
+[functions.sugerir-keywords-seo]
+verify_jwt = true
+
+[functions.e2e-captacao-diagnostico]
+verify_jwt = false
+
+[functions.radarzap-executar-agendado]
+verify_jwt = false
+
+[functions.telegram-webhook]
+verify_jwt = false
+
+[functions.cobranca-confirmar]
+verify_jwt = false

@@ -1,0 +1,1 @@
+UPDATE public.user_permissoes SET ativo = true WHERE modulo = 'imoveis' AND ativo = false;

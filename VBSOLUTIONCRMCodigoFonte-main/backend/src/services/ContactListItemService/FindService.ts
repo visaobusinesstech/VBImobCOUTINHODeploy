@@ -9,7 +9,7 @@ import Company from "../../models/Company";
 
 type Params = {
   companyId: number;
-  contactListId: number;
+  contactListId?: number;
 };
 
 const FindService = async ({

@@ -1,0 +1,247 @@
+name: E2E · /auditoria-requests (PR)
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/pages/AuditoriaRequests.tsx"
+      - "src/lib/auditoriaRequestsParams.ts"
+      - "src/lib/requestId.ts"
+      - "tests/e2e/**"
+      - ".github/workflows/e2e-auditoria-pr.yml"
+      - ".github/scripts/comment-e2e-trend.cjs"
+      - "package.json"
+      - "bun.lockb"
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-auditoria-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+  actions: read
+
+env:
+  # Threshold (0..1) above which a per-case flake rate fails the workflow.
+  E2E_FLAKE_RATE_MAX: "0.5"
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Plan balanced shards (LPT, 2 shards)
+        id: plan
+        run: python tests/e2e/plan_shards.py --shards 2
+
+  e2e:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Cache bun install
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun/install/cache
+            node_modules
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lockb') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install JS dependencies
+        run: bun install --frozen-lockfile
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install Playwright (Python)
+        run: |
+          python -m pip install --upgrade pip
+          pip install playwright==1.47.0
+
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-1.47.0-chromium-firefox-webkit
+          restore-keys: |
+            ${{ runner.os }}-playwright-1.47.0-
+
+      - name: Install browsers (and system deps)
+        run: |
+          if [ "${{ steps.playwright-cache.outputs.cache-hit }}" = "true" ]; then
+            python -m playwright install-deps chromium firefox webkit
+          else
+            python -m playwright install --with-deps chromium firefox webkit
+          fi
+
+      - name: Build app
+        run: bun run build
+
+      - name: Start preview server
+        run: |
+          nohup bun run preview --port 8080 --host 127.0.0.1 > /tmp/preview.log 2>&1 &
+          echo $! > /tmp/preview.pid
+
+      - name: Wait for server
+        run: |
+          for i in {1..40}; do
+            if curl -sf http://127.0.0.1:8080 > /dev/null; then
+              echo "preview is up"; exit 0
+            fi
+            sleep 1
+          done
+          echo "preview failed to start"; tail -n +1 /tmp/preview.log; exit 1
+
+      - name: Run E2E shard (${{ matrix.shard }} · ${{ matrix.cases }})
+        env:
+          BASE_URL: http://127.0.0.1:8080
+          E2E_SHARD: ${{ matrix.shard }}
+          E2E_CASES: ${{ matrix.cases }}
+          E2E_SHOTS_DIR: ${{ github.workspace }}/e2e-shots
+          E2E_TRACES_DIR: ${{ github.workspace }}/e2e-traces
+          E2E_REPORT_DIR: ${{ github.workspace }}/e2e-reports
+          # Keep traces for every attempt so the per-shard HTML report can
+          # render the full timeline (not just failing attempts).
+          E2E_KEEP_TRACES: "all"
+          E2E_RETRIES: "2"
+        run: python tests/e2e/auditoria_requests.py
+
+      - name: Build per-shard Playwright HTML report
+        if: always()
+        run: |
+          python tests/e2e/build_html_report.py \
+            --shard "${{ matrix.shard }}" \
+            --reports e2e-reports \
+            --traces e2e-traces \
+            --shots e2e-shots \
+            --out e2e-html-report
+
+      - name: Stop preview server
+        if: always()
+        run: kill "$(cat /tmp/preview.pid)" || true
+
+      - name: Upload JUnit + per-shard summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-reports-${{ matrix.shard }}
+          path: e2e-reports
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload full Playwright HTML report (per shard)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-html-report-${{ matrix.shard }}
+          path: e2e-html-report
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-shots-${{ matrix.shard }}
+          path: e2e-shots
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload Playwright traces (all attempts)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-traces-${{ matrix.shard }}
+          path: e2e-traces
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload preview log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-log-${{ matrix.shard }}
+          path: /tmp/preview.log
+          if-no-files-found: ignore
+
+  aggregate:
+    needs: e2e
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Download all shard reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: e2e-reports-*
+          path: reports
+          merge-multiple: true
+      - name: Aggregate flaky/fail summary + metrics.json (enforces E2E_FLAKE_RATE_MAX)
+        env:
+          E2E_FLAKE_RATE_MAX: ${{ env.E2E_FLAKE_RATE_MAX }}
+        run: python tests/e2e/aggregate_reports.py reports
+      - name: Upload metrics.json
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-metrics
+          path: reports/metrics.json
+          if-no-files-found: ignore
+          retention-days: 90
+
+  trend-comment:
+    needs: aggregate
+    if: always() && github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download current metrics
+        uses: actions/download-artifact@v4
+        with:
+          name: e2e-metrics
+          path: current
+      - name: Download previous metrics from latest main run
+        id: prev
+        uses: dawidd6/action-download-artifact@v6
+        continue-on-error: true
+        with:
+          workflow: e2e-auditoria-pr.yml
+          name: e2e-metrics
+          branch: main
+          workflow_conclusion: ""
+          path: previous
+          if_no_artifact_found: warn
+      - name: Comment trend on PR
+        uses: actions/github-script@v7
+        env:
+          CURRENT_METRICS: ${{ github.workspace }}/current/metrics.json
+          PREVIOUS_METRICS: ${{ github.workspace }}/previous/metrics.json
+        with:
+          script: |
+            const run = require('./.github/scripts/comment-e2e-trend.cjs');
+            await run({ github, context });

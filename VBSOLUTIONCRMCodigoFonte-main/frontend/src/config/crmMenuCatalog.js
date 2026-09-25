@@ -1,5 +1,6 @@
 /**
  * Contrato do menu único (DOCUMENTACAO/12-MENU.md).
+ * Inclui módulo CRM Imobiliário / Radar / portais / conteúdo.
  */
 export const CRM_MENU_PATHS = [
   "/",
@@ -29,6 +30,7 @@ export const CRM_MENU_PATHS = [
   "/prospeccao",
   "/activities",
   "/leads-landing",
+  // Imobiliário
   "/dashboard",
   "/imoveis",
   "/comparativo",
@@ -36,39 +38,30 @@ export const CRM_MENU_PATHS = [
   "/proprietarios",
   "/contratos",
   "/captacao",
-  "/pipeline-captacao",
   "/agenda",
   "/corretores",
   "/condominios",
+  "/crm-condominios",
   "/relacionamento",
   "/inadimplencia",
-  "/consulta-cpf",
+  // Radar e portais
   "/radarzap",
-  "/radarzap-grupos",
   "/radarzap/onboarding",
   "/radarzap/scoring",
   "/radarzap/status",
   "/radarzap/acessos",
-  "/portais",
+  "/radarzap-grupos",
   "/qcapture",
+  "/portais",
   "/monitoramento",
+  "/inteligencia",
   "/whatsapp",
-  "/conteudo-seo",
-  "/seo-auditoria",
-  "/feed",
-  "/curadoria",
-  "/blog",
-  "/portal",
-  "/captacao-avaliacao",
-  "/venda-crm",
+  "/radar-oportunidades",
+  // Gestão / sistema
   "/financeiro",
   "/reports",
   "/relatorios-agendados",
   "/produtividade",
-  "/inteligencia",
-  "/auditoria-leads",
-  "/auditoria-extracao",
-  "/metricas-extracao",
   "/connections",
   "/integrations",
   "/users",
@@ -77,5 +70,8 @@ export const CRM_MENU_PATHS = [
   "/lgpd-solicitacoes",
   "/leads-convertidos",
   "/inventory",
-  "/platform-api"
+  "/platform-api",
+  "/auditoria-leads",
+  "/auditoria-extracao",
+  "/metricas-extracao",
 ];

@@ -1,0 +1,897 @@
+/* Fonts loaded via <link> in index.html for non-blocking parallel fetch (was @import which blocks CSS parsing) */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 20% 98%;
+    --foreground: 220 20% 20%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 20% 20%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 20%;
+
+    --primary: 220 70% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 220 20% 25%;
+
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 10% 50%;
+
+    --accent: 220 70% 96%;
+    --accent-foreground: 220 70% 40%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 152 60% 42%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 38 92% 15%;
+
+    --info: 205 80% 50%;
+    --info-foreground: 0 0% 100%;
+
+    --border: 220 13% 90%;
+    --input: 220 13% 90%;
+    --ring: 220 70% 50%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 10% 45%;
+    --sidebar-primary: 220 70% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent-foreground: 220 20% 20%;
+    --sidebar-border: 220 13% 92%;
+    --sidebar-ring: 220 70% 50%;
+
+    --chart-1: 220 70% 50%;
+    --chart-2: 152 60% 42%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 262 60% 55%;
+    --chart-5: 0 72% 51%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(220 70% 50%), hsl(220 70% 40%));
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 100%), hsl(220 14% 98%));
+    --shadow-glow: 0 0 30px -5px hsl(220 70% 50% / 0.08);
+  }
+
+  .dark {
+    --background: 222 30% 8%;
+    --foreground: 210 40% 96%;
+
+    --card: 222 30% 11%;
+    --card-foreground: 210 40% 96%;
+
+    --popover: 222 30% 11%;
+    --popover-foreground: 210 40% 96%;
+
+    --primary: 220 70% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 20% 16%;
+    --secondary-foreground: 210 40% 90%;
+
+    --muted: 220 20% 14%;
+    --muted-foreground: 215 15% 55%;
+
+    --accent: 220 70% 20%;
+    --accent-foreground: 220 70% 80%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 40% 98%;
+
+    --success: 152 60% 42%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 38 92% 10%;
+
+    --info: 205 80% 50%;
+    --info-foreground: 0 0% 100%;
+
+    --border: 220 20% 18%;
+    --input: 220 20% 18%;
+    --ring: 220 70% 55%;
+
+    --sidebar-background: 222 30% 9%;
+    --sidebar-foreground: 215 15% 60%;
+    --sidebar-primary: 220 70% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 20% 14%;
+    --sidebar-accent-foreground: 210 40% 96%;
+    --sidebar-border: 220 20% 15%;
+    --sidebar-ring: 220 70% 55%;
+
+    --chart-1: 220 70% 55%;
+    --chart-2: 152 60% 42%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 262 60% 55%;
+    --chart-5: 0 72% 51%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(220 70% 55%), hsl(220 70% 45%));
+    --gradient-card: linear-gradient(135deg, hsl(222 30% 11%), hsl(222 30% 13%));
+    --shadow-glow: 0 0 30px -5px hsl(220 70% 55% / 0.15);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* Fluid typography — escala suavemente entre mobile e desktop */
+  h1 { font-size: clamp(1.5rem, 1.15rem + 1.6vw, 2.25rem); line-height: 1.2; }
+  h2 { font-size: clamp(1.25rem, 1rem + 1.1vw, 1.75rem); line-height: 1.25; }
+  h3 { font-size: clamp(1.125rem, 0.95rem + 0.8vw, 1.375rem); line-height: 1.3; }
+
+  /* Mídia sempre fluida — impede overflow horizontal em qualquer tela */
+  img, video, canvas, svg, iframe {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Inputs no iOS não aumentam zoom com fonte >=16px */
+  @media (max-width: 640px) {
+    input, select, textarea {
+      font-size: max(16px, 1rem);
+    }
+  }
+
+  /* Tap targets — mínimo 44x44 em toque */
+  @media (hover: none) and (pointer: coarse) {
+    button, [role="button"], a.btn, .tap-target {
+      min-height: 44px;
+    }
+  }
+}
+
+@layer utilities {
+  /* Wrapper para tabelas — rola horizontalmente no mobile sem quebrar layout */
+  .table-scroll {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .table-scroll > table { min-width: 100%; }
+
+  /* Containers que devem quebrar palavras longas (emails, URLs, IDs) */
+  .break-anywhere {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  /* Safe area para notch/home-indicator em iOS */
+  .safe-x { padding-left: max(1rem, env(safe-area-inset-left)); padding-right: max(1rem, env(safe-area-inset-right)); }
+  .safe-b { padding-bottom: env(safe-area-inset-bottom); }
+}
+
+/* Modais/Dialogs shadcn: fullscreen no mobile para não vazar viewport */
+@media (max-width: 640px) {
+  [role="dialog"][data-state="open"] {
+    max-width: 100vw !important;
+    max-height: 100dvh !important;
+  }
+  /* SheetContent + DialogContent shadcn usam essas classes */
+  .sm\:max-w-lg, .sm\:max-w-md, .sm\:max-w-xl, .sm\:max-w-2xl, .sm\:max-w-3xl, .sm\:max-w-4xl {
+    max-width: 100vw !important;
+  }
+}
+
+
+
+@layer utilities {
+  .font-display {
+    font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  }
+
+  .font-editorial {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-feature-settings: "liga" 1, "kern" 1;
+  }
+
+  /* ================ Pipeline Premium (Navy + Gold Editorial) ================
+     Tokens semânticos com pares fill/ink pré-validados (WCAG AA).
+     - --pp-*-ink representa a cor de texto SEGURA sobre o *-fill correspondente.
+     - --pp-surface / --pp-surface-2 = superfícies (cards, panels, coluna).
+     - --pp-ink / --pp-ink-muted = tinta primária/secundária sobre surface.
+  ============================================================================= */
+  .pipeline-premium {
+    /* Palette: pure white with subtle off-white / near-white variations only */
+    --pp-navy: #F1F5F9;                  /* superfície de destaque (cabeçalho da coluna) */
+    --pp-navy-2: #E2E8F0;
+    --pp-navy-ink: #0F172A;              /* texto sobre superfícies claras */
+    --pp-slate: #E2E8F0;
+    --pp-gold: #CBD5E1;                  /* accent = linha cinza-claro */
+    --pp-gold-2: #94A3B8;
+    --pp-gold-ink: #0F172A;
+    --pp-gold-soft: rgba(148, 163, 184, 0.10);
+    --pp-cream: #FFFFFF;
+    --pp-cream-2: #F8FAFC;
+    --pp-line: rgba(15, 23, 42, 0.06);
+    --pp-line-strong: rgba(15, 23, 42, 0.10);
+
+    --pp-surface: #FFFFFF;
+    --pp-surface-2: #FAFBFC;
+    --pp-surface-alpha: rgba(255,255,255,0.92);
+    --pp-ink: #0F172A;
+    --pp-ink-muted: #64748B;
+    --pp-scrim: linear-gradient(180deg, transparent 40%, rgba(15,23,42,0.35) 100%);
+
+    --pp-bg: #FFFFFF;
+    background: var(--pp-bg);
+    color: var(--pp-ink);
+    padding: 14px 6px 8px;
+    border-radius: 16px;
+    border: 1px solid var(--pp-line);
+  }
+
+  /* Tema Suave — cinza sereno, tons neutros */
+  .pipeline-premium.pipeline-theme-suave {
+    --pp-navy: #334155;
+    --pp-navy-2: #475569;
+    --pp-navy-ink: #F8FAFC;
+    --pp-slate: #475569;
+    --pp-gold: #64748B;                   /* escurecido para chip navy sobre gold ler bem */
+    --pp-gold-2: #475569;
+    --pp-gold-ink: #FFFFFF;               /* texto sobre gold (slate): branco (contraste 7:1) */
+    --pp-gold-soft: rgba(100, 116, 139, 0.14);
+    --pp-cream: #F8FAFC;
+    --pp-cream-2: #F1F5F9;
+    --pp-line: rgba(51, 65, 85, 0.10);
+    --pp-line-strong: rgba(51, 65, 85, 0.20);
+    --pp-surface: #FFFFFF;
+    --pp-surface-2: #F8FAFC;
+    --pp-surface-alpha: rgba(255,255,255,0.70);
+    --pp-ink: #0F172A;
+    --pp-ink-muted: #475569;
+    --pp-bg: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
+  }
+
+  /* Tema Azul — corporativo suave */
+  .pipeline-premium.pipeline-theme-azul {
+    --pp-navy: #1E3A5F;
+    --pp-navy-2: #2C5282;
+    --pp-navy-ink: #F0F7FF;
+    --pp-slate: #2C5282;
+    --pp-gold: #2563EB;                   /* escurecido de #3B82F6 → contraste com branco 4.8:1 */
+    --pp-gold-2: #1D4ED8;
+    --pp-gold-ink: #FFFFFF;
+    --pp-gold-soft: rgba(37, 99, 235, 0.12);
+    --pp-cream: #F0F7FF;
+    --pp-cream-2: #E0F2FE;
+    --pp-line: rgba(30, 58, 95, 0.10);
+    --pp-line-strong: rgba(30, 58, 95, 0.22);
+    --pp-surface: #FFFFFF;
+    --pp-surface-2: #F8FBFF;
+    --pp-surface-alpha: rgba(255,255,255,0.68);
+    --pp-ink: #0F172A;
+    --pp-ink-muted: #334155;
+    --pp-bg: radial-gradient(900px 300px at 100% 0%, rgba(59,130,246,0.08), transparent 55%),
+             linear-gradient(180deg, #F8FBFF 0%, #F0F7FF 100%);
+  }
+
+  /* Tema Claro — minimal, quase branco */
+  .pipeline-premium.pipeline-theme-claro {
+    --pp-navy: #0F172A;
+    --pp-navy-2: #1E293B;
+    --pp-navy-ink: #FFFFFF;
+    --pp-slate: #334155;
+    --pp-gold: #0F172A;                   /* accent = navy escuro */
+    --pp-gold-2: #334155;
+    --pp-gold-ink: #FFFFFF;               /* texto sobre navy: branco (WCAG AAA) */
+    --pp-gold-soft: rgba(15, 23, 42, 0.06);
+    --pp-cream: #FFFFFF;
+    --pp-cream-2: #F8FAFC;
+    --pp-line: rgba(15, 23, 42, 0.08);
+    --pp-line-strong: rgba(15, 23, 42, 0.16);
+    --pp-surface: #FFFFFF;
+    --pp-surface-2: #F8FAFC;
+    --pp-surface-alpha: rgba(255,255,255,0.85);
+    --pp-ink: #0F172A;
+    --pp-ink-muted: #475569;
+    --pp-bg: #FFFFFF;
+  }
+
+  /* ------- Modo Escuro (auto): inverte superfícies mantendo os pares de tinta ------- */
+  .dark .pipeline-premium {
+    --pp-surface: #111827;
+    --pp-surface-2: #0B1220;
+    --pp-surface-alpha: rgba(17,24,39,0.72);
+    --pp-ink: #F1F5F9;
+    --pp-ink-muted: #CBD5E1;
+    --pp-line: rgba(255,255,255,0.10);
+    --pp-line-strong: rgba(255,255,255,0.22);
+    --pp-cream: #1E293B;
+    --pp-cream-2: #111827;
+    --pp-bg: radial-gradient(1200px 400px at 10% -10%, rgba(201,169,106,0.12), transparent 60%),
+             linear-gradient(180deg, #0B1220 0%, #0F172A 100%);
+  }
+  .dark .pipeline-premium.pipeline-theme-suave {
+    --pp-navy: #E2E8F0;
+    --pp-navy-2: #CBD5E1;
+    --pp-navy-ink: #0F172A;               /* invertido: navy vira claro, ink vira escuro */
+    --pp-gold: #94A3B8;
+    --pp-gold-2: #CBD5E1;
+    --pp-gold-ink: #0F172A;
+    --pp-gold-soft: rgba(148,163,184,0.18);
+    --pp-bg: linear-gradient(180deg, #0B1220 0%, #111827 100%);
+  }
+  .dark .pipeline-premium.pipeline-theme-azul {
+    --pp-navy: #93C5FD;
+    --pp-navy-2: #60A5FA;
+    --pp-navy-ink: #0F172A;
+    --pp-gold: #60A5FA;
+    --pp-gold-2: #93C5FD;
+    --pp-gold-ink: #0F172A;
+    --pp-gold-soft: rgba(96,165,250,0.18);
+  }
+  .dark .pipeline-premium.pipeline-theme-claro {
+    --pp-navy: #F8FAFC;
+    --pp-navy-2: #E2E8F0;
+    --pp-navy-ink: #0F172A;
+    --pp-gold: #F8FAFC;
+    --pp-gold-2: #E2E8F0;
+    --pp-gold-ink: #0F172A;
+    --pp-gold-soft: rgba(248,250,252,0.10);
+    --pp-bg: #0B1220;
+  }
+
+  /* Pipeline components — aligned with Dashboard design system.
+     Uses semantic shadcn tokens (card/border/muted/primary) for consistency
+     across all pipeline themes. */
+  .pp-column-header {
+    background: transparent;
+    color: hsl(var(--foreground));
+    border: none;
+    box-shadow: none;
+  }
+  .pp-column-header .pp-kicker {
+    color: hsl(var(--muted-foreground));
+    letter-spacing: 0.14em;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .pp-column-header .pp-title {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 600;
+    color: hsl(var(--foreground));
+    letter-spacing: 0;
+  }
+  .pp-column-header .pp-count {
+    background: hsl(var(--muted));
+    color: hsl(var(--muted-foreground));
+    font-weight: 600;
+    border: 1px solid hsl(var(--border));
+  }
+  .pp-column-body {
+    background: hsl(var(--muted) / 0.35);
+    border: 1px solid hsl(var(--border));
+    color: hsl(var(--foreground));
+  }
+  .pp-column-body.pp-drop {
+    background: hsl(var(--accent) / 0.5);
+    border-color: hsl(var(--primary) / 0.4);
+    box-shadow: inset 0 0 0 1px hsl(var(--primary) / 0.35);
+  }
+
+  .pp-card {
+    background: hsl(var(--card));
+    color: hsl(var(--card-foreground));
+    border: 1px solid hsl(var(--border));
+    border-radius: 12px;
+    box-shadow: 0 1px 2px hsl(220 20% 20% / 0.04);
+    transition: box-shadow .18s ease, border-color .18s ease, transform .18s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .pp-card:hover {
+    transform: translateY(-1px);
+    border-color: hsl(var(--border));
+    box-shadow: 0 4px 12px hsl(220 20% 20% / 0.08);
+  }
+  .pp-card::after { content: none; }
+
+  .pp-name {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 600;
+    color: hsl(var(--foreground));
+  }
+  .pp-price {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 700;
+    color: hsl(var(--foreground));
+    letter-spacing: -0.01em;
+  }
+  .pp-price .pp-currency {
+    color: hsl(var(--muted-foreground));
+    font-size: 0.72em;
+    margin-right: 3px;
+    font-weight: 600;
+  }
+  .pp-divider {
+    height: 1px;
+    background: hsl(var(--border));
+  }
+  .pp-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    background: hsl(var(--muted));
+    color: hsl(var(--muted-foreground));
+    border: 1px solid hsl(var(--border));
+  }
+  .pp-chip-gold {
+    background: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+    border-color: hsl(var(--primary) / 0.2);
+  }
+  .pp-chip-navy {
+    background: hsl(var(--secondary));
+    color: hsl(var(--secondary-foreground));
+    border-color: hsl(var(--border));
+  }
+  .pp-ribbon {
+    background: hsl(var(--destructive));
+    color: hsl(var(--destructive-foreground));
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .pp-overlay-scrim { position: relative; }
+  .pp-overlay-scrim::before {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 40%, hsl(220 20% 10% / 0.35) 100%);
+    pointer-events: none;
+  }
+  .pp-overlay-text {
+    color: #FFFFFF;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.55);
+  }
+
+  .pp-action-btn {
+    width: 30px; height: 30px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 8px;
+    color: hsl(var(--muted-foreground));
+    border: 1px solid transparent;
+    transition: all .15s ease;
+  }
+  .pp-action-btn:hover {
+    background: hsl(var(--muted));
+    border-color: hsl(var(--border));
+    color: hsl(var(--foreground));
+  }
+  .pp-action-btn.pp-action-gold { color: hsl(var(--primary)); }
+  .pp-action-btn.pp-action-gold:hover {
+    background: hsl(var(--accent));
+    color: hsl(var(--primary));
+    border-color: hsl(var(--primary) / 0.3);
+  }
+
+  .pp-avatar {
+    background: hsl(var(--muted));
+    color: hsl(var(--foreground));
+    border: 1px solid hsl(var(--border));
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  .pp-newbtn {
+    color: hsl(var(--primary));
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    font-size: 11px;
+    text-transform: uppercase;
+    transition: color .15s ease;
+  }
+  .pp-newbtn:hover { color: hsl(var(--primary) / 0.8); }
+
+  /* Toolbar buttons — match Dashboard secondary/primary styles */
+  .pp-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    background: hsl(var(--card));
+    color: hsl(var(--foreground));
+    border: 1px solid hsl(var(--border));
+    transition: all .15s ease;
+  }
+  .pp-btn:hover {
+    background: hsl(var(--muted));
+    border-color: hsl(var(--border));
+    color: hsl(var(--foreground));
+  }
+  .pp-btn-primary {
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    border-color: hsl(var(--primary));
+    padding: 8px 16px;
+    font-weight: 600;
+    box-shadow: none;
+  }
+  .pp-btn-primary:hover {
+    background: hsl(var(--primary) / 0.9);
+    border-color: hsl(var(--primary) / 0.9);
+    color: hsl(var(--primary-foreground));
+  }
+  .pp-btn-active {
+    background: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+    border-color: hsl(var(--primary) / 0.3);
+  }
+  .pp-panel {
+    background: hsl(var(--card));
+    color: hsl(var(--foreground));
+    border: 1px solid hsl(var(--border));
+    border-radius: 12px;
+  }
+  .pp-search {
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    color: hsl(var(--foreground));
+    border-radius: 8px;
+  }
+  .pp-search::placeholder { color: hsl(var(--muted-foreground)); }
+  .pp-search:focus-within {
+    border-color: hsl(var(--primary));
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.15);
+  }
+
+
+
+
+
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-xl border border-border/50 rounded-xl;
+  }
+
+  .gradient-text {
+    @apply bg-clip-text text-transparent;
+    background-image: var(--gradient-primary);
+  }
+
+  .glow-border {
+    box-shadow: var(--shadow-glow);
+  }
+
+  .landing-hero-backdrop {
+    background:
+      radial-gradient(circle at top left, hsl(var(--primary) / 0.16), transparent 30%),
+      radial-gradient(circle at top right, hsl(var(--accent-foreground) / 0.08), transparent 26%),
+      linear-gradient(180deg, hsl(var(--background)), hsl(var(--secondary) / 0.6));
+  }
+
+  .landing-surface {
+    border-radius: 2rem;
+    border: 1px solid hsl(var(--border) / 0.6);
+    background-color: hsl(var(--card) / 0.82);
+    backdrop-filter: blur(24px);
+    box-shadow: 0 30px 120px -40px hsl(var(--foreground) / 0.22);
+  }
+
+  .landing-grid-overlay {
+    background-image:
+      linear-gradient(hsl(var(--border) / 0.35) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--border) / 0.35) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.5s ease-out forwards;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.4s ease-out forwards;
+  }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.dark ::-webkit-scrollbar-track {
+  background: hsl(222 47% 6%);
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: hsl(215 25% 20%);
+  border-radius: 3px;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: hsl(215 25% 30%);
+}
+::-webkit-scrollbar-track {
+  background: hsl(0 0% 96%);
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(220 13% 80%);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(220 13% 70%);
+}
+
+#lovable-badge {
+  display: none !important;
+}
+
+/* ============================================================
+   MOBILE RESPONSIVENESS OVERLAY (≤767px only)
+   Desktop layout is intentionally unchanged. All rules below
+   are scoped to small viewports via media queries.
+   ============================================================ */
+@media (max-width: 767px) {
+  /* Prevent iOS zoom on focus for inputs */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+
+  /* Collapse dense multi-column grids to a single column when the
+     component didn't declare a mobile-first breakpoint. Grids that
+     already use responsive prefixes (grid-cols-1 md:grid-cols-3)
+     are unaffected because their base rule is grid-cols-1. */
+  .grid-cols-3,
+  .grid-cols-4,
+  .grid-cols-5,
+  .grid-cols-6,
+  .grid-cols-7,
+  .grid-cols-8,
+  .grid-cols-9,
+  .grid-cols-10,
+  .grid-cols-11,
+  .grid-cols-12 {
+    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+  }
+
+  /* 2-column grids remain 2 columns (nice for metric cards) but with tighter gap */
+  .grid-cols-2 { gap: 0.5rem; }
+
+  /* Dialogs: near full-screen sheet on mobile so nothing is cut off */
+  [role="dialog"][data-state="open"] {
+    width: calc(100vw - 1rem) !important;
+    max-width: calc(100vw - 1rem) !important;
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+    padding: 1rem !important;
+  }
+
+  /* Tables: scrollable container gains a subtle right-edge hint */
+  .relative.w-full.overflow-auto {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    position: relative;
+  }
+  .relative.w-full.overflow-auto::after {
+    content: "";
+    position: sticky;
+    right: 0;
+    top: 0;
+    display: block;
+    width: 12px;
+    height: 100%;
+    background: linear-gradient(to left, hsl(var(--background) / 0.9), transparent);
+    pointer-events: none;
+  }
+  table { min-width: max-content; }
+  th, td { white-space: nowrap; padding-left: 0.5rem; padding-right: 0.5rem; }
+
+  /* Main content padding tightening */
+  main { padding: 0.75rem !important; }
+
+  /* Touch targets on interactive elements inside nav/toolbars */
+  header button,
+  header a,
+  nav a,
+  nav button {
+    min-height: 40px;
+  }
+
+  /* Prevent card content overflow */
+  .glass-card, [class*="rounded-lg"][class*="border"] {
+    max-width: 100%;
+  }
+
+  /* Long text truncation safety */
+  h1, h2, h3 { word-break: break-word; }
+
+  /* Charts and recharts responsive wrappers */
+  .recharts-wrapper, .recharts-surface {
+    max-width: 100% !important;
+  }
+
+  /* Sidebar padding for the hamburger toggle button */
+  main > *:first-child { padding-top: 0.25rem; }
+}
+
+/* Tablets (768-1023) — soften only spacing, keep desktop grid */
+@media (min-width: 768px) and (max-width: 1023px) {
+  main { padding: 1rem; }
+}
+
+/* ============================================================
+   Fluid design system — clamp() typography + minmax() grids.
+   Prevents overflow on any viewport (mobile → ultrawide) while
+   letting content reflow naturally.
+   ============================================================ */
+@layer base {
+  :root {
+    /* Fluid type scale — min | preferred (vw-based) | max */
+    --fs-xs:   clamp(0.75rem, 0.70rem + 0.20vw, 0.85rem);
+    --fs-sm:   clamp(0.82rem, 0.78rem + 0.25vw, 0.95rem);
+    --fs-base: clamp(0.92rem, 0.85rem + 0.35vw, 1.05rem);
+    --fs-lg:   clamp(1.05rem, 0.95rem + 0.50vw, 1.25rem);
+    --fs-xl:   clamp(1.20rem, 1.05rem + 0.75vw, 1.50rem);
+    --fs-2xl:  clamp(1.45rem, 1.20rem + 1.20vw, 1.95rem);
+    --fs-3xl:  clamp(1.75rem, 1.35rem + 1.90vw, 2.60rem);
+    --fs-4xl:  clamp(2.10rem, 1.55rem + 2.75vw, 3.40rem);
+
+    /* Fluid spacing */
+    --space-fluid-sm: clamp(0.5rem, 0.4rem + 0.5vw, 0.85rem);
+    --space-fluid-md: clamp(0.85rem, 0.7rem + 0.8vw, 1.4rem);
+    --space-fluid-lg: clamp(1.25rem, 1rem + 1.5vw, 2.25rem);
+
+    /* Grid track minimums — tuned so cards never overflow narrow screens */
+    --track-xs: 14rem;
+    --track-sm: 16rem;
+    --track-md: 20rem;
+    --track-lg: 26rem;
+  }
+
+  /* Never let content force horizontal scroll on the page */
+  html, body { max-width: 100%; overflow-x: hidden; }
+
+  /* Long-form / user content should wrap even without spaces */
+  p, li, dd, dt, blockquote, figcaption, td, th, label, small { overflow-wrap: anywhere; }
+
+  /* Media is fluid by default */
+  img, svg, video, canvas, iframe { max-width: 100%; height: auto; }
+}
+
+@layer utilities {
+  /* Fluid typography utilities */
+  .text-fluid-xs   { font-size: var(--fs-xs);   line-height: 1.45; }
+  .text-fluid-sm   { font-size: var(--fs-sm);   line-height: 1.5; }
+  .text-fluid-base { font-size: var(--fs-base); line-height: 1.55; }
+  .text-fluid-lg   { font-size: var(--fs-lg);   line-height: 1.5; }
+  .text-fluid-xl   { font-size: var(--fs-xl);   line-height: 1.4; }
+  .text-fluid-2xl  { font-size: var(--fs-2xl);  line-height: 1.3; letter-spacing: -0.01em; }
+  .text-fluid-3xl  { font-size: var(--fs-3xl);  line-height: 1.2; letter-spacing: -0.015em; }
+  .text-fluid-4xl  { font-size: var(--fs-4xl);  line-height: 1.1; letter-spacing: -0.02em; }
+
+  /* Fluid grid utilities — auto-fit with minmax() so tracks never overflow.
+     `min(<track>, 100%)` guarantees the min column fits even on 320px screens. */
+  .grid-fluid,
+  .grid-fluid-md { display: grid; gap: var(--space-fluid-md);
+    grid-template-columns: repeat(auto-fit, minmax(min(var(--track-md), 100%), 1fr)); }
+  .grid-fluid-xs { display: grid; gap: var(--space-fluid-sm);
+    grid-template-columns: repeat(auto-fit, minmax(min(var(--track-xs), 100%), 1fr)); }
+  .grid-fluid-sm { display: grid; gap: var(--space-fluid-sm);
+    grid-template-columns: repeat(auto-fit, minmax(min(var(--track-sm), 100%), 1fr)); }
+  .grid-fluid-lg { display: grid; gap: var(--space-fluid-lg);
+    grid-template-columns: repeat(auto-fit, minmax(min(var(--track-lg), 100%), 1fr)); }
+
+  /* Fluid container: safe max width + fluid horizontal padding */
+  .container-fluid {
+    width: 100%;
+    max-width: min(100%, 90rem);
+    margin-inline: auto;
+    padding-inline: clamp(0.75rem, 2vw, 2rem);
+  }
+
+  /* Guard rails against runaway flex/grid children (a leading overflow cause) */
+  .min-w-0-safe { min-width: 0; }
+  .min-h-0-safe { min-height: 0; }
+}
+
+/* ============================================================
+   Forms — mobile-first ergonomics.
+   - Native form fields fill the row on small screens.
+   - Trigger/select tap targets are ≥ 44px on touch.
+   - Form/field spacing is consistent across breakpoints.
+   Escape hatches: add `.form-inline` on a form to opt-out of
+   full-width children, or `data-inline` on a control.
+   ============================================================ */
+@layer components {
+  /* Vertical rhythm inside any <form>: consistent gap between rows */
+  form > * + * { margin-top: 0.75rem; }
+  @media (min-width: 640px) {
+    form > * + * { margin-top: 1rem; }
+  }
+  /* Field wrappers (label + control + help) — space-y-1.5 by convention */
+  form label + input,
+  form label + textarea,
+  form label + select,
+  form label + [role="combobox"] { margin-top: 0.375rem; }
+
+  /* Mobile: native form controls span the row for easy tap and read */
+  @media (max-width: 639px) {
+    form:not(.form-inline) input:not([type="checkbox"]):not([type="radio"]):not([data-inline]),
+    form:not(.form-inline) select:not([data-inline]),
+    form:not(.form-inline) textarea:not([data-inline]),
+    form:not(.form-inline) [role="combobox"]:not([data-inline]),
+    form:not(.form-inline) [data-radix-select-trigger]:not([data-inline]) {
+      width: 100%;
+    }
+    /* Submit / footer buttons full-width on mobile unless opted out */
+    form:not(.form-inline) button[type="submit"]:not([data-inline]),
+    form:not(.form-inline) [data-form-footer] > button:not([data-inline]) {
+      width: 100%;
+    }
+    /* Field rows stack vertically instead of side-by-side */
+    form .field-row,
+    form [data-field-row] {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+  }
+
+  /* Touch-friendly minimums on interactive form controls (any breakpoint) */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  [data-radix-select-trigger],
+  [role="combobox"] {
+    min-height: 44px;
+  }
+  @media (min-width: 768px) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+    select,
+    [data-radix-select-trigger],
+    [role="combobox"] {
+      min-height: 40px;
+    }
+  }
+
+  /* Checkbox / radio: bigger hit area on touch without visual bloat */
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-width: 20px;
+    min-height: 20px;
+  }
+}
+
+

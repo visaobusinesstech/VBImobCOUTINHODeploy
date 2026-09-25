@@ -3,107 +3,136 @@
  * VB Solution CRM — propriedade intelectual da Visão Business.
  * Uso conforme LICENSE na raiz do repositório.
  *
- * Nutrição de Leads — UI alinhada ao Radarimobtech, envio via WhatsApp nativo do VBSolution
- * (ticket + SendWhatsAppMessage) e reaproveitamento de campanhas/cadências.
+ * Nutrição e reengajamento — 10 abas alinhadas ao Radarimobtech / Lovable,
+ * envio via WhatsApp nativo do VBSolution e API /realty-nutricao/*.
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { useHistory } from "react-router-dom";
 import MainContainer from "../../components/MainContainer";
 import realtyService from "../../services/realtyService";
-import leadsSalesService from "../../services/leadsSalesService";
 import api from "../../services/api";
 import toastError from "../../errors/toastError";
 import { toast } from "react-toastify";
+import { CATEGORIAS_MODELO, MODELOS_NUTRICAO } from "./nutricaoTemplates";
+import { resumoSegmentacao } from "./nutricaoSegmentacao";
+import { TIPOS_EVENTO } from "./nutricaoMetricas";
+import { FluxoNutricaoDialog } from "./FluxoNutricaoDialog";
+import { channelLabel } from "./canalOptions";
+import { MetricasFluxosPanel } from "./MetricasFluxosPanel";
+import { TesteABPanel } from "./TesteABPanel";
+import { TimelineLeadPanel } from "./TimelineLeadPanel";
+import { CoorteNutricaoPanel } from "./CoorteNutricaoPanel";
+import { ComparativoCanalVariantePanel } from "./ComparativoCanalVariantePanel";
+import { AlertasMetasPanel } from "./AlertasMetasPanel";
 
-const TEMPLATES = [
-  {
-    id: "boas_vindas",
-    titulo: "Boas-vindas",
-    canal: "whatsapp",
-    mensagem:
-      "Olá {{nome}}! Sou da equipe imobiliária. Vi seu interesse em {{interesse}} e quero te ajudar a encontrar a melhor opção. Podemos conversar?",
-  },
-  {
-    id: "followup_3d",
-    titulo: "Follow-up 3 dias",
-    canal: "whatsapp",
-    mensagem:
-      "Oi {{nome}}, passando para saber se ainda está buscando imóvel{{bairro}}. Tenho novidades alinhadas ao seu perfil — posso te enviar?",
-  },
-  {
-    id: "reengajamento",
-    titulo: "Reengajamento",
-    canal: "whatsapp",
-    mensagem:
-      "{{nome}}, sentimos sua falta! Novos imóveis entraram esta semana. Quer que eu filtre opções até R$ {{valor}}?",
-  },
-  {
-    id: "proposta",
-    titulo: "Lembrete de proposta",
-    canal: "whatsapp",
-    mensagem:
-      "Olá {{nome}}! Sua proposta ainda está em aberto. Posso esclarecer condições de pagamento ou agendar uma visita?",
-  },
+const TABS = [
+  { id: "fluxos", label: "Fluxos" },
+  { id: "sugestoes", label: "Sugestões prontas" },
+  { id: "inscricoes", label: "Leads em nutrição" },
+  { id: "envios", label: "Mensagens" },
+  { id: "metricas", label: "Métricas e relatórios" },
+  { id: "abtest", label: "Teste A/B" },
+  { id: "timeline", label: "Linha do tempo" },
+  { id: "coorte", label: "Coortes" },
+  { id: "comparativo", label: "Comparativo" },
+  { id: "alertas", label: "Metas e alertas" },
 ];
 
-const applyVars = (tpl, lead) => {
-  const nome = lead?.name || "cliente";
-  const interesse =
-    [lead?.interestType, lead?.purpose, lead?.description].filter(Boolean).join(" / ") ||
-    "imóveis";
-  const bairro = lead?.interestNeighborhood
-    ? ` em ${lead.interestNeighborhood}`
-    : lead?.interestCity
-      ? ` em ${lead.interestCity}`
-      : "";
-  const valor = lead?.value
-    ? Number(lead.value).toLocaleString("pt-BR")
-    : lead?.priceMax
-      ? Number(lead.priceMax).toLocaleString("pt-BR")
-      : "seu orçamento";
-  return String(tpl || "")
-    .replace(/\{\{nome\}\}/gi, nome)
-    .replace(/\{\{interesse\}\}/gi, interesse)
-    .replace(/\{\{bairro\}\}/gi, bairro)
-    .replace(/\{\{valor\}\}/gi, valor);
+const CAT_FILTERS = [
+  "todas",
+  "jornada",
+  "segmentado",
+  "reativacao",
+  "sem_resposta",
+  "valor",
+  "relacionamento",
+];
+
+const statusLabel = {
+  ativa: "Em andamento",
+  concluida: "Concluída",
+  encerrada: "Encerrada",
 };
 
+const canalLabel = (c, whatsapps = []) => {
+  if (!c) return "—";
+  if (String(c).startsWith("conn:")) {
+    const id = Number(String(c).slice(5));
+    const w = whatsapps.find((x) => Number(x.id) === id);
+    if (w) {
+      const nome = w.name || w.nome || `#${w.id}`;
+      return `${nome} · ${channelLabel(w.channel)}`;
+    }
+    return `Conexão #${String(c).slice(5)}`;
+  }
+  if (c === "email") return "E-mail";
+  if (c === "heranca") return "Padrão do fluxo";
+  return channelLabel(c);
+};
+
+function formatData(v) {
+  if (!v) return "—";
+  return new Date(v).toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit",
+  });
+}
+
+function filterEventosPorDias(eventos, dias) {
+  const desde = Date.now() - dias * 86400000;
+  return (eventos || []).filter((e) => {
+    const t = new Date(e.createdAt || e.ocorridoEm || 0).getTime();
+    return Number.isFinite(t) && t >= desde;
+  });
+}
+
 const NutricaoLeads = () => {
-  const history = useHistory();
   const [tab, setTab] = useState("fluxos");
-  const [items, setItems] = useState([]);
-  const [leads, setLeads] = useState([]);
-  const [campaigns, setCampaigns] = useState([]);
+  const [fluxos, setFluxos] = useState([]);
+  const [etapas, setEtapas] = useState([]);
+  const [inscricoes, setInscricoes] = useState([]);
+  const [envios, setEnvios] = useState([]);
+  const [eventos, setEventos] = useState([]);
+  const [metasConfig, setMetasConfig] = useState([]);
+  const [alertas, setAlertas] = useState([]);
+  const [whatsapps, setWhatsapps] = useState([]);
+  const [prompts, setPrompts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [processando, setProcessando] = useState(false);
   const [enviandoId, setEnviandoId] = useState(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editando, setEditando] = useState(null);
   const [busca, setBusca] = useState("");
-  const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({
-    title: "",
-    leadSaleId: "",
-    cadenceDays: 7,
-    nextSendAt: "",
-    channel: "whatsapp",
-    status: "ativo",
-    messageTemplate: TEMPLATES[0].mensagem,
-    notes: "",
-  });
+  const [categoria, setCategoria] = useState("todas");
+  const [aplicando, setAplicando] = useState(null);
+  const [diasMetricas, setDiasMetricas] = useState(90);
+  const [verificandoMetas, setVerificandoMetas] = useState(false);
 
   const load = useCallback(async () => {
     try {
       setLoading(true);
-      const [nut, leadsData, campData] = await Promise.all([
-        realtyService.listNutricao({ pageSize: 200 }),
-        leadsSalesService.list({ pageSize: 200, pageNumber: 1 }),
-        api.get("/campaigns", { params: { searchParam: "", pageNumber: 1 } }).catch(() => ({ data: {} })),
+      const [dash, waRes, promptRes] = await Promise.all([
+        realtyService.listNutricaoDashboard(),
+        api.get("/whatsapp/", { params: { session: 0 } }).catch(() => ({ data: [] })),
+        api.get("/prompt", { params: { pageNumber: "1" } }).catch(() => ({ data: {} })),
       ]);
-      setItems(nut.items || nut.records || []);
-      setLeads(leadsData.leads || []);
-      const campList = campData?.data?.records || campData?.data?.campaigns || campData?.data || [];
-      setCampaigns(Array.isArray(campList) ? campList : []);
+      setFluxos(dash.fluxos || []);
+      setEtapas(dash.etapas || []);
+      setInscricoes(dash.inscricoes || []);
+      setEnvios(dash.envios || []);
+      setEventos(dash.eventos || []);
+      setMetasConfig(dash.metasConfig || dash.metas || []);
+      setAlertas(dash.alertas || []);
+
+      const waList = Array.isArray(waRes.data)
+        ? waRes.data
+        : waRes.data?.whatsapps || waRes.data?.records || [];
+      setWhatsapps(Array.isArray(waList) ? waList : []);
+
+      const pList =
+        promptRes.data?.prompts || promptRes.data?.records || promptRes.data || [];
+      setPrompts(Array.isArray(pList) ? pList : []);
     } catch (err) {
       toastError(err);
     } finally {
@@ -115,119 +144,156 @@ const NutricaoLeads = () => {
     load();
   }, [load]);
 
-  const leadById = useMemo(() => {
-    const map = new Map();
-    leads.forEach((l) => map.set(Number(l.id), l));
-    return map;
-  }, [leads]);
+  const eventosFiltrados = useMemo(
+    () => filterEventosPorDias(eventos, diasMetricas),
+    [eventos, diasMetricas]
+  );
 
-  const filtered = useMemo(() => {
+  const inscricoesAtivas = useMemo(
+    () => inscricoes.filter((i) => i.status === "ativa"),
+    [inscricoes]
+  );
+  const enviosPendentes = useMemo(
+    () => envios.filter((e) => e.status === "pendente"),
+    [envios]
+  );
+
+  const fluxoEditando = useMemo(
+    () => fluxos.find((f) => f.id === editando) || null,
+    [fluxos, editando]
+  );
+  const etapasDoFluxo = useMemo(
+    () => etapas.filter((e) => e.fluxoId === editando),
+    [etapas, editando]
+  );
+
+  const modelosFiltrados = MODELOS_NUTRICAO.filter(
+    (m) => categoria === "todas" || m.categoria === categoria
+  );
+  const nomesExistentes = new Set(fluxos.map((f) => f.nome));
+
+  const filtradosEnvios = useMemo(() => {
     const q = busca.trim().toLowerCase();
-    if (!q) return items;
-    return items.filter((it) => {
-      const lead = leadById.get(Number(it.leadSaleId));
-      return (
-        String(it.title || "").toLowerCase().includes(q) ||
-        String(it.messageTemplate || "").toLowerCase().includes(q) ||
-        String(lead?.name || "").toLowerCase().includes(q) ||
-        String(lead?.phone || "").includes(q)
-      );
-    });
-  }, [items, busca, leadById]);
+    if (!q) return envios;
+    return envios.filter(
+      (e) =>
+        String(e.titulo || "")
+          .toLowerCase()
+          .includes(q) ||
+        String(e.destino || "")
+          .toLowerCase()
+          .includes(q) ||
+        String(e.mensagem || "")
+          .toLowerCase()
+          .includes(q)
+    );
+  }, [envios, busca]);
 
-  const dueItems = useMemo(() => {
-    const now = Date.now();
-    return items.filter((it) => {
-      if (it.status !== "ativo" && it.status !== "pendente") return false;
-      if (!it.nextSendAt) return true;
-      return new Date(it.nextSendAt).getTime() <= now;
-    });
-  }, [items]);
-
-  const openNew = (template) => {
-    setEditing(null);
-    setForm({
-      title: template?.titulo || "Nova cadência",
-      leadSaleId: "",
-      cadenceDays: 7,
-      nextSendAt: new Date().toISOString().slice(0, 16),
-      channel: template?.canal || "whatsapp",
-      status: "ativo",
-      messageTemplate: template?.mensagem || TEMPLATES[0].mensagem,
-      notes: "",
-    });
-    setFormOpen(true);
-  };
-
-  const openEdit = (item) => {
-    setEditing(item);
-    setForm({
-      title: item.title || "",
-      leadSaleId: item.leadSaleId || "",
-      cadenceDays: item.cadenceDays || 7,
-      nextSendAt: item.nextSendAt
-        ? new Date(item.nextSendAt).toISOString().slice(0, 16)
-        : "",
-      channel: item.channel || "whatsapp",
-      status: item.status || "ativo",
-      messageTemplate: item.messageTemplate || "",
-      notes: item.notes || "",
-    });
-    setFormOpen(true);
-  };
-
-  const saveForm = async (e) => {
-    e.preventDefault();
-    const payload = {
-      ...form,
-      leadSaleId: form.leadSaleId ? Number(form.leadSaleId) : null,
-      cadenceDays: Number(form.cadenceDays) || 7,
-      nextSendAt: form.nextSendAt ? new Date(form.nextSendAt).toISOString() : null,
-    };
+  const salvarFluxo = async (fluxoPayload, etapasPayload, id) => {
     try {
-      if (editing) await realtyService.updateNutricao(editing.id, payload);
-      else await realtyService.createNutricao(payload);
-      toast.success(editing ? "Cadência atualizada" : "Cadência criada");
-      setFormOpen(false);
-      await load();
-    } catch (err) {
-      toastError(err);
-    }
-  };
-
-  const removeItem = async (item) => {
-    if (!window.confirm(`Excluir cadência "${item.title}"?`)) return;
-    try {
-      await realtyService.deleteNutricao(item.id);
-      toast.success("Removida");
-      await load();
-    } catch (err) {
-      toastError(err);
-    }
-  };
-
-  const toggleStatus = async (item) => {
-    const next = item.status === "ativo" ? "pausado" : "ativo";
-    try {
-      await realtyService.updateNutricao(item.id, { status: next });
-      await load();
-    } catch (err) {
-      toastError(err);
-    }
-  };
-
-  const sendWhatsApp = async (item) => {
-    setEnviandoId(item.id);
-    try {
-      const data = await realtyService.sendNutricaoWhatsApp(item.id);
-      if (data.sent) {
-        toast.success("Mensagem enviada pelo WhatsApp do CRM");
-      } else if (data.ticket?.uuid) {
-        toast.info("Ticket aberto — finalize o envio no atendimento se necessário");
-        history.push(`/tickets/${data.ticket.uuid}`);
+      const body = { ...fluxoPayload, etapas: etapasPayload };
+      if (id) {
+        await realtyService.updateNutricaoFluxo(id, body);
+        toast.success("Fluxo atualizado");
       } else {
-        toast.warn(data.error || "Não foi possível enviar. Verifique telefone e conexão WhatsApp.");
+        await realtyService.createNutricaoFluxo(body);
+        toast.success("Fluxo criado");
       }
+      await load();
+      return true;
+    } catch (err) {
+      toastError(err);
+      return false;
+    }
+  };
+
+  const handleDialogSave = async (fluxoPayload, etapasPayload) => {
+    const ok = await salvarFluxo(fluxoPayload, etapasPayload, editando || undefined);
+    if (ok) {
+      setDialogOpen(false);
+      setEditando(null);
+    }
+    return ok;
+  };
+
+  const toggleFluxo = async (id, ativo) => {
+    try {
+      await realtyService.toggleNutricaoFluxo(id, ativo);
+      setFluxos((prev) => prev.map((f) => (f.id === id ? { ...f, ativo } : f)));
+    } catch (err) {
+      toastError(err);
+    }
+  };
+
+  const excluirFluxo = async (id) => {
+    if (!window.confirm("Excluir este fluxo e suas etapas?")) return;
+    try {
+      await realtyService.deleteNutricaoFluxo(id);
+      toast.success("Fluxo excluído");
+      await load();
+    } catch (err) {
+      toastError(err);
+    }
+  };
+
+  const processarAgora = async () => {
+    try {
+      setProcessando(true);
+      const res = await realtyService.processNutricao({ autoSend: true });
+      const parts = [
+        res?.inscritos != null ? `${res.inscritos} novos inscritos` : null,
+        res?.envios != null ? `${res.envios} mensagens geradas` : null,
+        res?.enviados != null ? `${res.enviados} enviadas no WhatsApp` : null,
+        res?.encerrados != null ? `${res.encerrados} encerrados` : null,
+      ].filter(Boolean);
+      toast.success(
+        parts.length
+          ? `Nutrição processada: ${parts.join(" · ")}`
+          : res?.message || "Nutrição processada"
+      );
+      await load();
+    } catch (err) {
+      toastError(err);
+    } finally {
+      setProcessando(false);
+    }
+  };
+
+  const criarModelos = async () => {
+    try {
+      setProcessando(true);
+      const basicos = MODELOS_NUTRICAO.filter((m) => m.fluxo.ativo).slice(0, 5);
+      for (const modelo of basicos) {
+        if (nomesExistentes.has(modelo.fluxo.nome)) continue;
+        await realtyService.createNutricaoFluxo({
+          ...modelo.fluxo,
+          etapas: modelo.etapas,
+        });
+      }
+      toast.success("Fluxos modelo criados");
+      await load();
+    } catch (err) {
+      toastError(err);
+    } finally {
+      setProcessando(false);
+    }
+  };
+
+  const aplicarModelo = async (modelo) => {
+    setAplicando(modelo.id);
+    const ok = await salvarFluxo(modelo.fluxo, modelo.etapas);
+    setAplicando(null);
+    if (ok) {
+      toast.success(`${modelo.fluxo.nome} adicionado na aba Fluxos`);
+      setTab("fluxos");
+    }
+  };
+
+  const enviarWhatsApp = async (envio) => {
+    try {
+      setEnviandoId(envio.id);
+      await realtyService.enviarNutricaoEnvio(envio.id);
+      toast.success("Mensagem enviada via WhatsApp do CRM");
       await load();
     } catch (err) {
       toastError(err);
@@ -236,78 +302,207 @@ const NutricaoLeads = () => {
     }
   };
 
-  const processarAgora = async () => {
-    setProcessando(true);
+  const marcarEnvio = async (id, status) => {
     try {
-      const data = await realtyService.processNutricao();
-      toast.success(
-        `Processado: ${data.processed || 0} envio(s), ${data.skipped || 0} ignorado(s)`
-      );
+      await realtyService.updateNutricaoEnvioStatus(id, status);
+      toast.success(status === "enviado" ? "Marcada como enviada" : `Status: ${status}`);
       await load();
-      setTab("mensagens");
+    } catch (err) {
+      toastError(err);
+    }
+  };
+
+  const encerrarInscricao = async (id) => {
+    try {
+      await realtyService.encerrarNutricaoInscricao(id);
+      toast.success("Inscrição encerrada");
+      await load();
+    } catch (err) {
+      toastError(err);
+    }
+  };
+
+  const fluxoDoEnvio = (inscricaoId) =>
+    inscricoes.find((i) => i.id === inscricaoId)?.fluxoId ?? null;
+
+  const marcarEvento = async (envio, tipo) => {
+    const fluxoId = fluxoDoEnvio(envio.inscricaoId);
+    if (!fluxoId) {
+      toast.error("Fluxo não encontrado para esta mensagem");
+      return;
+    }
+    let valor = null;
+    if (tipo === "fechamento") {
+      const entrada = window.prompt("Valor do negócio fechado (opcional, em R$):", "");
+      if (entrada) valor = Number(entrada.replace(/\./g, "").replace(",", ".")) || null;
+    }
+    try {
+      await realtyService.registrarNutricaoEvento({
+        fluxoId,
+        tipo,
+        envioId: envio.id,
+        inscricaoId: envio.inscricaoId,
+        etapaId: envio.etapaId,
+        leadSaleId: envio.leadSaleId,
+        canal: envio.canal,
+        valor,
+      });
+      toast.success(`Evento registrado: ${tipo}`);
+      await load();
+    } catch (err) {
+      toastError(err);
+    }
+  };
+
+  const aplicarVencedorAB = async (etapaId, vencedor) => {
+    try {
+      await realtyService.aplicarAbVencedor(etapaId, vencedor);
+      toast.success(`Variante ${vencedor} aplicada`);
+      await load();
+    } catch (err) {
+      toastError(err);
+    }
+  };
+
+  const reabrirTesteAB = async (etapaId) => {
+    try {
+      await realtyService.reabrirAb(etapaId);
+      toast.success("Teste A/B reaberto");
+      await load();
+    } catch (err) {
+      toastError(err);
+    }
+  };
+
+  const salvarMetas = async (form) => {
+    try {
+      const payload = {
+        ...form,
+        fluxoId:
+          form.fluxoId === null || form.fluxoId === undefined || form.fluxoId === ""
+            ? null
+            : Number(form.fluxoId),
+      };
+      await realtyService.saveNutricaoMetas(payload);
+      toast.success("Metas salvas");
+      const metas = await realtyService.getNutricaoMetas();
+      setMetasConfig(metas.configs || []);
+      setAlertas(metas.alertas || []);
+    } catch (err) {
+      toastError(err);
+    }
+  };
+
+  const verificarMetas = async () => {
+    try {
+      setVerificandoMetas(true);
+      const res = await realtyService.verificarNutricaoMetas();
+      const total = res?.alertas ?? 0;
+      toast.success(
+        total > 0 ? `${total} alerta(s) gerado(s)` : "Tudo dentro das metas"
+      );
+      const metas = await realtyService.getNutricaoMetas();
+      setMetasConfig(metas.configs || []);
+      setAlertas(metas.alertas || []);
     } catch (err) {
       toastError(err);
     } finally {
-      setProcessando(false);
+      setVerificandoMetas(false);
     }
   };
 
-  const enrollLead = async (lead) => {
+  const resolverAlerta = async (id) => {
     try {
-      await realtyService.createNutricao({
-        title: `Nutrição — ${lead.name}`,
-        leadSaleId: lead.id,
-        cadenceDays: 7,
-        nextSendAt: new Date().toISOString(),
-        channel: "whatsapp",
-        status: "ativo",
-        messageTemplate: applyVars(TEMPLATES[0].mensagem, lead),
-        notes: "Inscrito pela aba Leads",
-      });
-      toast.success(`${lead.name} inscrito na nutrição`);
-      await load();
-      setTab("fluxos");
+      await realtyService.resolverNutricaoAlerta(id);
+      setAlertas((prev) =>
+        prev.map((a) => (a.id === id ? { ...a, resolvido: true } : a))
+      );
+      toast.success("Alerta resolvido");
     } catch (err) {
       toastError(err);
     }
   };
 
+  const abrirWhatsappExterno = (destino, mensagem) => {
+    if (!destino) return;
+    const fone = String(destino).replace(/\D/g, "");
+    const numero = fone.length <= 11 ? `55${fone}` : fone;
+    window.open(`https://wa.me/${numero}?text=${encodeURIComponent(mensagem)}`, "_blank");
+  };
+
+  const abrirEmail = (destino, titulo, mensagem) => {
+    if (!destino) return;
+    window.open(
+      `mailto:${destino}?subject=${encodeURIComponent(titulo || "Novidades")}&body=${encodeURIComponent(mensagem)}`,
+      "_blank"
+    );
+  };
+
   return (
-    <MainContainer>
-      <div className="realty-page">
-        <div className="realty-page__header">
-          <div>
-            <h1 className="realty-page__title">Nutrição de Leads</h1>
+    <MainContainer autoHeight>
+      <div className="realty-page nutricao-page">
+        <div className="realty-page__header nutricao-page__header">
+          <div className="nutricao-page__heading">
+            <h1 className="realty-page__title">Nutrição e reengajamento</h1>
             <p className="realty-page__subtitle">
-              Cadências e envio pelo WhatsApp nativo do VBSolution — mesmos fluxos do Radarimobtech.
+              Sequências automáticas que reativam leads inativos e mantêm o relacionamento
+              vivo nos momentos-chave.
             </p>
           </div>
           <div className="realty-page__header-actions">
             <button
               type="button"
+              className="realty-page__btn"
+              onClick={() => {
+                setEditando(null);
+                setDialogOpen(true);
+              }}
+            >
+              Novo fluxo
+            </button>
+            <button
+              type="button"
               className="realty-page__btn realty-page__btn--ghost"
-              disabled={processando || dueItems.length === 0}
+              disabled={processando}
               onClick={processarAgora}
             >
-              {processando ? "Processando…" : `Processar agora (${dueItems.length})`}
+              {processando ? "Processando…" : "Processar agora"}
             </button>
-            <button type="button" className="realty-page__btn" onClick={() => openNew()}>
-              Nova cadência
-            </button>
+            {fluxos.length === 0 && (
+              <button
+                type="button"
+                className="realty-page__btn realty-page__btn--ghost"
+                disabled={processando}
+                onClick={criarModelos}
+              >
+                Criar fluxos modelo
+              </button>
+            )}
           </div>
         </div>
 
-        <div className="realty-tabs">
-          {[
-            { id: "fluxos", label: `Fluxos (${items.length})` },
-            { id: "sugestoes", label: "Sugestões" },
-            { id: "leads", label: `Leads (${leads.length})` },
-            { id: "mensagens", label: `Pendentes (${dueItems.length})` },
-            { id: "campanhas", label: `Campanhas (${campaigns.length})` },
-          ].map((t) => (
+        <div className="nutricao-kpis nutricao-kpis--3">
+          <article className="realty-card nutricao-kpi">
+            <span className="nutricao-muted">Fluxos ativos</span>
+            <strong>{fluxos.filter((f) => f.ativo).length}</strong>
+          </article>
+          <article className="realty-card nutricao-kpi">
+            <span className="nutricao-muted">Leads em nutrição</span>
+            <strong>{inscricoesAtivas.length}</strong>
+          </article>
+          <article className="realty-card nutricao-kpi">
+            <span className="nutricao-muted">Mensagens a enviar</span>
+            <strong>{enviosPendentes.length}</strong>
+          </article>
+        </div>
+
+        <div className="realty-tabs nutricao-tabs" role="tablist">
+          {TABS.map((t) => (
             <button
               key={t.id}
               type="button"
+              role="tab"
+              aria-selected={tab === t.id}
               className={`realty-tab${tab === t.id ? " realty-tab--active" : ""}`}
               onClick={() => setTab(t.id)}
             >
@@ -316,268 +511,452 @@ const NutricaoLeads = () => {
           ))}
         </div>
 
-        {(tab === "fluxos" || tab === "mensagens") && (
-          <div className="realty-page__toolbar">
-            <input
-              className="realty-page__search"
-              placeholder="Buscar cadência, lead ou telefone…"
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-            />
-          </div>
-        )}
-
-        {loading ? (
+        <div className="nutricao-page__panel" role="tabpanel">
+        {loading && tab !== "sugestoes" ? (
           <div className="realty-empty">Carregando…</div>
-        ) : tab === "sugestoes" ? (
-          <div className="realty-page__grid">
-            {TEMPLATES.map((tpl) => (
-              <article key={tpl.id} className="realty-card">
-                <h3>{tpl.titulo}</h3>
-                <span className="realty-chip">{tpl.canal}</span>
-                <p style={{ marginTop: 10, whiteSpace: "pre-wrap" }}>{tpl.mensagem}</p>
-                <button
-                  type="button"
-                  className="realty-page__btn"
-                  style={{ marginTop: 12 }}
-                  onClick={() => openNew(tpl)}
-                >
-                  Usar modelo
-                </button>
-              </article>
-            ))}
-          </div>
-        ) : tab === "leads" ? (
-          <div className="realty-page__grid">
-            {leads.slice(0, 40).map((lead) => (
-              <article key={lead.id} className="realty-card">
-                <h3>{lead.name}</h3>
-                <p>
-                  {lead.phone || "sem telefone"} · {lead.status}
-                </p>
-                <button
-                  type="button"
-                  className="realty-page__btn"
-                  style={{ marginTop: 12 }}
-                  onClick={() => enrollLead(lead)}
-                >
-                  Inscrever na nutrição
-                </button>
-              </article>
-            ))}
-          </div>
-        ) : tab === "campanhas" ? (
-          <div className="realty-page__grid">
-            {campaigns.length === 0 ? (
+        ) : null}
+
+        {!loading && tab === "fluxos" && (
+          <div className="nutricao-stack">
+            {fluxos.length === 0 && (
               <div className="realty-empty">
-                Nenhuma campanha. Crie em{" "}
-                <button
-                  type="button"
-                  className="realty-page__btn realty-page__btn--ghost"
-                  onClick={() => history.push("/campaigns")}
-                >
-                  Campanhas
-                </button>
+                Nenhum fluxo criado. Use &quot;Criar fluxos modelo&quot; ou a aba Sugestões
+                prontas.
               </div>
-            ) : (
-              campaigns.slice(0, 30).map((c) => (
-                <article key={c.id} className="realty-card">
-                  <h3>{c.name || `Campanha #${c.id}`}</h3>
-                  <p>
-                    Status: {c.status} · WhatsApp #{c.whatsappId || "—"}
-                  </p>
-                  <button
-                    type="button"
-                    className="realty-page__btn realty-page__btn--ghost"
-                    style={{ marginTop: 12 }}
-                    onClick={() => history.push("/campaigns")}
-                  >
-                    Abrir campanhas
-                  </button>
-                </article>
-              ))
             )}
-          </div>
-        ) : (
-          <div className="realty-page__grid">
-            {(tab === "mensagens" ? dueItems : filtered).map((item) => {
-              const lead = leadById.get(Number(item.leadSaleId));
-              const preview = applyVars(item.messageTemplate, lead);
+            {fluxos.map((fluxo) => {
+              const etapasFluxo = etapas.filter((e) => e.fluxoId === fluxo.id);
+              const emNutricao = inscricoes.filter(
+                (i) => i.fluxoId === fluxo.id && i.status === "ativa"
+              ).length;
               return (
-                <article key={item.id} className="realty-card">
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
-                    <h3>{item.title}</h3>
-                    <span className="realty-chip">{item.status}</span>
+                <article key={fluxo.id} className="realty-card">
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      justifyContent: "space-between",
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <h3>{fluxo.nome}</h3>
+                      {fluxo.descricao && <p>{fluxo.descricao}</p>}
+                      <div className="nutricao-chips" style={{ marginTop: 8 }}>
+                        <span className="realty-chip">
+                          {fluxo.publicoAlvo === "lead_sem_resposta"
+                            ? "Sem resposta"
+                            : "Inativos"}{" "}
+                          · {fluxo.diasInatividade} dias
+                        </span>
+                        <span className="realty-chip">{etapasFluxo.length} etapas</span>
+                        <span className="realty-chip">{emNutricao} em nutrição</span>
+                        <span className="realty-chip">
+                          {fluxo.whatsappId
+                            ? canalLabel(`conn:${fluxo.whatsappId}`, whatsapps)
+                            : canalLabel(fluxo.canal, whatsapps)}
+                        </span>
+                        {fluxo.encerrarAoResponder && (
+                          <span className="realty-chip">Para ao responder</span>
+                        )}
+                        {resumoSegmentacao(fluxo).map((t) => (
+                          <span key={t} className="realty-chip">
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="realty-card__actions">
+                      <label className="nutricao-switch">
+                        <input
+                          type="checkbox"
+                          checked={!!fluxo.ativo}
+                          onChange={(e) => toggleFluxo(fluxo.id, e.target.checked)}
+                        />
+                        {fluxo.ativo ? "Ativo" : "Pausado"}
+                      </label>
+                      <button
+                        type="button"
+                        className="realty-page__btn realty-page__btn--ghost"
+                        onClick={() => {
+                          setEditando(fluxo.id);
+                          setDialogOpen(true);
+                        }}
+                      >
+                        Editar
+                      </button>
+                      <button
+                        type="button"
+                        className="realty-page__btn realty-page__btn--ghost"
+                        onClick={() => excluirFluxo(fluxo.id)}
+                      >
+                        Excluir
+                      </button>
+                    </div>
                   </div>
-                  <p>
-                    Lead: {lead?.name || `#${item.leadSaleId || "—"}`} · a cada{" "}
-                    {item.cadenceDays || 7} dias · {item.channel || "whatsapp"}
-                  </p>
-                  {item.nextSendAt && (
-                    <p>Próximo: {new Date(item.nextSendAt).toLocaleString("pt-BR")}</p>
-                  )}
-                  <p style={{ marginTop: 8, whiteSpace: "pre-wrap" }}>{preview}</p>
-                  <div className="realty-card__actions" style={{ flexWrap: "wrap" }}>
-                    <button
-                      type="button"
-                      className="realty-page__btn"
-                      disabled={enviandoId === item.id || item.channel !== "whatsapp"}
-                      onClick={() => sendWhatsApp(item)}
-                    >
-                      {enviandoId === item.id ? "Enviando…" : "Enviar WhatsApp"}
-                    </button>
-                    <button
-                      type="button"
-                      className="realty-page__btn realty-page__btn--ghost"
-                      onClick={() => toggleStatus(item)}
-                    >
-                      {item.status === "ativo" ? "Pausar" : "Ativar"}
-                    </button>
-                    <button
-                      type="button"
-                      className="realty-page__btn realty-page__btn--ghost"
-                      onClick={() => openEdit(item)}
-                    >
-                      Editar
-                    </button>
-                    <button
-                      type="button"
-                      className="realty-page__btn realty-page__btn--ghost"
-                      onClick={() => removeItem(item)}
-                    >
-                      Excluir
-                    </button>
+                  <div className="nutricao-stack" style={{ marginTop: 12 }}>
+                    {etapasFluxo.map((e) => (
+                      <div key={e.id} className="nutricao-etapa-card">
+                        <div style={{ fontWeight: 600, fontSize: 13 }}>
+                          {e.ordem}. {e.titulo}{" "}
+                          <span className="nutricao-muted">+{e.diasApos}d</span>
+                          <span className="realty-chip" style={{ marginLeft: 8 }}>
+                            {canalLabel(e.canal, whatsapps)}
+                          </span>
+                          {e.abAtivo && (
+                            <span className="realty-chip" style={{ marginLeft: 4 }}>
+                              A/B
+                            </span>
+                          )}
+                        </div>
+                        <p
+                          className="nutricao-muted nutricao-clamp"
+                          style={{ marginTop: 4, WebkitLineClamp: 2 }}
+                        >
+                          {e.mensagem}
+                        </p>
+                      </div>
+                    ))}
                   </div>
                 </article>
               );
             })}
-            {(tab === "mensagens" ? dueItems : filtered).length === 0 && (
-              <div className="realty-empty">
-                {tab === "mensagens"
-                  ? "Nenhuma mensagem pendente."
-                  : "Nenhuma cadência. Use um modelo ou crie uma nova."}
-              </div>
-            )}
           </div>
         )}
 
-        {formOpen && (
-          <div className="realty-modal-backdrop" onClick={() => setFormOpen(false)}>
-            <div
-              className="realty-card realty-modal"
-              style={{ width: 520, maxWidth: "94vw" }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h3>{editing ? "Editar cadência" : "Nova cadência"}</h3>
-              <form className="realty-form" onSubmit={saveForm}>
-                <label>
-                  Título *
-                  <input
-                    required
-                    value={form.title}
-                    onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
-                  />
-                </label>
-                <label>
-                  Lead
-                  <select
-                    value={form.leadSaleId}
-                    onChange={(e) => {
-                      const id = e.target.value;
-                      const lead = leadById.get(Number(id));
-                      setForm((p) => ({
-                        ...p,
-                        leadSaleId: id,
-                        messageTemplate: lead
-                          ? applyVars(p.messageTemplate, lead)
-                          : p.messageTemplate,
-                      }));
-                    }}
-                  >
-                    <option value="">Selecione o lead</option>
-                    {leads.map((l) => (
-                      <option key={l.id} value={l.id}>
-                        {l.name} {l.phone ? `(${l.phone})` : ""}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                  <label>
-                    Intervalo (dias)
-                    <input
-                      type="number"
-                      min="1"
-                      value={form.cadenceDays}
-                      onChange={(e) => setForm((p) => ({ ...p, cadenceDays: e.target.value }))}
-                    />
-                  </label>
-                  <label>
-                    Próximo envio
-                    <input
-                      type="datetime-local"
-                      value={form.nextSendAt}
-                      onChange={(e) => setForm((p) => ({ ...p, nextSendAt: e.target.value }))}
-                    />
-                  </label>
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                  <label>
-                    Canal
-                    <select
-                      value={form.channel}
-                      onChange={(e) => setForm((p) => ({ ...p, channel: e.target.value }))}
+        {tab === "sugestoes" && (
+          <div className="nutricao-stack">
+            <div className="nutricao-chips">
+              {CAT_FILTERS.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  className={`realty-page__btn${
+                    categoria === c ? "" : " realty-page__btn--ghost"
+                  }`}
+                  style={{ padding: "6px 12px", fontSize: 12 }}
+                  onClick={() => setCategoria(c)}
+                >
+                  {c === "todas" ? "Todas" : CATEGORIAS_MODELO[c]}
+                </button>
+              ))}
+            </div>
+            <div className="realty-page__grid">
+              {modelosFiltrados.map((modelo) => {
+                const jaExiste = nomesExistentes.has(modelo.fluxo.nome);
+                return (
+                  <article key={modelo.id} className="realty-card">
+                    <h3>{modelo.fluxo.nome}</h3>
+                    <p>{modelo.resumo}</p>
+                    <div className="nutricao-chips" style={{ marginTop: 8 }}>
+                      <span className="realty-chip">
+                        {CATEGORIAS_MODELO[modelo.categoria]}
+                      </span>
+                      <span className="realty-chip">
+                        {modelo.fluxo.publicoAlvo === "lead_sem_resposta"
+                          ? "Sem resposta"
+                          : "Inativos"}{" "}
+                        · {modelo.fluxo.diasInatividade} dias
+                      </span>
+                      <span className="realty-chip">{modelo.etapas.length} etapas</span>
+                      {resumoSegmentacao(modelo.fluxo).map((t) => (
+                        <span key={t} className="realty-chip">
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="nutricao-stack" style={{ marginTop: 10 }}>
+                      {modelo.etapas.map((e) => (
+                        <div key={e.ordem} className="nutricao-etapa-card">
+                          <div style={{ fontWeight: 600, fontSize: 13 }}>
+                            {e.ordem}. {e.titulo}{" "}
+                            <span className="nutricao-muted">+{e.diasApos}d</span>
+                          </div>
+                          <p
+                            className="nutricao-muted"
+                            style={{
+                              marginTop: 4,
+                              fontSize: 12,
+                              display: "-webkit-box",
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: "vertical",
+                              overflow: "hidden",
+                            }}
+                          >
+                            {e.mensagem}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      className="realty-page__btn"
+                      style={{ marginTop: 12 }}
+                      disabled={aplicando === modelo.id || jaExiste}
+                      onClick={() => aplicarModelo(modelo)}
                     >
-                      <option value="whatsapp">WhatsApp</option>
-                      <option value="email">E-mail</option>
-                      <option value="sms">SMS</option>
-                    </select>
-                  </label>
-                  <label>
-                    Status
-                    <select
-                      value={form.status}
-                      onChange={(e) => setForm((p) => ({ ...p, status: e.target.value }))}
-                    >
-                      <option value="ativo">Ativo</option>
-                      <option value="pausado">Pausado</option>
-                      <option value="concluido">Concluído</option>
-                    </select>
-                  </label>
-                </div>
-                <label>
-                  Mensagem / template
-                  <textarea
-                    rows={5}
-                    value={form.messageTemplate}
-                    onChange={(e) => setForm((p) => ({ ...p, messageTemplate: e.target.value }))}
-                    placeholder="Use {{nome}}, {{interesse}}, {{bairro}}, {{valor}}"
-                  />
-                </label>
-                <label>
-                  Observações
-                  <textarea
-                    rows={2}
-                    value={form.notes}
-                    onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))}
-                  />
-                </label>
-                <div className="realty-card__actions">
-                  <button
-                    type="button"
-                    className="realty-page__btn realty-page__btn--ghost"
-                    onClick={() => setFormOpen(false)}
-                  >
-                    Cancelar
-                  </button>
-                  <button type="submit" className="realty-page__btn">
-                    Salvar
-                  </button>
-                </div>
-              </form>
+                      {aplicando === modelo.id
+                        ? "Adicionando…"
+                        : jaExiste
+                          ? "Já adicionado"
+                          : "Usar esta sugestão"}
+                    </button>
+                  </article>
+                );
+              })}
             </div>
           </div>
         )}
+
+        {!loading && tab === "inscricoes" && (
+          <div className="nutricao-stack">
+            {inscricoes.length === 0 && (
+              <div className="realty-empty">
+                Nenhum lead inscrito ainda. Clique em &quot;Processar agora&quot;.
+              </div>
+            )}
+            {inscricoes.map((i) => {
+              const fluxo = fluxos.find((f) => f.id === i.fluxoId);
+              return (
+                <article key={i.id} className="realty-card">
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      justifyContent: "space-between",
+                      gap: 12,
+                      alignItems: "center",
+                    }}
+                  >
+                    <div>
+                      <h3>{i.nome || "Contato"}</h3>
+                      <p className="nutricao-muted">
+                        {fluxo?.nome} · etapa {i.etapaAtual} · próxima ação{" "}
+                        {formatData(i.proximaExecucao)}
+                        {i.motivoEncerramento ? ` · ${i.motivoEncerramento}` : ""}
+                      </p>
+                    </div>
+                    <div className="realty-card__actions">
+                      <span className="realty-chip">
+                        {statusLabel[i.status] || i.status}
+                      </span>
+                      {i.status === "ativa" && (
+                        <button
+                          type="button"
+                          className="realty-page__btn realty-page__btn--ghost"
+                          onClick={() => encerrarInscricao(i.id)}
+                        >
+                          Encerrar
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+
+        {!loading && tab === "envios" && (
+          <div className="nutricao-stack">
+            <div className="realty-page__toolbar">
+              <input
+                className="realty-page__search"
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+                placeholder="Buscar por título, contato ou texto"
+              />
+            </div>
+            {filtradosEnvios.length === 0 && (
+              <div className="realty-empty">Nenhuma mensagem gerada.</div>
+            )}
+            {filtradosEnvios.map((e) => {
+              const isWa =
+                e.canal === "whatsapp" ||
+                e.canal === "whatsapp_oficial" ||
+                !e.canal ||
+                e.canal === "heranca";
+              return (
+                <article key={e.id} className="realty-card">
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      justifyContent: "space-between",
+                      gap: 8,
+                      alignItems: "center",
+                    }}
+                  >
+                    <div style={{ fontWeight: 600 }}>
+                      {e.titulo || "Mensagem"}{" "}
+                      <span className="nutricao-muted">{e.destino || "sem contato"}</span>
+                    </div>
+                    <div className="nutricao-chips">
+                      <span className="realty-chip">{canalLabel(e.canal, whatsapps)}</span>
+                      {e.variante && (
+                        <span className="realty-chip">Variante {e.variante}</span>
+                      )}
+                      <span className="realty-chip">{e.status}</span>
+                    </div>
+                  </div>
+                  <p style={{ marginTop: 8, whiteSpace: "pre-wrap", fontSize: 13 }}>
+                    {e.mensagem}
+                  </p>
+                  {e.erro && (
+                    <p style={{ color: "#dc2626", fontSize: 12, marginTop: 4 }}>{e.erro}</p>
+                  )}
+                  <div className="realty-card__actions" style={{ flexWrap: "wrap", marginTop: 10 }}>
+                    {isWa ? (
+                      <>
+                        <button
+                          type="button"
+                          className="realty-page__btn"
+                          disabled={!e.destino || enviandoId === e.id || e.status === "enviado"}
+                          onClick={() => enviarWhatsApp(e)}
+                        >
+                          {enviandoId === e.id ? "Enviando…" : "Enviar WhatsApp"}
+                        </button>
+                        <button
+                          type="button"
+                          className="realty-page__btn realty-page__btn--ghost"
+                          disabled={!e.destino}
+                          onClick={() => abrirWhatsappExterno(e.destino, e.mensagem)}
+                        >
+                          Abrir no WhatsApp Web externo
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        className="realty-page__btn realty-page__btn--ghost"
+                        disabled={!e.destino}
+                        onClick={() => abrirEmail(e.destino, e.titulo, e.mensagem)}
+                      >
+                        Abrir e-mail
+                      </button>
+                    )}
+                    {e.status !== "enviado" && (
+                      <button
+                        type="button"
+                        className="realty-page__btn realty-page__btn--ghost"
+                        onClick={() => marcarEnvio(e.id, "enviado")}
+                      >
+                        Marcar como enviada
+                      </button>
+                    )}
+                    <span className="nutricao-muted">{formatData(e.createdAt)}</span>
+                  </div>
+                  <div
+                    className="nutricao-chips"
+                    style={{ marginTop: 10, borderTop: "1px solid #e2e6ee", paddingTop: 10 }}
+                  >
+                    <span className="nutricao-muted">Registrar:</span>
+                    {TIPOS_EVENTO.map((t) => {
+                      const jaTem = eventos.some(
+                        (ev) => ev.envioId === e.id && ev.tipo === t.tipo
+                      );
+                      return (
+                        <button
+                          key={t.tipo}
+                          type="button"
+                          className={`realty-page__btn${
+                            jaTem ? "" : " realty-page__btn--ghost"
+                          }`}
+                          style={{ padding: "4px 10px", fontSize: 12 }}
+                          disabled={jaTem}
+                          onClick={() => marcarEvento(e, t.tipo)}
+                        >
+                          {jaTem ? "✓ " : ""}
+                          {t.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+
+        {!loading && tab === "metricas" && (
+          <MetricasFluxosPanel
+            fluxos={fluxos}
+            inscricoes={inscricoes}
+            envios={envios}
+            eventos={eventosFiltrados}
+            dias={diasMetricas}
+            onDiasChange={setDiasMetricas}
+            loading={loading}
+          />
+        )}
+
+        {!loading && tab === "abtest" && (
+          <TesteABPanel
+            fluxos={fluxos}
+            etapas={etapas}
+            envios={envios}
+            eventos={eventos}
+            onAplicarVencedor={aplicarVencedorAB}
+            onReabrir={reabrirTesteAB}
+          />
+        )}
+
+        {!loading && tab === "timeline" && (
+          <TimelineLeadPanel
+            fluxos={fluxos}
+            etapas={etapas}
+            inscricoes={inscricoes}
+            envios={envios}
+            eventos={eventos}
+            loading={loading}
+          />
+        )}
+
+        {!loading && tab === "coorte" && (
+          <CoorteNutricaoPanel
+            fluxos={fluxos}
+            inscricoes={inscricoes}
+            eventos={eventos}
+            loading={loading}
+          />
+        )}
+
+        {!loading && tab === "comparativo" && (
+          <ComparativoCanalVariantePanel
+            fluxos={fluxos}
+            etapas={etapas}
+            envios={envios}
+            eventos={eventos}
+            loading={loading}
+          />
+        )}
+
+        {!loading && tab === "alertas" && (
+          <AlertasMetasPanel
+            fluxos={fluxos}
+            metasConfig={metasConfig}
+            alertas={alertas}
+            onSalvar={salvarMetas}
+            onVerificar={verificarMetas}
+            onResolver={resolverAlerta}
+            loading={loading}
+            verificando={verificandoMetas}
+          />
+        )}
+        </div>
+
+        <FluxoNutricaoDialog
+          open={dialogOpen}
+          onClose={() => {
+            setDialogOpen(false);
+            setEditando(null);
+          }}
+          fluxo={fluxoEditando}
+          etapas={etapasDoFluxo}
+          onSave={handleDialogSave}
+          whatsapps={whatsapps}
+          prompts={prompts}
+        />
       </div>
     </MainContainer>
   );

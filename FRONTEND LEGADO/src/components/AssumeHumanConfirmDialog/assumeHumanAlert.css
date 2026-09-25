@@ -1,0 +1,180 @@
+/* Apple Magic UI — alerta central de confirmação "Assumir humano" */
+
+body:has(.assume-human-alert) .brain-dialog-overlay {
+  background: rgba(0, 0, 0, 0.28) !important;
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+}
+
+.assume-human-alert.brain-dialog {
+  width: min(100% - 2rem, 340px) !important;
+  max-width: 340px !important;
+  padding: 0 !important;
+  border-radius: 22px !important;
+  border: 1px solid rgba(255, 255, 255, 0.55) !important;
+  background: rgba(255, 255, 255, 0.78) !important;
+  backdrop-filter: blur(28px) saturate(1.4);
+  -webkit-backdrop-filter: blur(28px) saturate(1.4);
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.22),
+    0 2px 8px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65) !important;
+  color: #1d1d1f;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI",
+    Helvetica, Arial, sans-serif;
+  overflow: hidden;
+  text-align: center;
+}
+
+body.Mui-dark .assume-human-alert.brain-dialog,
+[data-theme="dark"] .assume-human-alert.brain-dialog {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  background: rgba(44, 44, 46, 0.82) !important;
+  color: #f5f5f7;
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+.assume-human-alert__header.brain-dialog__header {
+  padding: 28px 22px 6px !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.assume-human-alert__avatar-wrap {
+  width: 64px;
+  height: 64px;
+}
+
+.assume-human-alert__avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
+  border: 2px solid rgba(255, 255, 255, 0.85);
+}
+
+.assume-human-alert__avatar--fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, #e8e8ed 0%, #d2d2d7 100%);
+  color: #3a3a3c;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+body.Mui-dark .assume-human-alert__avatar--fallback,
+[data-theme="dark"] .assume-human-alert__avatar--fallback {
+  background: linear-gradient(160deg, #48484a 0%, #3a3a3c 100%);
+  color: #f5f5f7;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.assume-human-alert__title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: -0.022em;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+.assume-human-alert__body.brain-dialog__body {
+  padding: 4px 22px 18px !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+.assume-human-alert__lead {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: rgba(60, 60, 67, 0.72);
+  text-wrap: pretty;
+}
+
+body.Mui-dark .assume-human-alert__lead,
+[data-theme="dark"] .assume-human-alert__lead {
+  color: rgba(235, 235, 245, 0.65);
+}
+
+.assume-human-alert__name {
+  color: #1d1d1f;
+  font-weight: 600;
+}
+
+body.Mui-dark .assume-human-alert__name,
+[data-theme="dark"] .assume-human-alert__name {
+  color: #f5f5f7;
+}
+
+.assume-human-alert__footer.brain-dialog__footer {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 !important;
+  padding: 0 !important;
+  border-top: 1px solid rgba(60, 60, 67, 0.18) !important;
+  justify-content: stretch !important;
+}
+
+body.Mui-dark .assume-human-alert__footer.brain-dialog__footer,
+[data-theme="dark"] .assume-human-alert__footer.brain-dialog__footer {
+  border-top-color: rgba(84, 84, 88, 0.65) !important;
+}
+
+.assume-human-alert__btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  min-height: 46px;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  transition: background 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.18s ease;
+}
+
+.assume-human-alert__btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.assume-human-alert__btn--cancel {
+  color: #007aff;
+  border-right: 1px solid rgba(60, 60, 67, 0.18);
+  border-radius: 0 0 0 22px;
+}
+
+body.Mui-dark .assume-human-alert__btn--cancel,
+[data-theme="dark"] .assume-human-alert__btn--cancel {
+  border-right-color: rgba(84, 84, 88, 0.65);
+}
+
+.assume-human-alert__btn--confirm {
+  color: #007aff;
+  font-weight: 650;
+  border-radius: 0 0 22px 0;
+}
+
+.assume-human-alert__btn:hover:not(:disabled) {
+  background: rgba(0, 122, 255, 0.08);
+}
+
+.assume-human-alert__btn:active:not(:disabled) {
+  background: rgba(0, 122, 255, 0.14);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .assume-human-alert__btn {
+    transition: none;
+  }
+}

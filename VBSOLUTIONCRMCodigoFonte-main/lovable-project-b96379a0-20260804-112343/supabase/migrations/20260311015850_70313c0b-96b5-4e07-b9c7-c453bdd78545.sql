@@ -1,0 +1,1 @@
+DELETE FROM imoveis_mercado WHERE estado != 'DF' OR cidade NOT IN ('Brasília', 'Valparaíso', 'Novo Gama', 'Cidade Ocidental', 'Luziânia', 'Águas Lindas', 'Santo Antônio do Descoberto', 'Formosa', 'Planaltina de Goiás');

@@ -1,0 +1,1 @@
+ALTER TABLE public.followups ADD COLUMN IF NOT EXISTS resultado text;

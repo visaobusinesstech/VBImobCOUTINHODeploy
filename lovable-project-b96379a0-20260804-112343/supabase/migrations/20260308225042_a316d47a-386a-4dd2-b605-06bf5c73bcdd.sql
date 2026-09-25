@@ -1,0 +1,1 @@
+UPDATE profiles SET trial_start = now() - interval '25 days' WHERE id = '5e38e946-f81c-473f-81f3-44a613e89ab8';

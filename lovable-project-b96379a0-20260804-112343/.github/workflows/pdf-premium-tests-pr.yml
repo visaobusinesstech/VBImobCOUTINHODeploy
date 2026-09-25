@@ -1,0 +1,297 @@
+name: PDF Premium · testes de ordem editorial (PR)
+
+# Roda em toda PR contra main e bloqueia merges com regressão de
+# ordem editorial no PDF de avaliação premium: narrativa antes do
+# número, snapshot visual, não-repetição, hierarquia e afins.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/lib/exportAvaliacaoPremiumPDF.ts"
+      - "src/lib/exportAvaliacaoPremiumPDF.*.test.ts"
+      - "src/test/avaliacaoComparaveis.test.ts"
+      - "scripts/pdfTestArtifacts.ts"
+      - "scripts/mergeJunit.ts"
+      - "scripts/mergeCoverage.ts"
+      - "vitest.config.ts"
+      - "package.json"
+      - "bun.lockb"
+      - ".github/workflows/pdf-premium-tests-pr.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: pdf-premium-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+  security-events: write
+
+jobs:
+  # Os ~22 arquivos de teste são divididos em 4 shards que rodam em paralelo,
+  # cada um com workers multi-thread. O tempo de parede cai para ~1/4.
+  vitest:
+    name: vitest · shard ${{ matrix.shard }}/4
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Cache bun install
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun/install/cache
+            node_modules
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lockb') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install JS dependencies
+        run: bun install --frozen-lockfile
+
+      # Qualquer regressão (ordem de leitura, snapshot visual, narrativa antes
+      # do número, hierarquia, não-repetição, selos, formatação, robustez,
+      # PDF renderizado) faz o shard falhar — e a proteção de branch impede o merge.
+      - name: Run PDF Premium test suite (shard ${{ matrix.shard }}/4)
+        run: |
+          bunx vitest run \
+            --shard=${{ matrix.shard }}/4 \
+            --reporter=default \
+            --reporter=junit \
+            --outputFile=./pdf-premium-junit-${{ matrix.shard }}.xml \
+            --coverage \
+            --coverage.reportsDirectory=./coverage-${{ matrix.shard }} \
+            --coverage.reporter=json \
+            --coverage.thresholds.lines=0 \
+            --coverage.thresholds.statements=0 \
+            --coverage.thresholds.functions=0 \
+            --coverage.thresholds.branches=0 \
+            src/lib/exportAvaliacaoPremiumPDF \
+            src/test/avaliacaoComparaveis.test.ts
+
+      - name: Upload JUnit do shard
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pdf-premium-junit-shard-${{ matrix.shard }}
+          path: pdf-premium-junit-${{ matrix.shard }}.xml
+          if-no-files-found: warn
+          retention-days: 14
+
+      # Cada shard cobre só parte dos testes; as metas são checadas no
+      # job consolidado, por isso aqui os limiares ficam desligados.
+      - name: Upload cobertura parcial do shard
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pdf-premium-coverage-shard-${{ matrix.shard }}
+          path: coverage-${{ matrix.shard }}/coverage-final.json
+          if-no-files-found: warn
+          retention-days: 14
+
+  # Consolida os relatórios dos shards, gera os artefatos de revisão
+  # (PDFs das falhas + resumo HTML) e publica o check único no PR.
+  relatorio:
+    name: relatório consolidado
+    needs: vitest
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Cache bun install
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun/install/cache
+            node_modules
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lockb') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install JS dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Baixar JUnit dos shards
+        uses: actions/download-artifact@v4
+        with:
+          pattern: pdf-premium-junit-shard-*
+          path: junit-shards
+
+      - name: Consolidar relatórios JUnit
+        run: bun scripts/mergeJunit.ts junit-shards pdf-premium-junit.xml
+
+      - name: Baixar cobertura dos shards
+        uses: actions/download-artifact@v4
+        with:
+          pattern: pdf-premium-coverage-shard-*
+          path: coverage-shards
+
+      # Soma os contadores dos 4 shards e valida as metas de cobertura
+      # (linhas/statements 85%, funções/branches 80%).
+      - name: Consolidar cobertura do gerador de PDF
+        id: cobertura
+        run: bun scripts/mergeCoverage.ts coverage-shards coverage-merged
+
+      - name: Publicar cobertura no resumo do job
+        if: always()
+        run: cat coverage-merged/resumo.md >> "$GITHUB_STEP_SUMMARY" || true
+
+      - name: Upload métricas de cobertura (json + lcov + resumo)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pdf-premium-coverage
+          path: coverage-merged/
+          if-no-files-found: warn
+          retention-days: 14
+
+      # Baixa o metrics.json da última execução deste workflow para comparar
+      # páginas, tamanho e conteúdo dos PDFs entre execuções.
+      - name: Baixar baseline da execução anterior
+        if: always()
+        continue-on-error: true
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          workflow: pdf-premium-tests-pr.yml
+          name: pdf-premium-review
+          path: pdf-baseline
+          search_artifacts: true
+          if_no_artifact_found: warn
+
+      - name: Gerar artefatos de revisão (PDFs, resumo HTML e comparação)
+        if: always()
+        env:
+          PDF_ARTIFACT_NAME: pdf-premium-review
+        run: bun scripts/pdfTestArtifacts.ts pdf-premium-junit.xml pdf-test-artifacts pdf-baseline
+
+      - name: Upload artefatos de revisão (PDFs + HTML)
+        if: always()
+        id: upload_review
+        uses: actions/upload-artifact@v4
+        with:
+          name: pdf-premium-review
+          path: pdf-test-artifacts/
+          if-no-files-found: warn
+          retention-days: 14
+
+      # Publica (ou atualiza) um único comentário no PR com o resumo dos
+      # testes, as falhas e os links dos artefatos com os PDFs gerados.
+      - name: Comentar resumo e artefatos no PR
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        env:
+          ARTIFACT_URL: ${{ steps.upload_review.outputs.artifact-url }}
+        with:
+          script: |
+            const fs = require('fs');
+            const marcador = '<!-- pdf-premium-review-comment -->';
+            const caminho = 'pdf-test-artifacts/resumo-pr.md';
+            if (!fs.existsSync(caminho)) {
+              core.warning('resumo-pr.md não encontrado; nada a comentar.');
+              return;
+            }
+            let corpo = fs.readFileSync(caminho, 'utf8');
+            if (process.env.ARTIFACT_URL) {
+              corpo += `\n\n[Baixar artefato \`pdf-premium-review\` (HTML + PDFs)](${process.env.ARTIFACT_URL})`;
+            }
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const { data: comentarios } = await github.rest.issues.listComments({
+              owner, repo, issue_number, per_page: 100,
+            });
+            const existente = comentarios.find(
+              (c) => c.user?.type === 'Bot' && c.body?.includes(marcador),
+            );
+            if (existente) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existente.id, body: corpo });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body: corpo });
+            }
+
+
+
+      - name: Upload JUnit consolidado
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pdf-premium-junit
+          path: pdf-premium-junit.xml
+          if-no-files-found: warn
+          retention-days: 14
+
+      # Anotações inline (arquivo + linha) para cada teste que falhou.
+      - name: Anotar falhas nos arquivos de teste
+        if: always()
+        env:
+          PDF_ARTIFACT_URL: ${{ steps.upload_review.outputs.artifact-url }}
+          PDF_ARTIFACT_NAME: pdf-premium-review
+          PDF_ARTIFACTS_DIR: pdf-test-artifacts
+        run: bun scripts/annotateJunit.ts pdf-premium-junit.xml
+
+      # Notifica Slack/e-mail quando um cenário muda no PDF ou um teste quebra.
+      - name: Notificar mudanças e falhas (Slack/e-mail)
+        if: always()
+        continue-on-error: true
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          PDF_NOTIFY_EMAIL_TO: ${{ secrets.PDF_NOTIFY_EMAIL_TO }}
+          PDF_NOTIFY_EMAIL_FROM: ${{ vars.PDF_NOTIFY_EMAIL_FROM }}
+          PDF_ARTIFACT_NAME: pdf-premium-review
+        run: bun scripts/notifyPdfChanges.ts pdf-test-artifacts
+
+      # Exporta as falhas em SARIF para o GitHub Code Scanning destacar as linhas.
+      - name: Gerar SARIF das falhas
+        if: always()
+        env:
+          PDF_ARTIFACT_URL: ${{ steps.upload_review.outputs.artifact-url }}
+          PDF_ARTIFACT_NAME: pdf-premium-review
+          PDF_ARTIFACTS_DIR: pdf-test-artifacts
+        run: bun scripts/junitToSarif.ts pdf-premium-junit.xml pdf-premium.sarif
+
+      - name: Publicar SARIF no Code Scanning
+        if: always()
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: pdf-premium.sarif
+          category: pdf-premium-tests
+
+      - name: Upload SARIF como artefato
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pdf-premium-review-sarif
+          path: pdf-premium.sarif
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Publish JUnit as PR check
+        if: always()
+        uses: mikepenz/action-junit-report@v4
+        with:
+          report_paths: pdf-premium-junit.xml
+          check_name: "PDF Premium · testes de ordem editorial"
+          require_tests: true
+          fail_on_failure: true
+          annotate_only: false
+          detailed_summary: true
+          include_passed: false

@@ -1,0 +1,1 @@
+ALTER TABLE public.contrato_comprovantes_mensais ADD COLUMN recebido boolean NOT NULL DEFAULT false;

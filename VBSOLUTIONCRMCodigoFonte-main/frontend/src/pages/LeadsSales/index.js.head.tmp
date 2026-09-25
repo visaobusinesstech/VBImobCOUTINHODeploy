@@ -1,0 +1,663 @@
+/**
+ * Copyright (c) Visão Business. Todos os direitos reservados.
+ * VB Solution CRM — propriedade intelectual da Visão Business.
+ * Uso conforme LICENSE na raiz do repositório.
+ *
+ * Leads e Vendas = CRM Pipeline (paridade com Radarimobtech / Lovable)
+ * Layout = ActivitiesStyleLayout (igual Atividades / Projetos).
+ */
+
+import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useHistory } from "react-router-dom";
+import * as XLSX from "xlsx";
+import {
+  IconButton,
+  Popover,
+  Typography,
+  Button,
+} from "@material-ui/core";
+import {
+  ViewWeek as KanbanIcon,
+  List as ListIcon,
+  Dashboard as DashboardIcon,
+  Settings as SettingsIcon,
+  GetApp as DownloadIcon,
+  Publish as ImportIcon,
+  SwapHoriz as TransferIcon,
+  FlashOn as ScoringIcon,
+  ExpandMore as ExpandMoreIcon,
+  EventNote as FollowupIcon,
+  ContactPhone as ContatosIcon,
+  Notifications as NotifIcon,
+  CompareArrows as CruzamentoIcon,
+  Timeline as AcoesIcon,
+} from "@material-ui/icons";
+import {
+  Users,
+  Target,
+  Home,
+  Key,
+  FileText,
+  CalendarDays,
+  CalendarClock,
+  TrendingUp,
+  Flame,
+  UserX,
+  CircleDollarSign,
+} from "lucide-react";
+import ActivitiesStyleLayout from "../../components/ActivitiesStyleLayout";
+import MetricCard from "../../components/propostas/MetricCard";
+import leadsSalesService from "../../services/leadsSalesService";
+import leadPipelinesService from "../../services/leadPipelinesService";
+import realtyService from "../../services/realtyService";
+import realtyIntelService from "../../services/realtyIntelService";
+import api from "../../services/api";
+import PipelineLeadFormDialog from "../../components/PipelineLeadFormDialog";
+import PipelineEstagiosDialog from "../../components/PipelineEstagiosDialog";
+import TransferLeadsDialog from "../../components/TransferLeadsDialog";
+import toastError from "../../errors/toastError";
+import { toast } from "react-toastify";
+import { formatBRL, groupLeadsByStage } from "../../helpers/realtyCrm";
+import { AuthContext } from "../../context/Auth/AuthContext";
+import {
+  PIPELINE_ESTAGIOS,
+  MOTIVOS_PERDA,
+  normalizeEstagio,
+  normalizeSearchText,
+  getCanalLabel,
+} from "../../constants/pipelineCrm";
+
+const isAluguelPurpose = (purpose = "") =>
+  /alug|loca/i.test(String(purpose || ""));
+
+const isContratoAluguel = (c) =>
+  /alug|loca/i.test(`${c?.title || ""} ${c?.notes || ""} ${c?.status || ""}`);
+
+const defaultStages = () =>
+  PIPELINE_ESTAGIOS.map((e) => ({ key: e.id, label: e.title, color: e.color }));
+
+const navBtnStyle = { color: "#6b7280", padding: 4, width: 32, height: 32 };
+
+const LeadsSales = () => {
+  const history = useHistory();
+  const { user } = useContext(AuthContext);
+  const isMaster =
+    user?.profile === "admin" ||
+    user?.profile === "super" ||
+    user?.super === true ||
+    Number(user?.id) === 1;
+
+  const [viewMode, setViewMode] = useState("board");
+  const [leads, setLeads] = useState([]);
+  const [stages, setStages] = useState(defaultStages());
+  const [pipelines, setPipelines] = useState([]);
+  const [pipeline, setPipeline] = useState(null);
+  const [pipelineId, setPipelineId] = useState("");
+  const [users, setUsers] = useState([]);
+  const [openCreate, setOpenCreate] = useState(false);
+  const [editLead, setEditLead] = useState(null);
+  const [defaultEstagio, setDefaultEstagio] = useState("novos");
+  const [matches, setMatches] = useState([]);
+  const [selectedLead, setSelectedLead] = useState(null);
+  const [editarPipelineOpen, setEditarPipelineOpen] = useState(false);
+  const [transferOpen, setTransferOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterEstagio, setFilterEstagio] = useState("todos");
+  const [filterCorretor, setFilterCorretor] = useState("todos");
+  const [filterValorMin, setFilterValorMin] = useState("");
+  const [filterValorMax, setFilterValorMax] = useState("");
+  const [pendingPerdido, setPendingPerdido] = useState(null);
+  const [motivoPerda, setMotivoPerda] = useState("");
+  const [motivoDetalhe, setMotivoDetalhe] = useState("");
+  const [dragOverColumn, setDragOverColumn] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [leadScores, setLeadScores] = useState({});
+  const [scoringLoading, setScoringLoading] = useState(false);
+  const [importText, setImportText] = useState("");
+  const [contratosDash, setContratosDash] = useState([]);
+  const [opsKpis, setOpsKpis] = useState(null);
+  const [anchorPipeline, setAnchorPipeline] = useState(null);
+  const [anchorEstagio, setAnchorEstagio] = useState(null);
+  const [anchorCorretor, setAnchorCorretor] = useState(null);
+  const [anchorValor, setAnchorValor] = useState(null);
+
+  const ensureRadarPipeline = useCallback(async (list) => {
+    const arr = Array.isArray(list) ? list : [];
+    const hasRadarStages = (p) =>
+      (p.stages || []).some((s) => ["novos", "qualificados", "mandar_opcoes"].includes(s.key));
+
+    let target = arr.find((p) => /crm|radar|pipeline/i.test(p.name || "")) || arr[0];
+
+    if (!target || !hasRadarStages(target) || !(target.stages || []).length) {
+      const stagesPayload = PIPELINE_ESTAGIOS.map((e, i) => ({
+        key: e.id,
+        label: e.title,
+        color: e.color,
+        order: i + 1,
+      }));
+      const payload = arr.length
+        ? arr.map((p) => {
+            if (target && String(p.id) === String(target.id)) {
+              return {
+                id: p.id,
+                name: p.name || "CRM Pipeline",
+                stages: stagesPayload,
+              };
+            }
+            return {
+              id: p.id,
+              name: p.name,
+              stages: (p.stages || []).map((s, i) => ({
+                id: s.id,
+                key: s.key,
+                label: s.label || s.name,
+                color: s.color || "#3B82F6",
+                order: s.order || i + 1,
+              })),
+            };
+          })
+        : [{ name: "CRM Pipeline", stages: stagesPayload }];
+
+      if (!arr.length) {
+        await leadPipelinesService.bulkSave(payload);
+      } else if (target && (!(target.stages || []).length || !hasRadarStages(target))) {
+        await leadPipelinesService.bulkSave(payload);
+      }
+      const refreshed = await leadPipelinesService.list();
+      return Array.isArray(refreshed) ? refreshed : refreshed.pipelines || [];
+    }
+    return arr;
+  }, []);
+
+  const loadPipelinesAndUsers = useCallback(async () => {
+    try {
+      const [pipeData, usersResp] = await Promise.all([
+        leadPipelinesService.list(),
+        api.get("/users", { params: { searchParam: "" } }),
+      ]);
+      let list = Array.isArray(pipeData) ? pipeData : pipeData.pipelines || [];
+      list = await ensureRadarPipeline(list);
+      setPipelines(list);
+      const userList = usersResp?.data?.users || usersResp?.data || [];
+      setUsers(Array.isArray(userList) ? userList : []);
+      const first = list[0];
+      if (first) {
+        setPipeline(first);
+        setPipelineId(String(first.id));
+        const st = (first.stages || []).map((s) => ({
+          key: normalizeEstagio(s.key || s.status),
+          label: s.label || s.name || s.key,
+          color: s.color,
+        }));
+        setStages(st.length ? st : defaultStages());
+      } else {
+        setStages(defaultStages());
+      }
+    } catch (err) {
+      toastError(err);
+      setStages(defaultStages());
+    }
+  }, [ensureRadarPipeline]);
+
+  const load = useCallback(
+    async (pid = pipelineId) => {
+      try {
+        setLoading(true);
+        const data = await leadsSalesService.list({
+          pageSize: 500,
+          pageNumber: 1,
+          pipelineId: pid || undefined,
+        });
+        const rows = (data.leads || []).map((l) => ({
+          ...l,
+          status: normalizeEstagio(l.status),
+        }));
+        setLeads(rows);
+      } catch (err) {
+        toastError(err);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [pipelineId]
+  );
+
+  useEffect(() => {
+    loadPipelinesAndUsers();
+  }, [loadPipelinesAndUsers]);
+
+  useEffect(() => {
+    if (pipelineId) load(pipelineId);
+  }, [pipelineId, load]);
+
+  useEffect(() => {
+    if (viewMode !== "dashboard") return;
+    let active = true;
+    (async () => {
+      try {
+        const [contratosRes, dashRes] = await Promise.all([
+          realtyService.listContratos({ pageSize: 500, pageNumber: 1 }).catch(() => ({})),
+          realtyIntelService.dashboard().catch(() => null),
+        ]);
+        if (!active) return;
+        const rows = contratosRes?.contratos || contratosRes?.rows || [];
+        setContratosDash(Array.isArray(rows) ? rows : []);
+        setOpsKpis(dashRes?.kpis || null);
+      } catch (_) {
+        if (active) {
+          setContratosDash([]);
+          setOpsKpis(null);
+        }
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [viewMode]);
+
+  const hasActiveFilters =
+    filterEstagio !== "todos" ||
+    filterCorretor !== "todos" ||
+    filterValorMin !== "" ||
+    filterValorMax !== "" ||
+    searchQuery !== "";
+
+  const clearFilters = () => {
+    setFilterEstagio("todos");
+    setFilterCorretor("todos");
+    setFilterValorMin("");
+    setFilterValorMax("");
+    setSearchQuery("");
+  };
+
+  const filteredLeads = useMemo(() => {
+    let result = leads;
+    const rawQuery = searchQuery.trim();
+    if (rawQuery) {
+      const q = normalizeSearchText(rawQuery);
+      const qDigits = rawQuery.replace(/\D/g, "");
+      result = result.filter((l) => {
+        const nome = normalizeSearchText(l.name);
+        const email = normalizeSearchText(l.email);
+        const phone = String(l.phone || "").replace(/\D/g, "");
+        const interesse = normalizeSearchText(
+          [l.description, l.interestType, l.interestNeighborhood, l.purpose, l.featuresDesired]
+            .filter(Boolean)
+            .join(" ")
+        );
+        const canal = normalizeSearchText(l.origin);
+        const obs = normalizeSearchText(l.featuresDesired);
+        const estagioTitle = normalizeSearchText(
+          stages.find((s) => s.key === l.status)?.label || l.status
+        );
+        const corretor = normalizeSearchText(
+          l.responsible?.name || users.find((u) => Number(u.id) === Number(l.responsibleId))?.name
+        );
+        return (
+          nome.includes(q) ||
+          email.includes(q) ||
+          interesse.includes(q) ||
+          canal.includes(q) ||
+          obs.includes(q) ||
+          estagioTitle.includes(q) ||
+          corretor.includes(q) ||
+          (qDigits && phone.includes(qDigits))
+        );
+      });
+    }
+    if (filterEstagio !== "todos") {
+      result = result.filter((l) => String(l.status || "") === filterEstagio);
+    }
+    if (filterCorretor !== "todos") {
+      if (filterCorretor === "__none__") {
+        result = result.filter((l) => !l.responsibleId);
+      } else {
+        result = result.filter((l) => String(l.responsibleId) === String(filterCorretor));
+      }
+    }
+    const min = parseFloat(String(filterValorMin).replace(",", "."));
+    const max = parseFloat(String(filterValorMax).replace(",", "."));
+    if (!Number.isNaN(min)) result = result.filter((l) => Number(l.value || 0) >= min);
+    if (!Number.isNaN(max)) result = result.filter((l) => Number(l.value || 0) <= max);
+    return result;
+  }, [leads, searchQuery, filterEstagio, filterCorretor, filterValorMin, filterValorMax, stages, users]);
+
+  const visibleStages =
+    filterEstagio !== "todos" ? stages.filter((s) => s.key === filterEstagio) : stages;
+
+  const grouped = useMemo(
+    () => groupLeadsByStage(filteredLeads, visibleStages),
+    [filteredLeads, visibleStages]
+  );
+
+  const totalValor = filteredLeads.reduce((sum, l) => sum + (Number(l.value) || 0), 0);
+  const formatTotal = formatBRL(totalValor);
+
+  const followupsPendentes = useMemo(() => {
+    const now = Date.now();
+    return filteredLeads
+      .filter((l) => l.followUpAt)
+      .map((l) => ({
+        ...l,
+        overdue: new Date(l.followUpAt).getTime() < now,
+        today:
+          new Date(l.followUpAt).toDateString() === new Date().toDateString(),
+      }))
+      .sort((a, b) => new Date(a.followUpAt) - new Date(b.followUpAt));
+  }, [filteredLeads]);
+
+  const atrasadosCount = followupsPendentes.filter((f) => f.overdue).length;
+  const hojeCount = followupsPendentes.filter((f) => f.today && !f.overdue).length;
+
+  const contatosSemResposta = useMemo(
+    () =>
+      filteredLeads.filter((l) =>
+        ["nao_responde", "pediu_tempo", "qualificados", "novos"].includes(l.status)
+      ),
+    [filteredLeads]
+  );
+
+  const notificacoes = useMemo(() => {
+    const items = [];
+    followupsPendentes.filter((f) => f.overdue).forEach((l) => {
+      items.push({
+        id: `fu-${l.id}`,
+        tipo: "Follow-up atrasado",
+        texto: `${l.name} — ${new Date(l.followUpAt).toLocaleString("pt-BR")}`,
+      });
+    });
+    filteredLeads
+      .filter((l) => !l.responsibleId)
+      .slice(0, 20)
+      .forEach((l) => {
+        items.push({ id: `sc-${l.id}`, tipo: "Sem corretor", texto: l.name });
+      });
+    return items;
+  }, [followupsPendentes, filteredLeads]);
+
+  const dashboardMetrics = useMemo(() => {
+    const total = leads.length;
+    const novos = leads.filter((l) => l.status === "novos").length;
+    const fechadosList = leads.filter((l) => l.status === "fechado");
+    const fechados = fechadosList.length;
+    const perdidos = leads.filter((l) =>
+      ["perdido", "desistiu", "comprou_outra"].includes(l.status)
+    ).length;
+    const conversao = total ? Math.round((fechados / total) * 1000) / 10 : 0;
+    const porEstagio = stages.map((s) => ({
+      key: s.key,
+      label: s.label,
+      color: s.color,
+      count: leads.filter((l) => l.status === s.key).length,
+      valor: leads
+        .filter((l) => l.status === s.key)
+        .reduce((a, l) => a + (Number(l.value) || 0), 0),
+    }));
+    const porCanal = {};
+    leads.forEach((l) => {
+      const c = getCanalLabel(l.origin) || "Não informado";
+      porCanal[c] = (porCanal[c] || 0) + 1;
+    });
+    const canalRows = Object.entries(porCanal)
+      .map(([canal, count]) => ({ canal, count }))
+      .sort((a, b) => b.count - a.count);
+    const openStatuses = ["fechado", "perdido", "desistiu", "comprou_outra"];
+    const valorPipeline = leads
+      .filter((l) => !openStatuses.includes(l.status))
+      .reduce((a, l) => a + (Number(l.value) || 0), 0);
+
+    const fechadosVenda = fechadosList.filter((l) => !isAluguelPurpose(l.purpose));
+    const fechadosAluguel = fechadosList.filter((l) => isAluguelPurpose(l.purpose));
+    const totalVendas = fechadosVenda.reduce((a, l) => a + (Number(l.value) || 0), 0);
+    const totalAluguel = fechadosAluguel.reduce((a, l) => a + (Number(l.value) || 0), 0);
+
+    const contratosAtivos = contratosDash.filter(
+      (c) => !/cancel|rescind|inativ/i.test(String(c.status || ""))
+    );
+    const contratosVenda = contratosAtivos.filter((c) => !isContratoAluguel(c));
+    const contratosAluguel = contratosAtivos.filter((c) => isContratoAluguel(c));
+    const valorContratosVenda = contratosVenda.reduce((a, c) => a + (Number(c.value) || 0), 0);
+    const valorContratosAluguel = contratosAluguel.reduce((a, c) => a + (Number(c.value) || 0), 0);
+
+    const quentes = leads.filter((l) =>
+      /quente|hot/i.test(String(l.temperature || ""))
+    ).length;
+
+    return {
+      total,
+      novos,
+      fechados,
+      perdidos,
+      conversao,
+      porEstagio,
+      canalRows,
+      valorPipeline,
+      followups: followupsPendentes.length,
+      followupsAtrasados: atrasadosCount,
+      visitasHoje: opsKpis?.visitasHoje ?? 0,
+      propostasAbertas: opsKpis?.propostasAbertas ?? 0,
+      imoveisDisponiveis: opsKpis?.imoveisDisponiveis ?? 0,
+      imoveis: opsKpis?.imoveis ?? 0,
+      semCorretor: leads.filter((l) => !l.responsibleId).length,
+      quentes,
+      totalVendas: valorContratosVenda || totalVendas,
+      totalAluguel: valorContratosAluguel || totalAluguel,
+      contratosVenda: contratosVenda.length,
+      contratosAluguel: contratosAluguel.length,
+      contratosTotal: contratosAtivos.length,
+    };
+  }, [
+    leads,
+    stages,
+    followupsPendentes.length,
+    atrasadosCount,
+    contratosDash,
+    opsKpis,
+  ]);
+
+  const moveLead = async (lead, status, extra = {}) => {
+    try {
+      await leadsSalesService.update(lead.id, { status: normalizeEstagio(status), ...extra });
+      toast.success("Lead movido");
+      await load();
+    } catch (err) {
+      toastError(err);
+    }
+  };
+
+  const confirmPerdido = async () => {
+    if (!pendingPerdido) return;
+    const label = MOTIVOS_PERDA.find((m) => m.id === motivoPerda)?.label || motivoPerda;
+    const reason = [label, motivoDetalhe].filter(Boolean).join(" — ");
+    await moveLead(pendingPerdido, "perdido", { lostReason: reason || "Perdido" });
+    setPendingPerdido(null);
+    setMotivoPerda("");
+    setMotivoDetalhe("");
+  };
+
+  const openMatches = async (lead) => {
+    setSelectedLead(lead);
+    setViewMode("cruzamento");
+    try {
+      const data = await realtyService.matchImoveis(lead.id);
+      setMatches(data.matches || []);
+    } catch (err) {
+      toastError(err);
+    }
+  };
+
+  const vincular = async (imovelId) => {
+    if (!selectedLead) return;
+    try {
+      await leadsSalesService.update(selectedLead.id, { imovelId });
+      toast.success("Imóvel vinculado ao lead");
+      setSelectedLead(null);
+      await load();
+    } catch (err) {
+      toastError(err);
+    }
+  };
+
+  const enviarWhatsApp = async () => {
+    if (!selectedLead) return;
+    try {
+      const ids = matches.map((m) => m.imovelId);
+      const data = await realtyService.sendMatchWhatsApp(selectedLead.id, ids);
+      if (data.sent) toast.success("Opções enviadas no WhatsApp");
+      else {
+        toast.info(
+          data.ticketId
+            ? `Mensagem preparada (ticket #${data.ticketId}).`
+            : "Vincule o lead a um ticket WhatsApp para disparo automático."
+        );
+      }
+      if (data.ticketId) history.push(`/tickets/${data.ticketId}`);
+      setSelectedLead(null);
+      await load();
+    } catch (err) {
+      toastError(err);
+    }
+  };
+
+  const onDragStart = (e, lead) => {
+    e.dataTransfer.setData("text/plain", String(lead.id));
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const onDrop = async (e, stageKey) => {
+    e.preventDefault();
+    setDragOverColumn(null);
+    const id = e.dataTransfer.getData("text/plain");
+    const lead = leads.find((l) => String(l.id) === String(id));
+    if (!lead || String(lead.status) === stageKey) return;
+    if (stageKey === "perdido" || /perdido|lost|desistiu|comprou_outra/i.test(stageKey)) {
+      setPendingPerdido(lead);
+      setMotivoPerda("");
+      setMotivoDetalhe("");
+      return;
+    }
+    await moveLead(lead, stageKey);
+  };
+
+  const responsibleName = (lead) => {
+    if (lead.responsible?.name) return lead.responsible.name;
+    const u = users.find((x) => Number(x.id) === Number(lead.responsibleId));
+    return u?.name || null;
+  };
+
+  const exportExcel = () => {
+    const rows = filteredLeads.map((l) => ({
+      Nome: l.name,
+      Telefone: l.phone || "",
+      Email: l.email || "",
+      Interesse: l.description || "",
+      Operação: l.purpose || "",
+      Valor: Number(l.value) || 0,
+      Estágio: stages.find((s) => s.key === l.status)?.label || l.status,
+      Corretor: responsibleName(l) || "",
+      Canal: l.origin || "",
+      Bairro: l.interestNeighborhood || "",
+      "Tipo imóvel": l.interestType || "",
+      Observações: l.featuresDesired || "",
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Leads");
+    XLSX.writeFile(wb, `leads-pipeline-${new Date().toISOString().slice(0, 10)}.xlsx`);
+  };
+
+  const exportPdf = () => {
+    const w = window.open("", "_blank");
+    if (!w) {
+      toast.error("Permita pop-ups para exportar PDF");
+      return;
+    }
+    const rows = filteredLeads
+      .map(
+        (l) =>
+          `<tr><td>${l.name || ""}</td><td>${l.phone || ""}</td><td>${
+            stages.find((s) => s.key === l.status)?.label || l.status
+          }</td><td>${formatBRL(l.value)}</td><td>${responsibleName(l) || "—"}</td></tr>`
+      )
+      .join("");
+    w.document.write(`<!DOCTYPE html><html><head><title>Relatório de Leads</title>
+      <style>body{font-family:sans-serif;padding:24px}table{border-collapse:collapse;width:100%}
+      th,td{border:1px solid #ddd;padding:8px;font-size:12px}th{background:#f3f4f6}</style></head>
+      <body><h1>Relatório de Leads</h1>
+      <p>${filteredLeads.length} leads · ${formatTotal} em pipeline</p>
+      <table><thead><tr><th>Nome</th><th>Telefone</th><th>Estágio</th><th>Valor</th><th>Corretor</th></tr></thead>
+      <tbody>${rows}</tbody></table></body></html>`);
+    w.document.close();
+    w.focus();
+    setTimeout(() => w.print(), 300);
+  };
+
+  const handleScoring = () => {
+    setScoringLoading(true);
+    try {
+      const scores = {};
+      filteredLeads.forEach((l) => {
+        let score = 20;
+        if (l.phone) score += 15;
+        if (l.email) score += 10;
+        if (Number(l.value) > 0) score += 15;
+        if (l.interestNeighborhood) score += 10;
+        if (l.interestType) score += 10;
+        if (l.followUpAt) score += 10;
+        if (l.responsibleId) score += 10;
+        if (["visita", "proposta", "qualificados"].includes(l.status)) score += 15;
+        if (["nao_responde", "perdido", "desistiu"].includes(l.status)) score -= 20;
+        score = Math.max(0, Math.min(100, score));
+        let classification = "Frio";
+        let emoji = "❄️";
+        if (score >= 70) {
+          classification = "Quente";
+          emoji = "🔥";
+        } else if (score >= 40) {
+          classification = "Morno";
+          emoji = "🌤️";
+        }
+        scores[l.id] = { score, classification, emoji };
+      });
+      setLeadScores(scores);
+      toast.success(`Lead Scoring concluído! ${Object.keys(scores).length} leads classificados`);
+    } finally {
+      setScoringLoading(false);
+    }
+  };
+
+  const handleImport = async () => {
+    const lines = importText
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter(Boolean);
+    if (!lines.length) {
+      toast.error("Cole linhas no formato: Nome;Telefone;Email;Valor");
+      return;
+    }
+    let ok = 0;
+    for (const line of lines) {
+      const [name, phone, email, value] = line.split(";").map((x) => (x || "").trim());
+      if (!name) continue;
+      try {
+        await leadsSalesService.create({
+          name,
+          phone: phone || null,
+          email: email || null,
+          value: Number(String(value || "0").replace(",", ".")) || 0,
+          status: "novos",
+          purpose: "venda",
+          pipelineId: pipelineId ? Number(pipelineId) : undefined,
+        });
+        ok += 1;
+      } catch (_) {
+        /* continue */
+      }
+    }
+    toast.success(`${ok} lead(s) importado(s)`);
+    setImportOpen(false);
+    setImportText("");
+    await load();
+  };
+

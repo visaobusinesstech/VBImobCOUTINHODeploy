@@ -1,0 +1,1 @@
+ALTER TABLE public.avaliacoes_historico ADD COLUMN IF NOT EXISTS dados_completos jsonb;

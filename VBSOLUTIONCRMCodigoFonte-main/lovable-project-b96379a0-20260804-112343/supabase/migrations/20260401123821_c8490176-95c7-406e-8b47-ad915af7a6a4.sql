@@ -1,0 +1,6 @@
+ALTER TABLE public.contratos
+  ADD COLUMN IF NOT EXISTS cliente_rg text DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS proprietario_email text DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS proprietario_rg text DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS inquilino_rg text DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS inquilino2_rg text DEFAULT NULL;

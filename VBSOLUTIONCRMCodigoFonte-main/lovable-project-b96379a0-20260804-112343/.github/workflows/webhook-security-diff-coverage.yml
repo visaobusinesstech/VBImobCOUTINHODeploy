@@ -1,0 +1,63 @@
+name: webhookSecurity · diff coverage
+
+on:
+  pull_request:
+    paths:
+      - "supabase/functions/_shared/webhookSecurity.ts"
+      - "supabase/functions/_shared/webhookSecurity.test.ts"
+      - "scripts/webhook-security-coverage.ts"
+      - "scripts/webhook-security-diff-coverage.ts"
+      - ".github/workflows/webhook-security-diff-coverage.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+  actions: read
+
+jobs:
+  diff-coverage:
+    name: Diff coverage gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Precisamos de histórico suficiente para diffar contra a base do PR.
+          fetch-depth: 0
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Generate LCOV (full-file coverage)
+        env:
+          # O gate absoluto continua sendo aplicado pelo workflow
+          # webhook-security-coverage.yml — aqui apenas geramos o lcov.
+          COVERAGE_MIN_LINES: "0"
+          COVERAGE_MIN_BRANCHES: "0"
+        run: deno run -A scripts/webhook-security-coverage.ts
+
+      - name: Run diff coverage gate
+        id: gate
+        env:
+          DIFF_BASE_REF: origin/${{ github.event.pull_request.base.ref }}
+          DIFF_COVERAGE_MIN: "90"
+        run: deno run -A scripts/webhook-security-diff-coverage.ts
+
+      - name: Upload diff coverage artifact
+        id: upload
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: webhook-security-diff-coverage
+          path: |
+            coverage/webhook-security/lcov.info
+            coverage/webhook-security/diff-summary.json
+          retention-days: 14
+
+      # Comentário no PR consolidado em `webhook-security-report.yml`.
+      # Este workflow permanece apenas como gate de diff coverage combinado.
+
+

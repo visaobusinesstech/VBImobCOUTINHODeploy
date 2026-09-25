@@ -1,8 +1,12 @@
 import {
+  CONTRATO_STATUSES,
+  STATUS_CONTRATO,
   estimateAvaliacao,
   formatBRL,
+  getDocCompleteness,
   groupLeadsByStage,
   isImovelAvailable,
+  normalizeContratoStatus,
   rankImoveisForLead,
   scoreLeadImovelMatch,
 } from "./realtyCrm";
@@ -43,8 +47,39 @@ describe("realtyCrm frontend helper", () => {
   });
 
   it("estimates avaliação vs mercado", () => {
-    const { parecer, desvio } = estimateAvaliacao(400000, 80, 4000);
+    const { parecer, desvio } = estimateAvaliacao(250000, 80, 4000);
     expect(parecer).toContain("abaixo");
     expect(desvio).toBeLessThan(0);
+  });
+
+  it("normaliza status legado de contrato", () => {
+    expect(normalizeContratoStatus("aguardando_assinatura")).toBe("aguardando");
+    expect(normalizeContratoStatus("encerrado")).toBe("inativo");
+    expect(normalizeContratoStatus("ativo")).toBe("ativo");
+    expect(CONTRATO_STATUSES).toContain("aguardando");
+    expect(STATUS_CONTRATO.find((s) => s.id === "vencendo").label).toBe("Vencendo");
+  });
+
+  it("calcula completude documental (smoke)", () => {
+    const locacao = getDocCompleteness({
+      tipo: "Locação",
+      contratoAnexoUrl: "/files/contrato.pdf",
+      vistoriaEntrada: true,
+      vistoriaAnexoUrl: "/files/vistoria.pdf",
+      apoliceSeguro: true,
+      apoliceAnexoUrl: "/files/apolice.pdf",
+      seguroIncendioAnexoUrl: "/files/incendio.pdf",
+      inquilinoCpf: "123",
+      inquilinoTelefone: "11999999999",
+      proprietarioCpf: "456",
+      proprietarioTelefone: "11888888888",
+      matricula: "M-1",
+    });
+    expect(locacao.done).toBe(locacao.total);
+    expect(locacao.missing).toEqual([]);
+
+    const vendaIncompleta = getDocCompleteness({ tipo: "Venda" });
+    expect(vendaIncompleta.total).toBeGreaterThan(0);
+    expect(vendaIncompleta.missing.length).toBe(vendaIncompleta.total);
   });
 });

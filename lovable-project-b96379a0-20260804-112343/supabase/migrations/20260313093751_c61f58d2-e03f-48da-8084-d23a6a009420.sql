@@ -1,0 +1,1 @@
+ALTER TABLE public.transacoes ADD COLUMN IF NOT EXISTS canal_origem text DEFAULT null;

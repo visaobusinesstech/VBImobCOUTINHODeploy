@@ -30,6 +30,15 @@ class RealtyProposta extends Model<RealtyProposta> {
   @Column
   title: string;
 
+  @Column
+  clienteNome: string;
+
+  @Column
+  clienteTelefone: string;
+
+  @Column
+  clienteEmail: string;
+
   @Column(DataType.DECIMAL(14, 2))
   value: number;
 
@@ -46,7 +55,13 @@ class RealtyProposta extends Model<RealtyProposta> {
   conditions: string;
 
   @Column
+  prazoContrato: string;
+
+  @Column
   status: string;
+
+  @Column
+  numeroProposta: number;
 
   @Column
   validUntil: Date;
@@ -55,7 +70,7 @@ class RealtyProposta extends Model<RealtyProposta> {
   notes: string;
 
   @ForeignKey(() => LeadSale)
-  @Column
+  @Column({ allowNull: true })
   leadSaleId: number;
 
   @BelongsTo(() => LeadSale)

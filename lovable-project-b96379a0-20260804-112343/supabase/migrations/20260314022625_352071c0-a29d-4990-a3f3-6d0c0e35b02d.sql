@@ -1,0 +1,1 @@
+ALTER TABLE public.imobiliaria_config ADD COLUMN nomes_excluidos_importacao text[] DEFAULT '{}'::text[];

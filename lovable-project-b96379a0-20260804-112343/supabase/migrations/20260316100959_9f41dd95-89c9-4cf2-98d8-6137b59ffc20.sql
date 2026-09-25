@@ -1,0 +1,17 @@
+ALTER TABLE public.contratos
+  ADD COLUMN IF NOT EXISTS comissao_percentual numeric DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS comissao_valor numeric DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS tem_parceria boolean DEFAULT false,
+  ADD COLUMN IF NOT EXISTS parceiro_nome text,
+  ADD COLUMN IF NOT EXISTS parceiro_comissao_percentual numeric DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS parceiro_comissao_valor numeric DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS captador_nome text,
+  ADD COLUMN IF NOT EXISTS captador_telefone text,
+  ADD COLUMN IF NOT EXISTS captador_comissao_percentual numeric DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS captador_comissao_valor numeric DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS imposto_tipo text,
+  ADD COLUMN IF NOT EXISTS imposto_percentual numeric DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS imposto_valor numeric DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS corretor_nome text,
+  ADD COLUMN IF NOT EXISTS corretor_comissao_percentual numeric DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS corretor_comissao_valor numeric DEFAULT 0;

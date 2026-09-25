@@ -1,0 +1,40 @@
+name: webhookSecurity · coverage
+
+on:
+  pull_request:
+    paths:
+      - "supabase/functions/_shared/webhookSecurity.ts"
+      - "supabase/functions/_shared/webhookSecurity.test.ts"
+      - "scripts/webhook-security-coverage.ts"
+      - ".github/workflows/webhook-security-coverage.yml"
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  coverage:
+    name: Coverage gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Run coverage + threshold gate
+        env:
+          # Mínimos exigidos. Ajustar aqui (nunca abaixo do observado em main).
+          COVERAGE_MIN_LINES: "80"
+          COVERAGE_MIN_BRANCHES: "85"
+        run: deno run -A scripts/webhook-security-coverage.ts
+
+      - name: Upload coverage artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: webhook-security-coverage
+          path: coverage/webhook-security
+          retention-days: 14

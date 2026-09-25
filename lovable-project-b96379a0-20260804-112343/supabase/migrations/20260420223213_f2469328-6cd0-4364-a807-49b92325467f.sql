@@ -1,0 +1,1 @@
+ALTER TABLE public.lista_proprietarios_captacao ADD COLUMN url_anuncio TEXT NULL; COMMENT ON COLUMN public.lista_proprietarios_captacao.url_anuncio IS 'Link do portal onde o imóvel está anunciado';

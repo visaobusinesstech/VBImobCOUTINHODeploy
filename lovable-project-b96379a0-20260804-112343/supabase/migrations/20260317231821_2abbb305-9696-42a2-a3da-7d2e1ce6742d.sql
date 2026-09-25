@@ -1,0 +1,1 @@
+ALTER TABLE public.contratos ADD COLUMN caucao_valor numeric DEFAULT 0, ADD COLUMN caucao_quantidade integer DEFAULT 1;

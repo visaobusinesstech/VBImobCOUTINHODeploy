@@ -1,0 +1,1 @@
+ALTER TABLE public.compromissos ADD COLUMN IF NOT EXISTS resultado_cliente text;

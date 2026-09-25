@@ -75,14 +75,37 @@ import Project from "../models/Project";
 import ConvertedLead from "../models/ConvertedLead";
 import LeadSale from "../models/LeadSale";
 import Proprietario from "../models/Proprietario";
+import ProprietarioFamiliar from "../models/ProprietarioFamiliar";
 import Imovel from "../models/Imovel";
 import Contrato from "../models/Contrato";
+import ContratoAnexoAnual from "../models/ContratoAnexoAnual";
+import ContratoComprovanteMensal from "../models/ContratoComprovanteMensal";
 import RealtyFollowup from "../models/RealtyFollowup";
+import RealtyFollowupMessageTemplate from "../models/RealtyFollowupMessageTemplate";
 import RealtyVisita from "../models/RealtyVisita";
+import RealtyCompromisso from "../models/RealtyCompromisso";
 import RealtyProposta from "../models/RealtyProposta";
 import RealtyLeadImovelEnvio from "../models/RealtyLeadImovelEnvio";
 import RealtyNutricao from "../models/RealtyNutricao";
+import RealtyNutricaoFluxo from "../models/RealtyNutricaoFluxo";
+import RealtyNutricaoEtapa from "../models/RealtyNutricaoEtapa";
+import RealtyNutricaoInscricao from "../models/RealtyNutricaoInscricao";
+import RealtyNutricaoEnvio from "../models/RealtyNutricaoEnvio";
+import RealtyNutricaoEvento from "../models/RealtyNutricaoEvento";
+import RealtyNutricaoMetaConfig from "../models/RealtyNutricaoMetaConfig";
+import RealtyNutricaoMetaAlerta from "../models/RealtyNutricaoMetaAlerta";
 import RealtyProspeccao from "../models/RealtyProspeccao";
+import RealtyProspeccaoDiaria from "../models/RealtyProspeccaoDiaria";
+import RealtyConsultaCpf from "../models/RealtyConsultaCpf";
+import RealtyTransacao from "../models/RealtyTransacao";
+import RealtyInadimplenciaAlerta from "../models/RealtyInadimplenciaAlerta";
+import RealtyClienteRelacionamento from "../models/RealtyClienteRelacionamento";
+import RealtyMensagemTemplate from "../models/RealtyMensagemTemplate";
+import RealtyCaptacao from "../models/RealtyCaptacao";
+import RealtyCondominioIniciativa from "../models/RealtyCondominioIniciativa";
+import RealtyCondominioIniciativaLog from "../models/RealtyCondominioIniciativaLog";
+import RealtyCondominioContato from "../models/RealtyCondominioContato";
+import RealtyAvaliacaoHistorico from "../models/RealtyAvaliacaoHistorico";
 import RealtyAutomacaoFollowup from "../models/RealtyAutomacaoFollowup";
 import RealtyFilaConfig from "../models/RealtyFilaConfig";
 import {
@@ -93,6 +116,8 @@ import {
   SeoConteudo
 } from "../models/RealtyIntel";
 import RealtyModulo from "../models/RealtyModulo";
+import RealtyCorretorPermissao from "../models/RealtyCorretorPermissao";
+import RealtyCorretorAtribuicaoRegra from "../models/RealtyCorretorAtribuicaoRegra";
 import EmailTemplate from "../models/EmailTemplate";
 import EmailContact from "../models/EmailContact";
 import EmailCampaign from "../models/EmailCampaign";
@@ -265,14 +290,37 @@ const models = [
   ConvertedLead,
   LeadSale,
   Proprietario,
+  ProprietarioFamiliar,
   Imovel,
   Contrato,
+  ContratoAnexoAnual,
+  ContratoComprovanteMensal,
   RealtyFollowup,
+  RealtyFollowupMessageTemplate,
   RealtyVisita,
+  RealtyCompromisso,
   RealtyProposta,
   RealtyLeadImovelEnvio,
   RealtyNutricao,
+  RealtyNutricaoFluxo,
+  RealtyNutricaoEtapa,
+  RealtyNutricaoInscricao,
+  RealtyNutricaoEnvio,
+  RealtyNutricaoEvento,
+  RealtyNutricaoMetaConfig,
+  RealtyNutricaoMetaAlerta,
   RealtyProspeccao,
+  RealtyProspeccaoDiaria,
+  RealtyConsultaCpf,
+  RealtyTransacao,
+  RealtyInadimplenciaAlerta,
+  RealtyClienteRelacionamento,
+  RealtyMensagemTemplate,
+  RealtyCaptacao,
+  RealtyCondominioIniciativa,
+  RealtyCondominioIniciativaLog,
+  RealtyCondominioContato,
+  RealtyAvaliacaoHistorico,
   RealtyAutomacaoFollowup,
   RealtyFilaConfig,
   RadarZapGrupo,
@@ -281,6 +329,8 @@ const models = [
   ImovelMercado,
   SeoConteudo,
   RealtyModulo,
+  RealtyCorretorPermissao,
+  RealtyCorretorAtribuicaoRegra,
   EmailTemplate,
   EmailTemplateAttachment,
   EmailContact,

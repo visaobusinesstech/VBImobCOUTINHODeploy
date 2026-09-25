@@ -1,0 +1,424 @@
+/* CRM Condomínios — estilos sobre realty-theme (VBSolution) */
+
+.realty-condo-title-icon {
+  display: inline-block;
+  vertical-align: -4px;
+  margin-right: 6px;
+  color: #2673d9;
+}
+
+.realty-condo-kpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+@media (min-width: 900px) {
+  .realty-condo-kpis {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+.realty-condo-kpi-icon {
+  display: inline-flex;
+  margin-right: 4px;
+  vertical-align: -2px;
+}
+
+.realty-condo-kpi-value--danger,
+.realty-condo-kpi--danger .realty-metric-card__value {
+  color: #e11d48;
+}
+
+.realty-condo-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  min-height: 0;
+  flex: 1;
+}
+
+@media (min-width: 1024px) {
+  .realty-condo-layout {
+    grid-template-columns: 340px 1fr;
+  }
+}
+
+.realty-condo-list,
+.realty-condo-detail {
+  display: flex;
+  flex-direction: column;
+  min-height: 420px;
+  max-height: 70vh;
+  overflow: hidden;
+}
+
+.realty-condo-list__search {
+  position: relative;
+  padding: 12px 12px 8px;
+}
+
+.realty-condo-list__search .realty-page__search {
+  width: 100%;
+  padding-left: 34px;
+}
+
+.realty-condo-list__search-icon {
+  position: absolute;
+  left: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #737d8c;
+  pointer-events: none;
+}
+
+.realty-condo-list__scroll {
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.realty-condo-list__ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.realty-condo-list__item {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  text-align: left;
+  border: 0;
+  border-bottom: 1px solid #eef1f6;
+  background: transparent;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-family: inherit;
+  color: inherit;
+}
+
+.realty-condo-list__item:hover {
+  background: #f3f6fb;
+}
+
+.realty-condo-list__item.is-selected {
+  background: #eaf2fc;
+}
+
+.realty-condo-list__nome {
+  font-weight: 600;
+  font-size: 13px;
+  color: #2b3340;
+}
+
+.realty-condo-list__item-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.realty-condo-detail__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px 8px;
+}
+
+.realty-condo-detail__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 650;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #2b3340;
+}
+
+.realty-condo-detail__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.realty-condo-detail .realty-tabs {
+  margin: 0 12px 8px;
+}
+
+.realty-condo-tab {
+  padding: 8px 14px 16px;
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.realty-condo-row {
+  border: 1px solid #e2e6ee;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  background: #fff;
+}
+
+.realty-condo-row--late {
+  border-color: #fda4af;
+  background: #fff1f2;
+}
+
+.realty-condo-row__title {
+  font-weight: 600;
+  font-size: 13px;
+  color: #2b3340;
+}
+
+.realty-condo-row__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.realty-condo-icon-btn {
+  height: 32px !important;
+  min-width: 32px;
+  padding: 0 8px !important;
+}
+
+.realty-condo-status-select {
+  flex: 0 1 150px;
+  min-width: 120px;
+  height: 32px;
+}
+
+.realty-condo-muted {
+  font-size: 12px;
+  color: #737d8c;
+  margin: 2px 0 0;
+}
+
+.realty-condo-pad {
+  padding: 16px;
+}
+
+.realty-condo-capitalize {
+  text-transform: capitalize;
+}
+
+.realty-condo-mr {
+  margin-right: 8px;
+}
+
+.realty-condo-inline-icon {
+  display: inline;
+  vertical-align: -1px;
+  margin-right: 4px;
+}
+
+.realty-condo-late-text {
+  font-size: 12px;
+  color: #be123c;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.realty-condo-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  text-transform: capitalize;
+}
+
+.realty-condo-badge--slate {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.realty-condo-badge--blue {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.realty-condo-badge--amber {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.realty-condo-badge--emerald {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.realty-condo-badge--rose {
+  background: #ffe4e6;
+  color: #be123c;
+}
+
+.realty-condo-badge--muted {
+  background: #f4f4f5;
+  color: #71717a;
+}
+
+.realty-condo-perf__kpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+@media (min-width: 700px) {
+  .realty-condo-perf__kpis {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.realty-condo-perf__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+@media (min-width: 900px) {
+  .realty-condo-perf__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.realty-condo-breakdown {
+  padding: 12px;
+}
+
+.realty-condo-breakdown__title {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.realty-condo-breakdown__row {
+  margin-bottom: 6px;
+}
+
+.realty-condo-breakdown__labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  gap: 8px;
+}
+
+.realty-condo-bar {
+  height: 6px;
+  background: #eef1f6;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 3px;
+}
+
+.realty-condo-bar__fill {
+  height: 100%;
+  background: #2673d9;
+  border-radius: 999px;
+}
+
+.realty-condo-spin {
+  animation: realty-condo-spin 0.8s linear infinite;
+}
+
+@keyframes realty-condo-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.realty-condo-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(43, 51, 64, 0.45);
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.realty-condo-modal {
+  background: #fff;
+  border-radius: 16px;
+  width: min(640px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+  padding: 20px;
+  box-shadow: 0 16px 40px rgba(43, 51, 64, 0.18);
+}
+
+.realty-condo-modal h3 {
+  margin: 0 0 4px;
+  font-size: 18px;
+  color: #2b3340;
+}
+
+.realty-condo-form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+@media (min-width: 600px) {
+  .realty-condo-form-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.realty-condo-form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.realty-condo-form-grid .realty-page__search {
+  width: 100%;
+  font-weight: 400;
+}
+
+.realty-condo-span2 {
+  grid-column: 1 / -1;
+}
+
+.realty-condo-textarea {
+  min-height: 80px;
+  height: auto !important;
+  padding: 10px 12px !important;
+  resize: vertical;
+}
+
+.realty-condo-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.realty-page__header-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}

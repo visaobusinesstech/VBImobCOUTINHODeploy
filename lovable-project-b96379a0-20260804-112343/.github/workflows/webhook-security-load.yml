@@ -1,0 +1,53 @@
+name: webhookSecurity · load bench
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "supabase/functions/_shared/webhookSecurity.ts"
+      - "supabase/functions/_shared/webhookSecurity.load.bench.ts"
+      - ".github/workflows/webhook-security-load.yml"
+  workflow_dispatch:
+    inputs:
+      iterations:
+        description: "Total de validações por cenário"
+        default: "5000"
+      tenants:
+        description: "Número de tenants simulados"
+        default: "10"
+      providers:
+        description: "Providers por tenant"
+        default: "3"
+
+jobs:
+  load:
+    name: Cache on vs off
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Run load bench
+        env:
+          LOAD_ITERATIONS: ${{ github.event.inputs.iterations || '5000' }}
+          LOAD_TENANTS: ${{ github.event.inputs.tenants || '10' }}
+          LOAD_PROVIDERS: ${{ github.event.inputs.providers || '3' }}
+          LOAD_CONCURRENCY: "32"
+          # Regressão bloqueia merge: cache deve reduzir DB em >=80%
+          # (ratio <= 0.20) e não pode piorar a latência avg (<= 1.0x).
+          LOAD_MAX_DB_RATIO: "0.20"
+          LOAD_MAX_LAT_RATIO: "1.00"
+        run: deno run -A supabase/functions/_shared/webhookSecurity.load.bench.ts
+
+      - name: Upload load report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: webhook-security-load-report
+          path: coverage/webhook-security/load-report.json
+          retention-days: 30

@@ -45,16 +45,36 @@ describe("entrega CRM unificado (12-MENU)", () => {
 
   it("realty module pages export required screens", () => {
     [
-      "export const Condominios",
-      "export const Avaliacao",
-      "export const AgendaImobiliaria",
-      "export const Corretores",
+      "Condominios",
+      "Avaliacao",
+      "AgendaImobiliaria",
+      "export { default as Corretores }",
       "export const RadarZapOnboarding",
       "export const Automacoes",
       "export const Seguranca",
-      "export const ComparativoImoveis",
+      "ComparativoImoveis",
       "export const JornadaCliente"
     ].forEach((line) => expect(modules).toContain(line));
+  });
+
+  it("agenda imobiliária page exists with Lovable-parity form fields", () => {
+    const agenda = read("pages/AgendaImobiliaria/CompromissoFormDialog.js");
+    [
+      "Título",
+      "Tipo",
+      "Hora início",
+      "Hora fim",
+      "Local",
+      "Prioridade",
+      "Link Google Maps",
+      "E-mail do cliente",
+      "Lead (opcional)",
+      "Corretor (opcional)",
+      "Observações",
+      "Lembrete WhatsApp",
+      "Telefone para lembrete"
+    ].forEach((label) => expect(agenda).toContain(label));
+    expect(agenda).toContain("TIPOS_COMPROMISSO");
   });
 
   it("VBSolution does not import the Vite project/ folder", () => {

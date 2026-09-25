@@ -1,0 +1,1 @@
+DELETE FROM imoveis_mercado WHERE bairro IS NULL OR TRIM(bairro) = '' OR LOWER(bairro) LIKE '%setor sul casa%';

@@ -1,0 +1,562 @@
+/**
+ * Copyright (c) Visão Business. Todos os direitos reservados.
+ * Consulta CPF — design VBSolution + paridade funcional Lovable ConsultaCPFWidget.
+ */
+
+.consulta-cpf-page {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.consulta-cpf-card {
+  background: #fff;
+  border: 1px solid #e2e6ee;
+  border-radius: 16px;
+  padding: 20px 22px;
+  box-shadow: 0 1px 2px rgba(43, 51, 64, 0.04);
+}
+
+.consulta-cpf-card__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.consulta-cpf-card__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(38, 115, 217, 0.12);
+  color: #2673d9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.consulta-cpf-card__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 650;
+  color: #2b3340;
+  letter-spacing: -0.02em;
+}
+
+.consulta-cpf-card__sub {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #737d8c;
+}
+
+.consulta-cpf-card__sub span {
+  opacity: 0.65;
+}
+
+.consulta-cpf-form-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.consulta-cpf-input-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.consulta-cpf-input-wrap svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #8b95a5;
+  pointer-events: none;
+}
+
+.consulta-cpf-input {
+  width: 100%;
+  height: 42px;
+  border: 1px solid #e2e6ee;
+  border-radius: 12px;
+  padding: 0 12px 0 38px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 15px;
+  color: #2b3340;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.consulta-cpf-input:focus {
+  outline: none;
+  border-color: #2673d9;
+  box-shadow: 0 0 0 3px rgba(38, 115, 217, 0.15);
+}
+
+.consulta-cpf-lgpd {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 12px;
+  cursor: pointer;
+}
+
+.consulta-cpf-lgpd input {
+  margin-top: 2px;
+  width: 16px;
+  height: 16px;
+  accent-color: #2673d9;
+  flex-shrink: 0;
+}
+
+.consulta-cpf-lgpd span {
+  font-size: 11px;
+  line-height: 1.35;
+  color: #737d8c;
+}
+
+.consulta-cpf-banner {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 2px solid;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  position: relative;
+}
+
+.consulta-cpf-banner--warn {
+  border-color: rgba(217, 119, 6, 0.55);
+  background: rgba(217, 119, 6, 0.1);
+}
+
+.consulta-cpf-banner--danger {
+  border-color: rgba(220, 38, 38, 0.35);
+  background: rgba(220, 38, 38, 0.08);
+}
+
+.consulta-cpf-banner--ok {
+  border-color: rgba(22, 163, 74, 0.35);
+  background: rgba(22, 163, 74, 0.08);
+}
+
+.consulta-cpf-banner__label {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #737d8c;
+}
+
+.consulta-cpf-banner__value {
+  margin: 2px 0 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.consulta-cpf-banner__value--danger {
+  color: #dc2626;
+}
+
+.consulta-cpf-banner__value--ok {
+  color: #16a34a;
+}
+
+.consulta-cpf-banner__hint {
+  margin: 2px 0 0;
+  font-size: 10px;
+  color: #737d8c;
+}
+
+.consulta-cpf-pdf-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid #e2e6ee;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  color: #2b3340;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.consulta-cpf-pdf-btn:hover {
+  background: #f7f9fc;
+}
+
+.consulta-cpf-section {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #e2e6ee;
+  background: #fff;
+}
+
+.consulta-cpf-section__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.consulta-cpf-section__title {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #2b3340;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.consulta-cpf-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  border: 1px solid #e2e6ee;
+  background: #f7f9fc;
+  color: #2b3340;
+}
+
+.consulta-cpf-chip--danger {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+.consulta-cpf-chip--ok {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #16a34a;
+}
+
+.consulta-cpf-chip--primary {
+  background: rgba(38, 115, 217, 0.1);
+  border-color: rgba(38, 115, 217, 0.25);
+  color: #2673d9;
+}
+
+.consulta-cpf-score-bar {
+  height: 8px;
+  background: #eef1f6;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.consulta-cpf-score-bar__fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.7s ease;
+}
+
+.consulta-cpf-score-bar__fill--success {
+  background: #16a34a;
+}
+
+.consulta-cpf-score-bar__fill--warning {
+  background: #d97706;
+}
+
+.consulta-cpf-score-bar__fill--danger {
+  background: #dc2626;
+}
+
+.consulta-cpf-score-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.consulta-cpf-score-row span:first-child {
+  font-size: 10px;
+  color: #737d8c;
+}
+
+.consulta-cpf-score-row span:last-child {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.consulta-cpf-score-row span.tone-success {
+  color: #16a34a;
+}
+.consulta-cpf-score-row span.tone-warning {
+  color: #d97706;
+}
+.consulta-cpf-score-row span.tone-danger {
+  color: #dc2626;
+}
+
+.consulta-cpf-bureau {
+  margin-top: 10px;
+  padding: 14px;
+  border-radius: 12px;
+  border: 2px solid;
+}
+
+.consulta-cpf-bureau--ok {
+  border-color: rgba(22, 163, 74, 0.28);
+  background: rgba(22, 163, 74, 0.04);
+}
+
+.consulta-cpf-bureau--danger {
+  border-color: rgba(220, 38, 38, 0.28);
+  background: rgba(220, 38, 38, 0.04);
+}
+
+.consulta-cpf-bureau__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  gap: 8px;
+}
+
+.consulta-cpf-bureau__name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #2b3340;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.consulta-cpf-bureau-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.consulta-cpf-mini {
+  border-radius: 10px;
+  border: 1px solid #e2e6ee;
+  background: #fff;
+  padding: 10px 12px;
+}
+
+.consulta-cpf-mini__label {
+  margin: 0;
+  font-size: 10px;
+  color: #737d8c;
+  font-weight: 600;
+}
+
+.consulta-cpf-mini__value {
+  margin: 2px 0 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.consulta-cpf-detail {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  background: #fff;
+}
+
+.consulta-cpf-detail__title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 650;
+  color: #dc2626;
+}
+
+.consulta-cpf-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 16px;
+  margin-top: 8px;
+}
+
+@media (min-width: 560px) {
+  .consulta-cpf-detail-grid--3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .consulta-cpf-detail-grid--4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.consulta-cpf-detail-grid p {
+  margin: 0;
+}
+
+.consulta-cpf-detail-grid .lbl {
+  font-size: 10px;
+  color: #737d8c;
+}
+
+.consulta-cpf-detail-grid .val {
+  font-size: 11px;
+  font-weight: 600;
+  color: #2b3340;
+}
+
+.consulta-cpf-empty-ok {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(22, 163, 74, 0.08);
+  border: 1px solid rgba(22, 163, 74, 0.2);
+  color: #16a34a;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.consulta-cpf-tips {
+  margin-top: 12px;
+  padding: 16px;
+  border-radius: 14px;
+  border: 2px solid rgba(38, 115, 217, 0.28);
+  background: rgba(38, 115, 217, 0.04);
+}
+
+.consulta-cpf-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #e2e6ee;
+  background: #fff;
+  margin-top: 8px;
+}
+
+.consulta-cpf-tip--ok {
+  background: rgba(22, 163, 74, 0.08);
+  border-color: rgba(22, 163, 74, 0.2);
+}
+
+.consulta-cpf-tip h4 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 650;
+  color: #2b3340;
+}
+
+.consulta-cpf-tip p {
+  margin: 2px 0 0;
+  font-size: 10px;
+  color: #737d8c;
+}
+
+.consulta-cpf-actions {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+@media (min-width: 560px) {
+  .consulta-cpf-actions {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.consulta-cpf-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  border-radius: 10px;
+  border: 0;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.consulta-cpf-action--primary {
+  background: #2673d9;
+  color: #fff;
+}
+
+.consulta-cpf-action--ok {
+  background: #16a34a;
+  color: #fff;
+}
+
+.consulta-cpf-action--ghost {
+  background: #fff;
+  color: #2b3340;
+  border: 1px solid #e2e6ee;
+}
+
+.consulta-cpf-footer-meta {
+  margin-top: 12px;
+  font-size: 10px;
+  color: #737d8c;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.consulta-cpf-error {
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  background: rgba(220, 38, 38, 0.06);
+  color: #dc2626;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.consulta-cpf-pendencias {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.18);
+}
+
+.consulta-cpf-pendencias p {
+  margin: 0 0 4px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #dc2626;
+}
+
+.consulta-cpf-pendencias li {
+  font-size: 10px;
+  color: #737d8c;
+  margin-left: 14px;
+}
+
+.consulta-cpf-warn-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #d97706;
+}
+
+.consulta-cpf-warn-body {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #737d8c;
+  line-height: 1.45;
+}

@@ -30,19 +30,18 @@ function ensureDistMigrations() {
     process.exit(1);
   }
 
-  // Copia migrations .js-only de src que o tsc não emite
+  // Sempre sincroniza migrations .js de src → dist (tsc não emite .js-only;
+  // sobrescrever evita dist desatualizado sem checks idempotentes).
   const srcFiles = fs.readdirSync(srcDir).filter(f => f.endsWith(".js"));
   let copied = 0;
   for (const file of srcFiles) {
     const from = path.join(srcDir, file);
     const to = path.join(distDir, file);
-    if (!fs.existsSync(to)) {
-      fs.copyFileSync(from, to);
-      copied += 1;
-    }
+    fs.copyFileSync(from, to);
+    copied += 1;
   }
   if (copied > 0) {
-    console.log(`[migrate] Copiadas ${copied} migrations .js de src → dist`);
+    console.log(`[migrate] Sincronizadas ${copied} migrations .js de src → dist`);
   }
 
   const count = fs.readdirSync(distDir).filter(f => f.endsWith(".js")).length;

@@ -1,0 +1,204 @@
+name: PDF Premium · regressão noturna
+
+# Roda a suíte completa de regressão do PDF de avaliação premium todas as
+# noites, mesmo sem commits. Pega quebras causadas por fatores externos
+# (atualização de dependências, mudança de runner/Bun, drift de ambiente).
+
+on:
+  schedule:
+    # 03:20 UTC = 00:20 em Brasília
+    - cron: "20 3 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: pdf-premium-nightly
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  checks: write
+  issues: write
+  security-events: write
+
+jobs:
+  suite-completa:
+    name: suíte completa (sem shard) + cobertura
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      # Sem cache de node_modules: a execução noturna deve instalar do zero
+      # para detectar quebras vindas de dependências.
+      - name: Install JS dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Rodar suíte completa de regressão do PDF
+        id: testes
+        run: |
+          bunx vitest run \
+            --reporter=default \
+            --reporter=junit \
+            --outputFile=./pdf-premium-junit.xml \
+            --coverage \
+            --coverage.reportsDirectory=./coverage-nightly \
+            --coverage.reporter=json \
+            --coverage.thresholds.lines=0 \
+            --coverage.thresholds.statements=0 \
+            --coverage.thresholds.functions=0 \
+            --coverage.thresholds.branches=0 \
+            src/lib/exportAvaliacaoPremiumPDF \
+            src/test/avaliacaoComparaveis.test.ts
+
+      - name: Consolidar métricas de cobertura
+        if: always()
+        run: bun scripts/mergeCoverage.ts coverage-nightly coverage-merged || true
+
+      - name: Publicar cobertura no resumo do job
+        if: always()
+        run: cat coverage-merged/resumo.md >> "$GITHUB_STEP_SUMMARY" || true
+
+      - name: Baixar baseline da noturna anterior
+        if: always()
+        continue-on-error: true
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          workflow: pdf-premium-nightly.yml
+          name: pdf-premium-nightly-review
+          path: pdf-baseline
+          search_artifacts: true
+          if_no_artifact_found: warn
+
+      - name: Gerar artefatos de revisão (PDFs, resumo HTML e comparação)
+        if: always()
+        env:
+          PDF_ARTIFACT_NAME: pdf-premium-nightly-review
+        run: bun scripts/pdfTestArtifacts.ts pdf-premium-junit.xml pdf-test-artifacts pdf-baseline
+
+      - name: Upload artefatos de revisão (PDFs + HTML)
+        if: always()
+        id: upload_review
+        uses: actions/upload-artifact@v4
+        with:
+          name: pdf-premium-nightly-review
+          path: pdf-test-artifacts/
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Upload métricas de cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pdf-premium-nightly-coverage
+          path: coverage-merged/
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Upload JUnit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pdf-premium-nightly-junit
+          path: pdf-premium-junit.xml
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Anotar falhas nos arquivos de teste
+        if: always()
+        env:
+          PDF_ARTIFACT_URL: ${{ steps.upload_review.outputs.artifact-url }}
+          PDF_ARTIFACT_NAME: pdf-premium-nightly-review
+          PDF_ARTIFACTS_DIR: pdf-test-artifacts
+        run: bun scripts/annotateJunit.ts pdf-premium-junit.xml
+
+      # Notifica Slack/e-mail quando um cenário muda no PDF ou um teste quebra.
+      - name: Notificar mudanças e falhas (Slack/e-mail)
+        if: always()
+        continue-on-error: true
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          PDF_NOTIFY_EMAIL_TO: ${{ secrets.PDF_NOTIFY_EMAIL_TO }}
+          PDF_NOTIFY_EMAIL_FROM: ${{ vars.PDF_NOTIFY_EMAIL_FROM }}
+          PDF_ARTIFACT_NAME: pdf-premium-nightly-review
+        run: bun scripts/notifyPdfChanges.ts pdf-test-artifacts
+
+      # Exporta as falhas em SARIF para o GitHub Code Scanning destacar as linhas.
+      - name: Gerar SARIF das falhas
+        if: always()
+        env:
+          PDF_ARTIFACT_URL: ${{ steps.upload_review.outputs.artifact-url }}
+          PDF_ARTIFACT_NAME: pdf-premium-nightly-review
+          PDF_ARTIFACTS_DIR: pdf-test-artifacts
+        run: bun scripts/junitToSarif.ts pdf-premium-junit.xml pdf-premium.sarif
+
+      - name: Publicar SARIF no Code Scanning
+        if: always()
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: pdf-premium.sarif
+          category: pdf-premium-tests
+
+      - name: Upload SARIF como artefato
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pdf-premium-nightly-review-sarif
+          path: pdf-premium.sarif
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Publicar resultado como check
+        if: always()
+        uses: mikepenz/action-junit-report@v4
+        with:
+          report_paths: pdf-premium-junit.xml
+          check_name: "PDF Premium · regressão noturna"
+          require_tests: true
+          fail_on_failure: true
+          detailed_summary: true
+
+      # Abre (ou atualiza) uma única issue quando a noturna quebra, para o
+      # time ver a falha sem depender de olhar o Actions.
+      - name: Abrir issue em caso de falha
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const titulo = "PDF Premium · regressão noturna falhou";
+            const corpo = [
+              `A execução noturna da suíte de regressão do PDF falhou.`,
+              ``,
+              `- Workflow: ${context.workflow}`,
+              `- Execução: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              `- Commit: ${context.sha}`,
+              ``,
+              `Baixe o artefato **pdf-premium-nightly-review** para ver o resumo HTML e os PDFs dos cenários que falharam.`,
+            ].join("\n");
+            const { data: abertas } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              labels: "pdf-premium-nightly",
+            });
+            if (abertas.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: abertas[0].number,
+                body: corpo,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: titulo,
+                body: corpo,
+                labels: ["pdf-premium-nightly"],
+              });
+            }

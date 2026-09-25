@@ -1,7 +1,7 @@
 import { analyzeRadarZapMessage } from "../helpers/radarZapAnalyze";
 import { buildPortalSearchUrl, parseListingHtml, qScoreListing } from "../helpers/portalScraper";
 import { computeSeoChecks, generateSeoContent } from "../helpers/seoContent";
-import { estimateAvaliacao } from "../helpers/avaliacaoImovel";
+import { estimateAvaliacao, buildAvaliacaoLaudo, validarDescricaoBackendShape } from "../helpers/avaliacaoImovel";
 
 describe("radarZapAnalyze", () => {
   it("extracts sale listing from whatsapp text", () => {
@@ -73,5 +73,34 @@ describe("avaliacaoImovel", () => {
     const { parecer, desvio } = estimateAvaliacao(800000, 80, 4000);
     expect(desvio).toBeGreaterThan(15);
     expect(parecer).toContain("acima");
+  });
+
+  it("builds lovable-shaped laudo", () => {
+    const { avaliacao, valorJusto } = buildAvaliacaoLaudo({
+      preco: 500000,
+      area: 80,
+      precoM2Mercado: 6000,
+      tipo: "Apartamento",
+      operacao: "Venda",
+      bairro: "Águas Claras",
+      cidade: "Brasília",
+      quartos: 3,
+      vagas: 2,
+      descricao: "Apartamento amplo com vista livre, acabamento em porcelanato e duas vagas.",
+      comparaveisCount: 6
+    });
+    expect(valorJusto).toBe(480000);
+    expect(avaliacao.valor_minimo).toBeLessThan(avaliacao.valor_ideal);
+    expect(avaliacao.valor_maximo).toBeGreaterThan(avaliacao.valor_ideal);
+    expect(avaliacao.pontos_fortes.length).toBeGreaterThan(0);
+    expect(avaliacao.portais_recomendados).toContain("ZAP Imóveis");
+    expect(["alta", "media", "baixa"]).toContain(avaliacao.classificacao_liquidez);
+  });
+
+  it("blocks short description like lovable edge", () => {
+    expect(validarDescricaoBackendShape("")).toMatchObject({ code: "DESCRICAO_OBRIGATORIA" });
+    expect(validarDescricaoBackendShape("curta")).toMatchObject({ code: "DESCRICAO_ABAIXO_MINIMO" });
+    const ok = "x".repeat(40);
+    expect(validarDescricaoBackendShape(ok)).toBeNull();
   });
 });
