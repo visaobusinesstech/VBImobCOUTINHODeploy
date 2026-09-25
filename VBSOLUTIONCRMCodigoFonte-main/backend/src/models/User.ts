@@ -114,6 +114,10 @@ class User extends Model<User> {
   @Column
   defaultTheme: string;
 
+  @Default({})
+  @Column(DataType.JSONB)
+  uiPreferences: Record<string, unknown>;
+
   @Default("closed")
   @Column
   defaultMenu: string;

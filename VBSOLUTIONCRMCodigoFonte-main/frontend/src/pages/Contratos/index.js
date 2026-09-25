@@ -73,6 +73,7 @@ import {
 } from "../../helpers/contratoFilePreview";
 import toastError from "../../errors/toastError";
 import { toast } from "react-toastify";
+import { useUserUiPreferences } from "../../hooks/useUserUiPreferences";
 
 const formatDate = (d) => {
   if (!d) return "—";
@@ -313,6 +314,7 @@ const MetricsSummary = ({ items }) => {
 };
 
 const Contratos = () => {
+  const { getPref, setPref, ready } = useUserUiPreferences();
   const [contratos, setContratos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
@@ -325,13 +327,7 @@ const Contratos = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [importOpen, setImportOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState(() => {
-    try {
-      return sessionStorage.getItem("contratos_active_tab") || "todos";
-    } catch {
-      return "todos";
-    }
-  });
+  const [activeTab, setActiveTab] = useState("todos");
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerLoading, setViewerLoading] = useState(false);
   const [viewerFile, setViewerFile] = useState(null);
@@ -340,6 +336,11 @@ const Contratos = () => {
   useEffect(() => {
     didInitialRenderRef.current = true;
   }, []);
+
+  useEffect(() => {
+    if (!ready) return;
+    setActiveTab(getPref("contratos_active_tab", "todos"));
+  }, [ready, getPref]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -362,11 +363,7 @@ const Contratos = () => {
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    try {
-      sessionStorage.setItem("contratos_active_tab", tab);
-    } catch {
-      /* ignore */
-    }
+    setPref("contratos_active_tab", tab);
   };
 
   const alertas = useMemo(() => {

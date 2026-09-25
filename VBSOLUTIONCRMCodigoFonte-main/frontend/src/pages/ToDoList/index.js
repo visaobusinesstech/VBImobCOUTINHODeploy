@@ -15,6 +15,9 @@ import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import EditIcon from '@material-ui/icons/Edit';
+import { useUserUiPreferences } from '../../hooks/useUserUiPreferences';
+
+const TASKS_KEY = 'todo_tasks';
 
 const useStyles = makeStyles((theme)=> ({
   root: {
@@ -45,23 +48,34 @@ const useStyles = makeStyles((theme)=> ({
   }
 }));
 
+const hydrateTasks = (saved) => {
+  if (!Array.isArray(saved)) return [];
+  return saved.map((t) => ({
+    ...t,
+    createdAt: t.createdAt ? new Date(t.createdAt) : new Date(),
+    updatedAt: t.updatedAt ? new Date(t.updatedAt) : new Date(),
+  }));
+};
+
 const ToDoList = () => {
   const classes = useStyles();
+  const { getPref, setPref, ready } = useUserUiPreferences();
 
   const [task, setTask] = useState('');
   const [tasks, setTasks] = useState([]);
   const [editIndex, setEditIndex] = useState(-1);
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    const savedTasks = localStorage.getItem('tasks');
-    if (savedTasks) {
-      setTasks(JSON.parse(savedTasks));
-    }
-  }, []);
+    if (!ready) return;
+    setTasks(hydrateTasks(getPref(TASKS_KEY, [])));
+    setHydrated(true);
+  }, [ready, getPref]);
 
   useEffect(() => {
-    localStorage.setItem('tasks', JSON.stringify(tasks));
-  }, [tasks]);
+    if (!hydrated) return;
+    setPref(TASKS_KEY, tasks);
+  }, [tasks, hydrated, setPref]);
 
   const handleTaskChange = (event) => {
     setTask(event.target.value);
@@ -69,20 +83,17 @@ const ToDoList = () => {
 
   const handleAddTask = () => {
     if (!task.trim()) {
-      // Impede que o usuário crie uma tarefa sem texto
       return;
     }
 
     const now = new Date();
     if (editIndex >= 0) {
-      // Editar tarefa existente
       const newTasks = [...tasks];
       newTasks[editIndex] = {text: task, updatedAt: now, createdAt: newTasks[editIndex].createdAt};
       setTasks(newTasks);
       setTask('');
       setEditIndex(-1);
     } else {
-      // Adicionar nova tarefa
       setTasks([...tasks, {text: task, createdAt: now, updatedAt: now}]);
       setTask('');
     }

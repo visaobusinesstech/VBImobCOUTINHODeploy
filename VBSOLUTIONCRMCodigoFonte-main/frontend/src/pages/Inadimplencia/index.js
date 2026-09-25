@@ -49,8 +49,10 @@ import {
   persistTab,
   loadTab,
 } from "../../helpers/inadimplenciaCrm";
+import { useUserUiPreferences } from "../../hooks/useUserUiPreferences";
 
 const Inadimplencia = () => {
+  const { getPref, setPref, ready } = useUserUiPreferences();
   const [inadimplentes, setInadimplentes] = useState([]);
   const [contratosAtivos, setContratosAtivos] = useState(0);
   const [metrics, setMetrics] = useState({
@@ -62,7 +64,7 @@ const Inadimplencia = () => {
   const [brand, setBrand] = useState({});
   const [loading, setLoading] = useState(true);
   const [filtroGravidade, setFiltroGravidade] = useState("todos");
-  const [inadTab, setInadTab] = useState(() => loadTab("inadimplencia_active_tab", "lista"));
+  const [inadTab, setInadTab] = useState("lista");
   const [gerandoAlertas, setGerandoAlertas] = useState(false);
 
   const load = useCallback(async () => {
@@ -89,9 +91,14 @@ const Inadimplencia = () => {
     load();
   }, [load]);
 
+  useEffect(() => {
+    if (!ready) return;
+    setInadTab(loadTab("inadimplencia_active_tab", "lista", getPref));
+  }, [ready, getPref]);
+
   const setTab = (id) => {
     setInadTab(id);
-    persistTab("inadimplencia_active_tab", id);
+    persistTab("inadimplencia_active_tab", id, setPref);
   };
 
   const filtrados = useMemo(

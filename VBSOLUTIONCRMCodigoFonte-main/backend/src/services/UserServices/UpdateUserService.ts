@@ -29,6 +29,7 @@ interface UserData {
   whatsappId?: number;
   allTicket?: string;
   defaultTheme?: string;
+  uiPreferences?: Record<string, unknown>;
   defaultMenu?: string;
   allowGroup?: boolean;
   allHistoric?: string;
@@ -102,6 +103,7 @@ const UpdateUserService = async ({
     whatsappId,
     allTicket,
     defaultTheme,
+    uiPreferences,
     defaultMenu,
     allowGroup,
     allHistoric,
@@ -175,6 +177,14 @@ const UpdateUserService = async ({
     whatsappId: whatsappId || null,
     allTicket: resolvedAllTicket,
     defaultTheme,
+    ...(uiPreferences !== undefined
+      ? {
+          uiPreferences: {
+            ...((user as any).uiPreferences || {}),
+            ...(uiPreferences || {})
+          }
+        }
+      : {}),
     defaultMenu,
     allowGroup,
     allHistoric: resolvedAllHistoric,
@@ -221,6 +231,7 @@ const UpdateUserService = async ({
     allTicket: user.allTicket,
     defaultMenu: user.defaultMenu,
     defaultTheme: user.defaultTheme,
+    uiPreferences: (user as any).uiPreferences || {},
     allowGroup: user.allowGroup,
     allHistoric: user.allHistoric,
     userClosePendingTicket: user.userClosePendingTicket,

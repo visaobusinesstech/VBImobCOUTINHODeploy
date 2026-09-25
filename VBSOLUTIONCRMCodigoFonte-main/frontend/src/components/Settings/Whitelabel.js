@@ -524,41 +524,41 @@ export default function Whitelabel(props) {
   const { update } = useSettings();
 
   const [draftLight, setDraftLight] = useState(
-    () => localStorage.getItem("primaryColorLight") || "#131B2D"
+    () => settingsLoaded.primaryColorLight || "#131B2D"
   );
   const [draftDark, setDraftDark] = useState(
-    () => localStorage.getItem("primaryColorDark") || "#131B2D"
+    () => settingsLoaded.primaryColorDark || "#131B2D"
   );
   /** Vazio = mesma cor da identidade (marca) para botões primários */
   const [draftButtonLight, setDraftButtonLight] = useState(
-    () => localStorage.getItem("buttonPrimaryColorLight") || ""
+    () => settingsLoaded.buttonPrimaryColorLight || ""
   );
   const [draftButtonDark, setDraftButtonDark] = useState(
-    () => localStorage.getItem("buttonPrimaryColorDark") || ""
+    () => settingsLoaded.buttonPrimaryColorDark || ""
   );
   const [draftButtonTextLight, setDraftButtonTextLight] = useState(
-    () => localStorage.getItem("buttonPrimaryTextColorLight") || ""
+    () => settingsLoaded.buttonPrimaryTextColorLight || ""
   );
   const [draftButtonTextDark, setDraftButtonTextDark] = useState(
-    () => localStorage.getItem("buttonPrimaryTextColorDark") || ""
+    () => settingsLoaded.buttonPrimaryTextColorDark || ""
   );
   const [draftSecondaryLight, setDraftSecondaryLight] = useState(
-    () => localStorage.getItem("buttonSecondaryColorLight") || ""
+    () => settingsLoaded.buttonSecondaryColorLight || ""
   );
   const [draftSecondaryDark, setDraftSecondaryDark] = useState(
-    () => localStorage.getItem("buttonSecondaryColorDark") || ""
+    () => settingsLoaded.buttonSecondaryColorDark || ""
   );
   const [draftTopbarLight, setDraftTopbarLight] = useState(
-    () => localStorage.getItem("topbarColorLight") || ""
+    () => settingsLoaded.topbarColorLight || ""
   );
   const [draftTopbarDark, setDraftTopbarDark] = useState(
-    () => localStorage.getItem("topbarColorDark") || ""
+    () => settingsLoaded.topbarColorDark || ""
   );
   const [draftSidebarLight, setDraftSidebarLight] = useState(
-    () => localStorage.getItem("sidebarColorLight") || ""
+    () => settingsLoaded.sidebarColorLight || ""
   );
   const [draftSidebarDark, setDraftSidebarDark] = useState(
-    () => localStorage.getItem("sidebarColorDark") || ""
+    () => settingsLoaded.sidebarColorDark || ""
   );
   /** Se true, ignora o contraste e mantém sempre a logo do tema claro no preview. */
   const [previewForceLightLogo, setPreviewForceLightLogo] = useState(false);
@@ -649,31 +649,6 @@ export default function Whitelabel(props) {
   ]);
 
   function updateSettingsLoaded(key, value) {
-    if (
-      key === "primaryColorLight" ||
-      key === "primaryColorDark" ||
-      key === "appName"
-    ) {
-      localStorage.setItem(key, value);
-    }
-    if (
-      key === "buttonPrimaryColorLight" ||
-      key === "buttonPrimaryColorDark" ||
-      key === "buttonPrimaryTextColorLight" ||
-      key === "buttonPrimaryTextColorDark" ||
-      key === "buttonSecondaryColorLight" ||
-      key === "buttonSecondaryColorDark" ||
-      key === "topbarColorLight" ||
-      key === "topbarColorDark" ||
-      key === "sidebarColorLight" ||
-      key === "sidebarColorDark"
-    ) {
-      if (value) {
-        localStorage.setItem(key, value);
-      } else {
-        localStorage.removeItem(key);
-      }
-    }
     const newSettings = { ...settingsLoaded };
     newSettings[key] = value;
     setSettingsLoaded(newSettings);
@@ -802,18 +777,18 @@ export default function Whitelabel(props) {
     }
     else {
       savedPaletteRef.current = {
-        light: localStorage.getItem("primaryColorLight") || "#131B2D",
-        dark: localStorage.getItem("primaryColorDark") || "#131B2D",
-        btnLight: localStorage.getItem("buttonPrimaryColorLight") || "",
-        btnDark: localStorage.getItem("buttonPrimaryColorDark") || "",
-        btnTextLight: localStorage.getItem("buttonPrimaryTextColorLight") || "",
-        btnTextDark: localStorage.getItem("buttonPrimaryTextColorDark") || "",
-        secLight: localStorage.getItem("buttonSecondaryColorLight") || "",
-        secDark: localStorage.getItem("buttonSecondaryColorDark") || "",
-        topbarLight: localStorage.getItem("topbarColorLight") || "",
-        topbarDark: localStorage.getItem("topbarColorDark") || "",
-        sidebarLight: localStorage.getItem("sidebarColorLight") || "",
-        sidebarDark: localStorage.getItem("sidebarColorDark") || "",
+        light: "#131B2D",
+        dark: "#131B2D",
+        btnLight: "",
+        btnDark: "",
+        btnTextLight: "",
+        btnTextDark: "",
+        secLight: "",
+        secDark: "",
+        topbarLight: "",
+        topbarDark: "",
+        sidebarLight: "",
+        sidebarDark: "",
       };
       setLoading(false);
     }
@@ -871,30 +846,6 @@ export default function Whitelabel(props) {
     return () => {
       const s = savedPaletteRef.current;
       if (!s) {
-        const l = localStorage.getItem("primaryColorLight") || "#131B2D";
-        const d = localStorage.getItem("primaryColorDark") || "#131B2D";
-        const bl = localStorage.getItem("buttonPrimaryColorLight") || "";
-        const bd = localStorage.getItem("buttonPrimaryColorDark") || "";
-        const btl = localStorage.getItem("buttonPrimaryTextColorLight") || "";
-        const btd = localStorage.getItem("buttonPrimaryTextColorDark") || "";
-        const bsl = localStorage.getItem("buttonSecondaryColorLight") || "";
-        const bsd = localStorage.getItem("buttonSecondaryColorDark") || "";
-        const tl = localStorage.getItem("topbarColorLight") || "";
-        const td = localStorage.getItem("topbarColorDark") || "";
-        const sl = localStorage.getItem("sidebarColorLight") || "";
-        const sd = localStorage.getItem("sidebarColorDark") || "";
-        colorMode.setPrimaryColorLight(l);
-        colorMode.setPrimaryColorDark(d);
-        colorMode.setButtonPrimaryColorLight(bl);
-        colorMode.setButtonPrimaryColorDark(bd);
-        colorMode.setButtonPrimaryTextColorLight(btl);
-        colorMode.setButtonPrimaryTextColorDark(btd);
-        colorMode.setButtonSecondaryColorLight(bsl);
-        colorMode.setButtonSecondaryColorDark(bsd);
-        colorMode.setTopbarColorLight(tl);
-        colorMode.setTopbarColorDark(td);
-        colorMode.setSidebarColorLight(sl);
-        colorMode.setSidebarColorDark(sd);
         return;
       }
       colorMode.setPrimaryColorLight(s.light);

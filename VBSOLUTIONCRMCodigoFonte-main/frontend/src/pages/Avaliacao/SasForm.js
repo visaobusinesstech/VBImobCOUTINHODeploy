@@ -16,6 +16,7 @@ import {
   contarDescricao,
   truncarDescricao,
 } from "../../helpers/avaliacaoDescricao";
+import { loadFormDraft, saveFormDraft, clearFormDraft } from "../../hooks/useUserUiPreferences";
 
 const DRAFT_KEY = "draft_v1_sas-avaliacao-form";
 
@@ -45,26 +46,36 @@ function Field({ label, children, full }) {
 }
 
 export default function SasForm({ onSubmit, initial }) {
-  const [d, setD] = useState(() => {
-    try {
-      const raw = localStorage.getItem(DRAFT_KEY);
-      if (raw) return { ...createEmptySasState(), ...JSON.parse(raw), ...(initial || {}) };
-    } catch {
-      /* ignore */
-    }
-    return { ...createEmptySasState(), ...(initial || {}) };
-  });
+  const [d, setD] = useState(() => ({ ...createEmptySasState(), ...(initial || {}) }));
+  const [draftReady, setDraftReady] = useState(false);
 
   useEffect(() => {
-    const t = setTimeout(() => {
+    let cancelled = false;
+    (async () => {
       try {
-        localStorage.setItem(DRAFT_KEY, JSON.stringify(d));
+        const raw = await loadFormDraft(DRAFT_KEY);
+        if (!cancelled && raw) {
+          setD({ ...createEmptySasState(), ...raw, ...(initial || {}) });
+        }
       } catch {
         /* ignore */
+      } finally {
+        if (!cancelled) setDraftReady(true);
       }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!draftReady) return undefined;
+    const t = setTimeout(() => {
+      saveFormDraft(DRAFT_KEY, d).catch(() => {});
     }, 400);
     return () => clearTimeout(t);
-  }, [d]);
+  }, [d, draftReady]);
 
   const set = (k, v) => setD((p) => ({ ...p, [k]: v }));
 
@@ -117,11 +128,7 @@ export default function SasForm({ onSubmit, initial }) {
   };
 
   const clearDraft = () => {
-    try {
-      localStorage.removeItem(DRAFT_KEY);
-    } catch {
-      /* ignore */
-    }
+    clearFormDraft(DRAFT_KEY).catch(() => {});
     setD(createEmptySasState());
   };
 

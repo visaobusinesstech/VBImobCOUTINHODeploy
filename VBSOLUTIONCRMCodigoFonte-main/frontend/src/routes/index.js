@@ -159,11 +159,11 @@ const RoutesContent = () => {
   const { user } = useContext(AuthContext);
 
   useEffect(() => {
-    const cshow = localStorage.getItem("cshow");
-    if (cshow !== undefined) {
+    // Campanhas: flag vem do plano/empresa (AuthContext), não de localStorage
+    if (user?.company?.plan?.useCampaigns || user?.showCampaign === "enabled") {
       setShowCampaigns(true);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     if (user?.language) {

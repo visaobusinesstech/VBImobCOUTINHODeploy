@@ -66,11 +66,11 @@ const Contacts = () => {
   };
 
   useEffect(() => {
-    const currentDueDate = localStorage.getItem("dueDate");
-    if (currentDueDate !== "" && currentDueDate !== "null") {
-      setDueDate(moment(currentDueDate).format("DD/MM/YYYY"));
+    const raw = user?.company?.dueDate;
+    if (raw) {
+      setDueDate(moment(raw).format("DD/MM/YYYY"));
     }
-  }, []);
+  }, [user?.company?.dueDate]);
 
   return (
     <MainContainer className={classes.mainContainer}>

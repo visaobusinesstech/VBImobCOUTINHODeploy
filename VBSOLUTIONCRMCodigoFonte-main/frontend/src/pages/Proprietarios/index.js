@@ -40,40 +40,41 @@ import {
 import { mediaUrl } from "../../helpers/realtyCrm";
 import toastError from "../../errors/toastError";
 import { toast } from "react-toastify";
+import { useUserUiPreferences } from "../../hooks/useUserUiPreferences";
 
 const TAB_KEY = "proprietarios_active_tab";
 const DIALOG_STATE_KEY = "proprietarios_dialog_state";
 
-const persistProprietarioDialogState = (isOpen, editId) => {
-  try {
-    if (isOpen) {
-      localStorage.setItem(DIALOG_STATE_KEY, JSON.stringify({ open: true, editId: editId || null }));
-    } else {
-      localStorage.removeItem(DIALOG_STATE_KEY);
-    }
-  } catch {
-    /* ignore */
-  }
-};
-
 const Proprietarios = () => {
   const history = useHistory();
+  const { getPref, setPref, ready } = useUserUiPreferences();
   const [proprietarios, setProprietarios] = useState([]);
   const [contratos, setContratos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [propTab, setPropTab] = useState(() => {
-    try {
-      return localStorage.getItem(TAB_KEY) || "todos";
-    } catch {
-      return "todos";
-    }
-  });
+  const [propTab, setPropTab] = useState("todos");
   const [formOpen, setFormOpen] = useState(false);
   const [editItem, setEditItem] = useState(null);
   const [deleteItem, setDeleteItem] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [prefsHydrated, setPrefsHydrated] = useState(false);
   const restoredRef = useRef(false);
+
+  const persistProprietarioDialogState = useCallback(
+    (isOpen, editId) => {
+      if (isOpen) {
+        setPref(DIALOG_STATE_KEY, { open: true, editId: editId || null });
+      } else {
+        setPref(DIALOG_STATE_KEY, null);
+      }
+    },
+    [setPref]
+  );
+
+  const changeTab = (value) => {
+    setPropTab(value);
+    setPref(TAB_KEY, value);
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -96,36 +97,28 @@ const Proprietarios = () => {
   }, [load]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(TAB_KEY, propTab);
-    } catch {
-      /* ignore */
-    }
-  }, [propTab]);
-
-  // Restaura dialog aberto após reload (paridade Lovable)
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(DIALOG_STATE_KEY);
-      if (!saved) return;
-      const state = JSON.parse(saved);
-      if (!state.open) return;
-      setFormOpen(true);
-      if (state.editId && proprietarios.length > 0 && !restoredRef.current) {
-        const found = proprietarios.find((p) => String(p.id) === String(state.editId));
-        if (found) {
-          setEditItem(found);
-          restoredRef.current = true;
-        }
-      }
-    } catch {
-      /* ignore */
-    }
-  }, [proprietarios]);
+    if (!ready) return;
+    setPropTab(getPref(TAB_KEY, "todos"));
+    const state = getPref(DIALOG_STATE_KEY, null);
+    if (state?.open) setFormOpen(true);
+    setPrefsHydrated(true);
+  }, [ready, getPref]);
 
   useEffect(() => {
+    if (!prefsHydrated || restoredRef.current) return;
+    const state = getPref(DIALOG_STATE_KEY, null);
+    if (!state?.open || !state.editId || proprietarios.length === 0) return;
+    const found = proprietarios.find((p) => String(p.id) === String(state.editId));
+    if (found) {
+      setEditItem(found);
+      restoredRef.current = true;
+    }
+  }, [proprietarios, prefsHydrated, getPref]);
+
+  useEffect(() => {
+    if (!prefsHydrated) return;
     persistProprietarioDialogState(formOpen, editItem?.id || null);
-  }, [formOpen, editItem]);
+  }, [formOpen, editItem, prefsHydrated, persistProprietarioDialogState]);
 
   const openCreate = () => {
     setEditItem(null);
@@ -169,7 +162,6 @@ const Proprietarios = () => {
       } else {
         toastError(err);
       }
-      // Mantém o formulário aberto em caso de erro/duplicado (paridade Lovable bloqueia insert)
     } finally {
       setSaving(false);
     }
@@ -449,21 +441,21 @@ const Proprietarios = () => {
           <button
             type="button"
             className={`realty-tab${propTab === "todos" ? " realty-tab--active" : ""}`}
-            onClick={() => setPropTab("todos")}
+            onClick={() => changeTab("todos")}
           >
             <Users size={14} /> Todos ({filteredProprietarios.length})
           </button>
           <button
             type="button"
             className={`realty-tab${propTab === "venda" ? " realty-tab--active" : ""}`}
-            onClick={() => setPropTab("venda")}
+            onClick={() => changeTab("venda")}
           >
             <Briefcase size={14} /> Venda ({vendaProps.length})
           </button>
           <button
             type="button"
             className={`realty-tab${propTab === "aluguel" ? " realty-tab--active" : ""}`}
-            onClick={() => setPropTab("aluguel")}
+            onClick={() => changeTab("aluguel")}
           >
             <Building2 size={14} /> Aluguel ({aluguelProps.length})
           </button>

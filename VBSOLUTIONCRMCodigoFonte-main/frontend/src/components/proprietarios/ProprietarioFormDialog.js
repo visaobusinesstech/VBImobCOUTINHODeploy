@@ -22,8 +22,9 @@ import {
   isCasadoOuUniao,
   proprietarioFromApi,
 } from "../../helpers/proprietarioCrm";
+import { loadFormDraft, saveFormDraft, clearFormDraft } from "../../hooks/useUserUiPreferences";
 
-const DRAFT_KEY = "proprietario_form_backup";
+const DRAFT_KEY = "proprietario_form";
 
 const SwitchRow = ({ checked, onChange, label }) => (
   <label className="realty-imovel-switch-row">
@@ -43,6 +44,7 @@ const ProprietarioFormDialog = ({ open, onOpenChange, proprietario, onSave, savi
   const [form, setForm] = useState(emptyProprietarioForm());
   const [familiares, setFamiliares] = useState([]);
   const [uploadingField, setUploadingField] = useState(null);
+  const [draftReady, setDraftReady] = useState(false);
   const exclusividadeInputRef = useRef(null);
   const certidaoInputRef = useRef(null);
   const isNew = !proprietario;
@@ -50,36 +52,46 @@ const ProprietarioFormDialog = ({ open, onOpenChange, proprietario, onSave, savi
   const set = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setDraftReady(false);
+      return;
+    }
     if (proprietario) {
       const mapped = proprietarioFromApi(proprietario);
       const { familiares: fams, ...rest } = mapped;
       setForm(rest);
       setFamiliares(fams || []);
-    } else {
-      setForm(emptyProprietarioForm());
-      setFamiliares([]);
+      setDraftReady(true);
+      return;
+    }
+
+    setForm(emptyProprietarioForm());
+    setFamiliares([]);
+    let cancelled = false;
+    (async () => {
       try {
-        const backup = localStorage.getItem(DRAFT_KEY);
-        if (backup) {
-          const parsed = JSON.parse(backup);
-          if (parsed?.name) setForm((prev) => ({ ...prev, ...parsed }));
+        const backup = await loadFormDraft(DRAFT_KEY);
+        if (!cancelled && backup?.name) {
+          setForm((prev) => ({ ...prev, ...backup }));
         }
       } catch {
         /* ignore */
+      } finally {
+        if (!cancelled) setDraftReady(true);
       }
-    }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [proprietario, open]);
 
   useEffect(() => {
-    if (open && isNew) {
-      try {
-        localStorage.setItem(DRAFT_KEY, JSON.stringify(form));
-      } catch {
-        /* ignore */
-      }
-    }
-  }, [form, open, isNew]);
+    if (!open || !isNew || !draftReady) return undefined;
+    const t = setTimeout(() => {
+      saveFormDraft(DRAFT_KEY, form).catch(() => {});
+    }, 400);
+    return () => clearTimeout(t);
+  }, [form, open, isNew, draftReady]);
 
   const handleFileUpload = async (file, field) => {
     setUploadingField(field);
@@ -107,7 +119,7 @@ const ProprietarioFormDialog = ({ open, onOpenChange, proprietario, onSave, savi
     const payload = buildProprietarioPayload(form, familiares);
     await onSave(payload);
     try {
-      localStorage.removeItem(DRAFT_KEY);
+      await clearFormDraft(DRAFT_KEY);
     } catch {
       /* ignore */
     }

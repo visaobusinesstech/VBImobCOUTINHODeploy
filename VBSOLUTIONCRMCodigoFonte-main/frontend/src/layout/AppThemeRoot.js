@@ -95,61 +95,31 @@ const AppThemeRoot = ({ children }) => {
     return "#3B82F6";
   };
 
-  const appColorLocalStorage = getSafeColor(
-    localStorage.getItem("primaryColorLight") ||
-    localStorage.getItem("primaryColorDark")
-  );
-  const btnLightStored = localStorage.getItem("buttonPrimaryColorLight");
-  const btnDarkStored = localStorage.getItem("buttonPrimaryColorDark");
-  const btnSecLightStored = localStorage.getItem("buttonSecondaryColorLight");
-  const btnSecDarkStored = localStorage.getItem("buttonSecondaryColorDark");
-  const appNameLocalStorage = localStorage.getItem("appName") || "";
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
-  const preferredTheme = window.localStorage.getItem("preferredTheme");
+  const userTheme =
+    user?.defaultTheme === "dark" || user?.defaultTheme === "light"
+      ? user.defaultTheme
+      : null;
   const [mode, setMode] = useState(
-    preferredTheme ? preferredTheme : prefersDarkMode ? "dark" : "light"
+    userTheme || (prefersDarkMode ? "dark" : "light")
   );
-  const [primaryColorLight, setPrimaryColorLight] =
-    useState(appColorLocalStorage);
-  const [primaryColorDark, setPrimaryColorDark] =
-    useState(appColorLocalStorage);
-  const [buttonPrimaryColorLight, setButtonPrimaryColorLight] = useState(
-    btnLightStored && isValidHex(btnLightStored) ? btnLightStored : ""
-  );
-  const [buttonPrimaryColorDark, setButtonPrimaryColorDark] = useState(
-    btnDarkStored && isValidHex(btnDarkStored) ? btnDarkStored : ""
-  );
-  const btnTextLightStored = localStorage.getItem("buttonPrimaryTextColorLight");
-  const btnTextDarkStored = localStorage.getItem("buttonPrimaryTextColorDark");
-  const [buttonPrimaryTextColorLight, setButtonPrimaryTextColorLight] = useState(
-    btnTextLightStored && isValidHex(btnTextLightStored) ? btnTextLightStored : ""
-  );
-  const [buttonPrimaryTextColorDark, setButtonPrimaryTextColorDark] = useState(
-    btnTextDarkStored && isValidHex(btnTextDarkStored) ? btnTextDarkStored : ""
-  );
-  const [buttonSecondaryColorLight, setButtonSecondaryColorLight] = useState(
-    btnSecLightStored && isValidHex(btnSecLightStored) ? btnSecLightStored : ""
-  );
-  const [buttonSecondaryColorDark, setButtonSecondaryColorDark] = useState(
-    btnSecDarkStored && isValidHex(btnSecDarkStored) ? btnSecDarkStored : ""
-  );
-  const [topbarColorLight, setTopbarColorLight] = useState(
-    () => localStorage.getItem("topbarColorLight") || ""
-  );
-  const [topbarColorDark, setTopbarColorDark] = useState(
-    () => localStorage.getItem("topbarColorDark") || ""
-  );
-  const [sidebarColorLight, setSidebarColorLight] = useState(
-    () => localStorage.getItem("sidebarColorLight") || ""
-  );
-  const [sidebarColorDark, setSidebarColorDark] = useState(
-    () => localStorage.getItem("sidebarColorDark") || ""
-  );
+  const [primaryColorLight, setPrimaryColorLight] = useState("#3B82F6");
+  const [primaryColorDark, setPrimaryColorDark] = useState("#3B82F6");
+  const [buttonPrimaryColorLight, setButtonPrimaryColorLight] = useState("");
+  const [buttonPrimaryColorDark, setButtonPrimaryColorDark] = useState("");
+  const [buttonPrimaryTextColorLight, setButtonPrimaryTextColorLight] = useState("");
+  const [buttonPrimaryTextColorDark, setButtonPrimaryTextColorDark] = useState("");
+  const [buttonSecondaryColorLight, setButtonSecondaryColorLight] = useState("");
+  const [buttonSecondaryColorDark, setButtonSecondaryColorDark] = useState("");
+  const [topbarColorLight, setTopbarColorLight] = useState("");
+  const [topbarColorDark, setTopbarColorDark] = useState("");
+  const [sidebarColorLight, setSidebarColorLight] = useState("");
+  const [sidebarColorDark, setSidebarColorDark] = useState("");
   const [appLogoLight, setAppLogoLight] = useState(defaultLogoLight);
   const [appLogoDark, setAppLogoDark] = useState(defaultLogoDark);
   const [appLogoFavicon, setAppLogoFavicon] = useState(defaultLogoFavicon);
   const [appLogoTickets, setAppLogoTickets] = useState("");
-  const [appName, setAppName] = useState(appNameLocalStorage);
+  const [appName, setAppName] = useState("Radar CRM");
   const { getPublicSetting } = useSettings();
   const getPublicSettingRef = useRef(getPublicSetting);
   getPublicSettingRef.current = getPublicSetting;
@@ -159,7 +129,10 @@ const AppThemeRoot = ({ children }) => {
       toggleColorMode: () => {
         setMode((prevMode) => {
           const newMode = prevMode === "light" ? "dark" : "light";
-          window.localStorage.setItem("preferredTheme", newMode);
+          // Persiste tema no banco (Users.defaultTheme)
+          api
+            .put("/users/me/ui-preferences", { defaultTheme: newMode })
+            .catch(() => {});
           return newMode;
         });
       },
@@ -1029,8 +1002,10 @@ const AppThemeRoot = ({ children }) => {
   );
 
   useEffect(() => {
-    window.localStorage.setItem("preferredTheme", mode);
-  }, [mode]);
+    if (user?.defaultTheme === "light" || user?.defaultTheme === "dark") {
+      setMode(user.defaultTheme);
+    }
+  }, [user?.defaultTheme, user?.id]);
 
   useEffect(() => {
     const cid =
@@ -1251,9 +1226,7 @@ const AppThemeRoot = ({ children }) => {
   useEffect(() => {
     async function fetchVersionData() {
       try {
-        const response = await api.get("/version");
-        const { data } = response;
-        window.localStorage.setItem("frontendVersion", data.version);
+        await api.get("/version");
       } catch (error) {
         console.log("Error fetching data", error);
       }

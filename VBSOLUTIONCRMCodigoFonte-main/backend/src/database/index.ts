@@ -152,6 +152,7 @@ import GrokIntegration from "../models/GrokIntegration";
 import FigmaIntegration from "../models/FigmaIntegration";
 import GithubIntegration from "../models/GithubIntegration";
 import ApiCredential from "../models/ApiCredential";
+import UserFormDraft from "../models/UserFormDraft";
 
 // eslint-disable-next-line
 const dbConfig = require("../config/database");
@@ -364,7 +365,8 @@ const models = [
   FigmaIntegration,
   GithubIntegration,
   AnthropicMultiAgent,
-  ApiCredential
+  ApiCredential,
+  UserFormDraft
 ];
 
 sequelize.addModels(models);

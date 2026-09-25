@@ -42,6 +42,7 @@ const ShowUserService = async (
       "companyId",
       "tokenVersion",
       "defaultTheme",
+      "uiPreferences",
       "allowGroup",
       "defaultMenu",
       "farewellMessage",

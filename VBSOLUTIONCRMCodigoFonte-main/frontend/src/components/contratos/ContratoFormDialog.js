@@ -33,8 +33,7 @@ import ContratoDocChecklist from "./ContratoDocChecklist";
 import ContratoAnexosAnuaisSection from "./ContratoAnexosAnuaisSection";
 import ContratoComprovantesMensaisSection from "./ContratoComprovantesMensaisSection";
 import ContratoFileViewerDialog from "./ContratoFileViewerDialog";
-
-const CONTRATO_FORM_BACKUP_PREFIX = "contrato_form_backup_v2_";
+import { loadFormDraft, saveFormDraft, clearFormDraft } from "../../hooks/useUserUiPreferences";
 
 const COMMISSION_RECALC_KEYS = [
   "value",
@@ -141,27 +140,8 @@ const toDateInput = (value) => {
   }
 };
 
-const getContratoFormBackupKey = (contratoId) =>
-  `${CONTRATO_FORM_BACKUP_PREFIX}${contratoId ?? "novo"}`;
-
-const readContratoFormBackup = (contratoId) => {
-  try {
-    const raw = localStorage.getItem(getContratoFormBackupKey(contratoId));
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-};
-
-const clearContratoFormBackup = (contratoId) => {
-  try {
-    localStorage.removeItem(getContratoFormBackupKey(contratoId));
-    localStorage.removeItem("draft_v1_contrato");
-  } catch {
-    /* ignore */
-  }
-};
+const getContratoFormDraftKey = (contratoId) =>
+  `contrato_form_${contratoId || "novo"}`;
 
 const SwitchRow = ({ checked, onChange, label }) => (
   <label className="realty-contrato-switch-row">
@@ -212,50 +192,69 @@ const ContratoFormDialog = ({ open, onClose, contrato, onSave, saving = false })
   const [percentualDisplay, setPercentualDisplay] = useState("");
   const [currencyDisplays, setCurrencyDisplays] = useState({});
   const [viewer, setViewer] = useState({ open: false, loading: false, file: null });
+  const [draftReady, setDraftReady] = useState(false);
 
   useEffect(() => {
     if (!open) {
+      setDraftReady(false);
       setForm(emptyContratoForm());
       setValorDisplay("");
       setPercentualDisplay("");
       setCurrencyDisplays({});
-      return;
+      return undefined;
     }
 
-    const persisted = readContratoFormBackup(contrato?.id);
-    if (persisted?.form) {
-      setForm(recalculateCommissionState({ ...emptyContratoForm(), ...persisted.form }));
-      setValorDisplay(persisted.valorDisplay || "");
-      setPercentualDisplay(persisted.percentualDisplay || "");
-      setCurrencyDisplays(persisted.currencyDisplays || {});
-      return;
-    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const persisted = await loadFormDraft(getContratoFormDraftKey(contrato?.id));
+        if (cancelled) return;
+        if (persisted?.form) {
+          setForm(recalculateCommissionState({ ...emptyContratoForm(), ...persisted.form }));
+          setValorDisplay(persisted.valorDisplay || "");
+          setPercentualDisplay(persisted.percentualDisplay || "");
+          setCurrencyDisplays(persisted.currencyDisplays || {});
+          setDraftReady(true);
+          return;
+        }
+      } catch {
+        /* ignore */
+      }
 
-    if (contrato) {
-      const mapped = formFromContrato(contrato);
-      setForm(mapped);
-      setValorDisplay(formatCurrencyDisplay(mapped.value));
-      setPercentualDisplay(formatPercentDisplay(mapped.percentualCorrecao || 0));
-      setCurrencyDisplays({});
-    } else {
-      setForm(emptyContratoForm());
-      setValorDisplay("");
-      setPercentualDisplay("");
-      setCurrencyDisplays({});
-    }
+      if (cancelled) return;
+
+      if (contrato) {
+        const mapped = formFromContrato(contrato);
+        setForm(mapped);
+        setValorDisplay(formatCurrencyDisplay(mapped.value));
+        setPercentualDisplay(formatPercentDisplay(mapped.percentualCorrecao || 0));
+        setCurrencyDisplays({});
+      } else {
+        setForm(emptyContratoForm());
+        setValorDisplay("");
+        setPercentualDisplay("");
+        setCurrencyDisplays({});
+      }
+      setDraftReady(true);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [contrato, open]);
 
   useEffect(() => {
-    if (!open) return;
-    try {
-      localStorage.setItem(
-        getContratoFormBackupKey(contrato?.id),
-        JSON.stringify({ form, valorDisplay, percentualDisplay, currencyDisplays })
-      );
-    } catch {
-      /* ignore quota */
-    }
-  }, [open, contrato?.id, form, valorDisplay, percentualDisplay, currencyDisplays]);
+    if (!open || !draftReady) return undefined;
+    const t = setTimeout(() => {
+      saveFormDraft(getContratoFormDraftKey(contrato?.id), {
+        form,
+        valorDisplay,
+        percentualDisplay,
+        currencyDisplays,
+      }).catch(() => {});
+    }, 400);
+    return () => clearTimeout(t);
+  }, [open, draftReady, contrato?.id, form, valorDisplay, percentualDisplay, currencyDisplays]);
 
   useEffect(() => {
     if (!open) return;
@@ -380,7 +379,7 @@ const ContratoFormDialog = ({ open, onClose, contrato, onSave, saving = false })
   };
 
   const handleClose = () => {
-    clearContratoFormBackup(contrato?.id);
+    clearFormDraft(getContratoFormDraftKey(contrato?.id)).catch(() => {});
     onClose();
   };
 
@@ -489,7 +488,7 @@ const ContratoFormDialog = ({ open, onClose, contrato, onSave, saving = false })
     };
 
     await onSave(payload);
-    clearContratoFormBackup(contrato?.id);
+    clearFormDraft(getContratoFormDraftKey(contrato?.id)).catch(() => {});
   };
 
   const isLocacao = form.tipo === "Locação";

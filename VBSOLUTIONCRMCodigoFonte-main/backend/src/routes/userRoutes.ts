@@ -20,6 +20,14 @@ userRoutes.get("/users", isAuth, UserController.index);
 
 userRoutes.get("/users/list", isAuth, UserController.list);
 
+userRoutes.get("/users/online", isAuth, UserController.getOnlineUsers);
+
+userRoutes.get("/users/me/ui-preferences", isAuth, UserController.getMyUiPreferences);
+userRoutes.put("/users/me/ui-preferences", isAuth, UserController.updateMyUiPreferences);
+userRoutes.get("/users/me/form-drafts/:draftKey", isAuth, UserController.getMyFormDraft);
+userRoutes.put("/users/me/form-drafts/:draftKey", isAuth, UserController.upsertMyFormDraft);
+userRoutes.delete("/users/me/form-drafts/:draftKey", isAuth, UserController.deleteMyFormDraft);
+
 userRoutes.post("/users", isAuth, enforceUserQuota, UserController.store);
 
 userRoutes.put("/users/:userId", isAuth, UserController.update);
@@ -46,7 +54,5 @@ userRoutes.put(
   isAuth,
   UserController.updateOnlineStatus
 );
-
-userRoutes.get("/users/online", isAuth, UserController.getOnlineUsers);
 
 export default userRoutes;

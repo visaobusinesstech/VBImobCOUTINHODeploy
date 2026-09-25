@@ -14,6 +14,7 @@ import {
 } from "../../helpers/avaliacaoConstants";
 import { calcularResultadoWizard } from "../../helpers/avaliacaoEngine";
 import { formatBRL } from "../../helpers/realtyCrm";
+import { loadFormDraft, saveFormDraft } from "../../hooks/useUserUiPreferences";
 
 const DRAFT_KEY = "sas-wizard-v1";
 
@@ -23,26 +24,35 @@ function uid() {
 
 export default function WizardNbr({ onApplyResult }) {
   const [step, setStep] = useState(1);
-  const [state, setState] = useState(() => {
-    try {
-      const raw = localStorage.getItem(DRAFT_KEY);
-      if (raw) return { ...createEmptyWizardState(), ...JSON.parse(raw) };
-    } catch {
-      /* ignore */
-    }
-    return createEmptyWizardState();
-  });
+  const [state, setState] = useState(() => createEmptyWizardState());
+  const [draftReady, setDraftReady] = useState(false);
 
   useEffect(() => {
-    const t = setTimeout(() => {
+    let cancelled = false;
+    (async () => {
       try {
-        localStorage.setItem(DRAFT_KEY, JSON.stringify(state));
+        const raw = await loadFormDraft(DRAFT_KEY);
+        if (!cancelled && raw) {
+          setState({ ...createEmptyWizardState(), ...raw });
+        }
       } catch {
         /* ignore */
+      } finally {
+        if (!cancelled) setDraftReady(true);
       }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!draftReady) return undefined;
+    const t = setTimeout(() => {
+      saveFormDraft(DRAFT_KEY, state).catch(() => {});
     }, 400);
     return () => clearTimeout(t);
-  }, [state]);
+  }, [state, draftReady]);
 
   const setImovel = (k, v) =>
     setState((p) => ({ ...p, imovel: { ...p.imovel, [k]: v } }));

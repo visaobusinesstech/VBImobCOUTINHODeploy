@@ -42,8 +42,9 @@ import {
 } from "../../helpers/realtyCrm";
 import toastError from "../../errors/toastError";
 import { toast } from "react-toastify";
+import { useUserUiPreferences } from "../../hooks/useUserUiPreferences";
 
-const STORAGE_KEY = "followups:filters:v1";
+const FILTERS_KEY = "followups_filters";
 const SEM_CONTATO_OPCOES = [3, 5, 7, 14, 30];
 
 const startOfDay = (d) => {
@@ -90,14 +91,7 @@ const clienteNome = (f) =>
     : f.leadNome || `Lead #${f.leadSaleId || f.id}`;
 
 const Followups = () => {
-  const saved = (() => {
-    try {
-      return JSON.parse(window.localStorage.getItem(STORAGE_KEY) || "{}");
-    } catch {
-      return {};
-    }
-  })();
-
+  const { getPref, setPref, ready } = useUserUiPreferences();
   const [followups, setFollowups] = useState([]);
   const [leads, setLeads] = useState([]);
   const [contratos, setContratos] = useState([]);
@@ -105,18 +99,15 @@ const Followups = () => {
   const [counts, setCounts] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [prefsHydrated, setPrefsHydrated] = useState(false);
 
   const [showFilters, setShowFilters] = useState(false);
-  const [search, setSearch] = useState(saved.search || "");
-  const [filterStatus, setFilterStatus] = useState(saved.filterStatus || "todos");
-  const [filterTipo, setFilterTipo] = useState(saved.filterTipo || "todos");
-  const [filterPrazo, setFilterPrazo] = useState(saved.filterPrazo || "todos");
-  const [filterAlvo, setFilterAlvo] = useState(saved.filterAlvo || "todos");
-  const [semContatoDias, setSemContatoDias] = useState(
-    SEM_CONTATO_OPCOES.includes(Number(saved.semContatoDias))
-      ? Number(saved.semContatoDias)
-      : 7
-  );
+  const [search, setSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState("todos");
+  const [filterTipo, setFilterTipo] = useState("todos");
+  const [filterPrazo, setFilterPrazo] = useState("todos");
+  const [filterAlvo, setFilterAlvo] = useState("todos");
+  const [semContatoDias, setSemContatoDias] = useState(7);
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -161,22 +152,32 @@ const Followups = () => {
   }, [load]);
 
   useEffect(() => {
-    try {
-      window.localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({
-          search,
-          filterStatus,
-          filterTipo,
-          filterPrazo,
-          filterAlvo,
-          semContatoDias,
-        })
-      );
-    } catch {
-      /* ignore */
-    }
-  }, [search, filterStatus, filterTipo, filterPrazo, filterAlvo, semContatoDias]);
+    if (!ready) return;
+    const saved = getPref(FILTERS_KEY, {}) || {};
+    setSearch(saved.search || "");
+    setFilterStatus(saved.filterStatus || "todos");
+    setFilterTipo(saved.filterTipo || "todos");
+    setFilterPrazo(saved.filterPrazo || "todos");
+    setFilterAlvo(saved.filterAlvo || "todos");
+    setSemContatoDias(
+      SEM_CONTATO_OPCOES.includes(Number(saved.semContatoDias))
+        ? Number(saved.semContatoDias)
+        : 7
+    );
+    setPrefsHydrated(true);
+  }, [ready, getPref]);
+
+  useEffect(() => {
+    if (!prefsHydrated) return;
+    setPref(FILTERS_KEY, {
+      search,
+      filterStatus,
+      filterTipo,
+      filterPrazo,
+      filterAlvo,
+      semContatoDias,
+    });
+  }, [search, filterStatus, filterTipo, filterPrazo, filterAlvo, semContatoDias, prefsHydrated, setPref]);
 
   const hasActiveFilters =
     filterStatus !== "todos" ||

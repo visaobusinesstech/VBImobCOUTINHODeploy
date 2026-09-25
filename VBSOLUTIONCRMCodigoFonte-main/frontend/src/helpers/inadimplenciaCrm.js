@@ -80,18 +80,16 @@ export function openWhatsApp(item) {
   window.open(`https://wa.me/55${digits}?text=${encodeURIComponent(text)}`, "_blank");
 }
 
-export function persistTab(key, value) {
-  try {
-    localStorage.setItem(key, value);
-  } catch {
-    /* ignore */
+export function persistTab(key, value, setPref) {
+  if (typeof setPref === "function") {
+    setPref(key, value);
+    return;
   }
 }
 
-export function loadTab(key, fallback = "lista") {
-  try {
-    return localStorage.getItem(key) || fallback;
-  } catch {
-    return fallback;
+export function loadTab(key, fallback = "lista", getPref) {
+  if (typeof getPref === "function") {
+    return getPref(key, fallback);
   }
+  return fallback;
 }

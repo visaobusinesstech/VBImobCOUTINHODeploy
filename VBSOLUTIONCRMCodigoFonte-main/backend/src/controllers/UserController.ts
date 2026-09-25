@@ -21,6 +21,7 @@ import { useDate } from "../utils/useDate";
 import { getWbot } from "../libs/wbot";
 import FindCompaniesWhatsappService from "../services/CompanyService/FindCompaniesWhatsappService";
 import User from "../models/User";
+import UserFormDraft from "../models/UserFormDraft";
 
 import { head } from "lodash";
 import ToggleChangeWidthService from "../services/UserServices/ToggleChangeWidthService";
@@ -695,6 +696,106 @@ const validateCpf = (cpf: string): boolean => {
   return true;
 };
 
+/** Preferências de UI do usuário autenticado (substitui localStorage). */
+export const getMyUiPreferences = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { id: userId, companyId } = req.user;
+  const user = await User.findOne({
+    where: { id: userId, companyId },
+    attributes: ["id", "uiPreferences", "defaultTheme"]
+  });
+  if (!user) throw new AppError("ERR_NO_USER_FOUND", 404);
+  return res.status(200).json({
+    uiPreferences: (user as any).uiPreferences || {},
+    defaultTheme: user.defaultTheme || "light"
+  });
+};
+
+export const updateMyUiPreferences = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { id: userId, companyId } = req.user;
+  const patch = req.body?.uiPreferences;
+  const defaultTheme = req.body?.defaultTheme;
+
+  const user = await User.findOne({ where: { id: userId, companyId } });
+  if (!user) throw new AppError("ERR_NO_USER_FOUND", 404);
+
+  const nextPrefs = {
+    ...((user as any).uiPreferences || {}),
+    ...(patch && typeof patch === "object" ? patch : {})
+  };
+
+  const updates: any = { uiPreferences: nextPrefs };
+  if (defaultTheme === "light" || defaultTheme === "dark") {
+    updates.defaultTheme = defaultTheme;
+  }
+
+  await user.update(updates);
+
+  return res.status(200).json({
+    uiPreferences: (user as any).uiPreferences || nextPrefs,
+    defaultTheme: user.defaultTheme
+  });
+};
+
+export const getMyFormDraft = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { id: userId, companyId } = req.user;
+  const draftKey = String(req.params.draftKey || "").trim();
+  if (!draftKey) throw new AppError("draftKey is required", 400);
+
+  const row = await UserFormDraft.findOne({
+    where: { userId, companyId, draftKey }
+  });
+  return res.status(200).json({ draftKey, payload: row?.payload || null });
+};
+
+export const upsertMyFormDraft = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { id: userId, companyId } = req.user;
+  const draftKey = String(req.params.draftKey || "").trim();
+  if (!draftKey) throw new AppError("draftKey is required", 400);
+  const payload =
+    req.body?.payload && typeof req.body.payload === "object"
+      ? req.body.payload
+      : {};
+
+  const existing = await UserFormDraft.findOne({
+    where: { userId: Number(userId), companyId: Number(companyId), draftKey }
+  });
+  if (existing) {
+    await existing.update({ payload });
+    return res.status(200).json({ draftKey, payload: existing.payload });
+  }
+  const row = await UserFormDraft.create({
+    companyId: Number(companyId),
+    userId: Number(userId),
+    draftKey,
+    payload
+  } as any);
+  return res.status(200).json({ draftKey, payload: row.payload });
+};
+
+export const deleteMyFormDraft = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { id: userId, companyId } = req.user;
+  const draftKey = String(req.params.draftKey || "").trim();
+  if (!draftKey) throw new AppError("draftKey is required", 400);
+
+  await UserFormDraft.destroy({ where: { userId, companyId, draftKey } });
+  return res.status(200).json({ deleted: true, draftKey });
+};
+
 export default {
   index,
   store,
@@ -707,5 +808,10 @@ export default {
   toggleChangeWidht,
   updateOnlineStatus,
   getOnlineUsers,
-  validateCnpj
+  validateCnpj,
+  getMyUiPreferences,
+  updateMyUiPreferences,
+  getMyFormDraft,
+  upsertMyFormDraft,
+  deleteMyFormDraft
 };

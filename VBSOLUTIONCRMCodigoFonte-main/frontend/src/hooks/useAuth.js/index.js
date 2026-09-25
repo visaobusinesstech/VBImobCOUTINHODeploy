@@ -17,6 +17,8 @@ import { openApi } from "../../services/api";
 import toastError from "../../errors/toastError";
 import { socketConnection, resolveSocketCompanyId } from "../../services/socket";
 import moment from "moment";
+import { purgeNonAuthBrowserStorage } from "../../utils/purgeNonAuthBrowserStorage";
+import { fetchUiPreferences } from "../useUserUiPreferences";
 
 const batchUpdates = ReactDOM.unstable_batchedUpdates || ((fn) => fn());
 
@@ -115,6 +117,11 @@ const useAuth = () => {
   setIsAuthRef.current = setIsAuth;
   const socketRef = useRef(socket);
   socketRef.current = socket;
+
+  useEffect(() => {
+    // Remove dados de negócio órfãos do navegador (mantém só tokens)
+    purgeNonAuthBrowserStorage();
+  }, []);
 
   useEffect(() => {
     const reqId = api.interceptors.request.use(
@@ -374,7 +381,7 @@ const useAuth = () => {
         (s) => s.key === "campaignsEnabled"
       );
       if (setting && setting.value === "true") {
-        localStorage.setItem("cshow", null);
+        // campaignsEnabled via CompaniesSettings — sem cshow em localStorage
       }
     }
 
@@ -383,22 +390,12 @@ const useAuth = () => {
       isArray(company.companieSettings) &&
       isArray(company.companieSettings[0])
     ) {
-      const setting = company.companieSettings[0].find(
-        (s) => s.key === "sendSignMessage"
-      );
-
-      if (setting && (setting.value === "enabled" || setting.value === "enable")) {
-        localStorage.setItem("sendSignMessage", setting.value === "enable");
-      }
+      // sendSignMessage vem de CompaniesSettings — sem mirror em localStorage
     }
 
-    if (data.user.profileImage != null) {
-      localStorage.setItem("profileImage", data.user.profileImage);
-    } else {
-      localStorage.removeItem("profileImage");
-    }
+    // profileImage vem do user no AuthContext — sem mirror em localStorage
 
-    const userLanguage = data?.user?.language || localStorage.getItem("language") || "pt";
+    const userLanguage = data?.user?.language || "pt";
     const momentLocale = String(userLanguage).toLowerCase().startsWith("en")
       ? "en"
       : String(userLanguage).toLowerCase().startsWith("es")
@@ -427,9 +424,9 @@ const useAuth = () => {
     const dias = diff;
 
     if (before === true) {
+      purgeNonAuthBrowserStorage();
       localStorage.setItem("token", JSON.stringify(data.token));
       if (data.refreshToken) storeRefreshToken(data.refreshToken);
-      localStorage.setItem("companyDueDate", vencimento);
       api.defaults.headers.Authorization = `Bearer ${data.token}`;
       const u = data.user || data;
       batchUpdates(() => {
@@ -437,6 +434,7 @@ const useAuth = () => {
         setIsAuth(true);
         setLoading(false);
       });
+      fetchUiPreferences().catch(() => {});
       if (u?.language) {
         applyAppLanguage(u.language);
       }
@@ -452,12 +450,14 @@ const useAuth = () => {
 
       history.push("/tickets");
     } else {
+      purgeNonAuthBrowserStorage();
       api.defaults.headers.Authorization = `Bearer ${data.token}`;
       if (data.refreshToken) storeRefreshToken(data.refreshToken);
       batchUpdates(() => {
         setIsAuth(true);
         setLoading(false);
       });
+      // keep existing expired-subscription flow below
       toastError(`Opss! Sua assinatura venceu ${vencimento}.
 Entre em contato com o Suporte para mais informações! `);
       history.push("/tickets");

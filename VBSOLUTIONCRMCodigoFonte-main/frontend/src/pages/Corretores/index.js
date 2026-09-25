@@ -35,18 +35,14 @@ import {
 } from "../../helpers/corretoresParity";
 import DesempenhoTab from "./DesempenhoTab";
 import AtribuicaoTab from "./AtribuicaoTab";
+import { useUserUiPreferences } from "../../hooks/useUserUiPreferences";
 import "./corretores.css";
 
 const TAB_KEY = "corretores_active_tab";
 
 const Corretores = () => {
-  const [tab, setTab] = useState(() => {
-    try {
-      return localStorage.getItem(TAB_KEY) || "desempenho";
-    } catch {
-      return "desempenho";
-    }
-  });
+  const { getPref, setPref, ready } = useUserUiPreferences();
+  const [tab, setTab] = useState("desempenho");
   const [corretores, setCorretores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -57,13 +53,14 @@ const Corretores = () => {
   const [permCorretor, setPermCorretor] = useState(null);
   const [permissoes, setPermissoes] = useState([]);
 
+  useEffect(() => {
+    if (!ready) return;
+    setTab(getPref(TAB_KEY, "desempenho"));
+  }, [ready, getPref]);
+
   const changeTab = (value) => {
     setTab(value);
-    try {
-      localStorage.setItem(TAB_KEY, value);
-    } catch {
-      /* ignore */
-    }
+    setPref(TAB_KEY, value);
   };
 
   const fetchCorretores = useCallback(async () => {
