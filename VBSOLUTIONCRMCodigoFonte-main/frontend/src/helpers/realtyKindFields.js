@@ -116,9 +116,14 @@ export const KIND_FIELDS = {
         { value: "proposta_enviada", label: "Proposta enviada" },
         { value: "pagamento_atrasado", label: "Pagamento atrasado" },
         { value: "visita_realizada", label: "Visita realizada" },
+        { value: "sem_resposta", label: "Sem resposta" },
+        { value: "lead_parado", label: "Lead parado" },
+        { value: "pos_visita", label: "Pós-visita" },
+        { value: "pos_proposta", label: "Pós-proposta" },
       ],
       "lead_criado"
     ),
+    { name: "diasSemContato", label: "Dias sem contato", type: "number", cast: "number", defaultValue: 3 },
     { name: "acao", label: "Ação" },
     select(
       "tipo",
@@ -126,12 +131,16 @@ export const KIND_FIELDS = {
       ["whatsapp", "email", "notificacao", "portal", "tarefa"],
       "whatsapp"
     ),
-    select("categoria", "Categoria", ["comunicacao", "portal", "social", "financeiro"], "comunicacao"),
+    select("categoria", "Categoria", ["comunicacao", "portal", "social", "financeiro", "followup"], "comunicacao"),
+    { name: "messageTemplate", label: "Template de mensagem", type: "textarea", placeholder: "Olá {nome}, ..." },
     bool("ativo", "Ativa", "true"),
   ],
   seguranca: [
     select("tipo", "Tipo", ["acesso", "incidente", "politica", "lgpd"], "politica"),
     { name: "responsavel", label: "Responsável" },
+    select("severidade", "Severidade", ["baixa", "media", "alta", "critica"], "media"),
+    { name: "escopo", label: "Escopo / módulo afetado" },
+    { name: "acaoCorretiva", label: "Ação corretiva", type: "textarea" },
   ],
   auditoria_extracao: [
     { name: "fonte", label: "Fonte / portal" },
@@ -303,9 +312,13 @@ export const KIND_FIELDS = {
     { name: "email", label: "E-mail" },
     { name: "telefone", label: "Telefone / WhatsApp" },
     { name: "creci", label: "CRECI" },
-    select("statusCorretor", "Status", ["ativo", "inativo"], "ativo"),
+    select("statusCorretor", "Status", ["ativo", "inativo", "ferias"], "ativo"),
+    { name: "cidade", label: "Cidade / região de atuação" },
     { name: "limite", label: "Limite leads ativos", type: "number", cast: "number", defaultValue: 20 },
+    { name: "metaDiaria", label: "Meta diária (prospecção)", type: "number", cast: "number", defaultValue: 10 },
+    select("canalPreferido", "Canal preferido", ["whatsapp", "ligacao", "email", "presencial"], "whatsapp"),
     { name: "especialidades", label: "Especialidades / regiões", type: "textarea" },
+    { name: "agendaNotas", label: "Notas de agenda / disponibilidade", type: "textarea" },
     { name: "userId", label: "ID usuário CRM (opcional)", type: "number", cast: "number" },
   ],
 };
@@ -331,7 +344,13 @@ export const kindCardMeta = (kind, item, display) => {
     corretor: () => (
       <>
         {chip(d("statusCorretor") || item.status || "ativo")}
-        {line(`CRECI ${d("creci") || "—"}`, d("telefone") || d("email"), d("limite") ? `limite ${d("limite")}` : "")}
+        {line(
+          `CRECI ${d("creci") || "—"}`,
+          d("telefone") || d("email"),
+          d("cidade"),
+          d("limite") ? `limite ${d("limite")}` : "",
+          d("metaDiaria") ? `meta ${d("metaDiaria")}` : ""
+        )}
       </>
     ),
     condominio: () => (
@@ -361,7 +380,7 @@ export const kindCardMeta = (kind, item, display) => {
     automacao: () => (
       <>
         {chip(d("ativo") === "false" ? "off" : "on")}
-        {line(d("trigger_desc"), d("tipo"), d("acao"))}
+        {line(d("trigger_desc"), d("tipo"), d("acao"), (d("messageTemplate") || "").slice(0, 40))}
       </>
     ),
     feed: () => (
@@ -410,6 +429,36 @@ export const kindCardMeta = (kind, item, display) => {
       <>
         {chip(item.status || "ativo")}
         {line(d("marca"), d("cidadePadrao"), d("creciEmpresa"))}
+      </>
+    ),
+    radarzap_scoring: () => (
+      <>
+        {chip(d("categoria") || item.status)}
+        {line(d("palavraChave"), d("pontos") ? `${d("pontos")} pts` : "")}
+      </>
+    ),
+    radarzap_onboarding: () => (
+      <>
+        {chip(d("concluido") === "true" || d("concluido") === true ? "concluído" : "pendente")}
+        {line(d("passo"))}
+      </>
+    ),
+    radarzap_status: () => (
+      <>
+        {chip(d("saude") || item.status)}
+        {line(d("filaMensagens") != null ? `fila ${d("filaMensagens")}` : "", d("ultimaColeta"))}
+      </>
+    ),
+    radarzap_acessos: () => (
+      <>
+        {chip(item.status || "acesso")}
+        {line(d("usuario"), d("acao"), d("recurso"))}
+      </>
+    ),
+    radarzap_grupo: () => (
+      <>
+        {chip(d("statusGrupo") || item.status)}
+        {line(d("cidade"), d("inviteUrl"))}
       </>
     ),
   };

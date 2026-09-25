@@ -53,6 +53,8 @@ const RealtyCrudPage = ({
   coreFields = ["title", "status", "value", "dueDate", "notes"],
   emptyHint = "Nenhum registro ainda. Clique em Novo e preencha os campos estratégicos.",
   headerActions = null,
+  /** Optional extra buttons in each card: (item) => ReactNode */
+  cardActions = null,
 }) => {
   const [items, setItems] = useState([]);
   const [search, setSearch] = useState("");
@@ -239,6 +241,7 @@ const RealtyCrudPage = ({
                 <h3>{cardTitle ? cardTitle(item, display) : item.title}</h3>
                 <div>{cardMeta ? cardMeta(item, display) : null}</div>
                 <div className="realty-card__actions">
+                  {typeof cardActions === "function" ? cardActions(item) : null}
                   <button type="button" className="realty-page__btn realty-page__btn--ghost" onClick={() => openEdit(item)}>
                     Editar
                   </button>

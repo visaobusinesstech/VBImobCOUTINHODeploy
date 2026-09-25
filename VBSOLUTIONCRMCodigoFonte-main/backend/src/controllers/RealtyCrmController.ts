@@ -538,14 +538,15 @@ export const leadTimeline = async (req: Request, res: Response): Promise<Respons
   const lead = await LeadSale.findOne({ where: { id: leadId, companyId } });
   if (!lead) return res.status(404).json({ error: "Lead not found" });
 
-  const [followups, visitas, propostas, envios] = await Promise.all([
+  const [followups, visitas, propostas, envios, nutricao] = await Promise.all([
     RealtyFollowup.findAll({ where: { companyId, leadSaleId: leadId }, order: [["scheduledAt", "DESC"]], limit: 50 }),
     RealtyVisita.findAll({ where: { companyId, leadSaleId: leadId }, order: [["scheduledAt", "DESC"]], limit: 50 }),
     RealtyProposta.findAll({ where: { companyId, leadSaleId: leadId }, order: [["createdAt", "DESC"]], limit: 50 }),
-    RealtyLeadImovelEnvio.findAll({ where: { companyId, leadSaleId: leadId }, order: [["sentAt", "DESC"]], limit: 50 })
+    RealtyLeadImovelEnvio.findAll({ where: { companyId, leadSaleId: leadId }, order: [["sentAt", "DESC"]], limit: 50 }),
+    RealtyNutricao.findAll({ where: { companyId, leadSaleId: leadId }, order: [["updatedAt", "DESC"]], limit: 50 })
   ]);
 
-  return res.json({ lead, followups, visitas, propostas, envios });
+  return res.json({ lead, followups, visitas, propostas, envios, nutricao });
 };
 
 const nutricaoCrud = crudFactory(
@@ -558,6 +559,164 @@ export const listNutricao = nutricaoCrud.list;
 export const storeNutricao = nutricaoCrud.store;
 export const updateNutricao = nutricaoCrud.update;
 export const removeNutricao = nutricaoCrud.remove;
+
+function applyNutricaoVars(tpl: string, lead: LeadSale | null): string {
+  const nome = lead?.name || "cliente";
+  const interesse =
+    [(lead as any)?.interestType, (lead as any)?.purpose, lead?.description]
+      .filter(Boolean)
+      .join(" / ") || "imóveis";
+  const bairro = (lead as any)?.interestNeighborhood
+    ? ` em ${(lead as any).interestNeighborhood}`
+    : (lead as any)?.interestCity
+      ? ` em ${(lead as any).interestCity}`
+      : "";
+  const valor = lead?.value
+    ? Number(lead.value).toLocaleString("pt-BR")
+    : (lead as any)?.priceMax
+      ? Number((lead as any).priceMax).toLocaleString("pt-BR")
+      : "seu orçamento";
+  return String(tpl || "")
+    .replace(/\{\{nome\}\}/gi, nome)
+    .replace(/\{\{interesse\}\}/gi, interesse)
+    .replace(/\{\{bairro\}\}/gi, bairro)
+    .replace(/\{\{valor\}\}/gi, valor);
+}
+
+export const sendNutricaoWhatsApp = async (req: Request, res: Response): Promise<Response> => {
+  const { companyId, id: userId } = req.user as any;
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) return res.status(400).json({ error: "id inválido" });
+
+  const item = await RealtyNutricao.findOne({ where: { id, companyId } });
+  if (!item) return res.status(404).json({ error: "Cadência não encontrada" });
+
+  const lead = item.leadSaleId
+    ? await LeadSale.findOne({ where: { id: item.leadSaleId, companyId } })
+    : null;
+  if (!lead) {
+    return res.status(400).json({ error: "Cadência sem lead vinculado", sent: false });
+  }
+
+  const messageBody = applyNutricaoVars(item.messageTemplate || "", lead);
+
+  let ticket =
+    lead.ticketId != null
+      ? await Ticket.findOne({ where: { id: lead.ticketId, companyId } })
+      : null;
+
+  if (!ticket) {
+    ticket = await ResolveTicketForLeadPreviewService({
+      companyId,
+      contactId: lead.contactId,
+      phone: lead.phone,
+      requestUserId: userId
+    });
+    if (ticket?.id) await lead.update({ ticketId: ticket.id });
+  }
+
+  let sent = false;
+  let sendError: string | null = null;
+  if (ticket) {
+    try {
+      const fullTicket = await Ticket.findByPk(ticket.id, {
+        include: ["contact", "whatsapp"]
+      } as any);
+      if (fullTicket) {
+        await SendWhatsAppMessage({ body: messageBody, ticket: fullTicket as any });
+        sent = true;
+      }
+    } catch (err: any) {
+      sendError = err?.message || String(err);
+    }
+  }
+
+  const cadence = Number(item.cadenceDays) || 7;
+  const next = new Date();
+  next.setDate(next.getDate() + cadence);
+  await item.update({
+    nextSendAt: next,
+    notes: [item.notes, sent ? `Enviado WA ${new Date().toISOString()}` : `Falha WA: ${sendError || "sem ticket"}`]
+      .filter(Boolean)
+      .join("\n")
+      .slice(0, 4000)
+  } as any);
+
+  return res.json({
+    sent,
+    error: sendError,
+    ticket: ticket ? { id: ticket.id, uuid: (ticket as any).uuid, status: ticket.status } : null,
+    preview: messageBody,
+    item
+  });
+};
+
+export const processNutricao = async (req: Request, res: Response): Promise<Response> => {
+  const { companyId, id: userId } = req.user as any;
+  const now = new Date();
+  const due = await RealtyNutricao.findAll({
+    where: {
+      companyId,
+      status: { [Op.in]: ["ativo", "pendente"] },
+      channel: "whatsapp",
+      [Op.or]: [{ nextSendAt: null }, { nextSendAt: { [Op.lte]: now } }]
+    },
+    limit: 50
+  });
+
+  let processed = 0;
+  let skipped = 0;
+  const results: any[] = [];
+
+  for (const item of due) {
+    if (!item.leadSaleId) {
+      skipped += 1;
+      continue;
+    }
+    const lead = await LeadSale.findOne({ where: { id: item.leadSaleId, companyId } });
+    if (!lead?.phone && !lead?.contactId) {
+      skipped += 1;
+      continue;
+    }
+    const messageBody = applyNutricaoVars(item.messageTemplate || "", lead);
+    let ticket =
+      lead.ticketId != null
+        ? await Ticket.findOne({ where: { id: lead.ticketId, companyId } })
+        : null;
+    if (!ticket) {
+      ticket = await ResolveTicketForLeadPreviewService({
+        companyId,
+        contactId: lead.contactId,
+        phone: lead.phone,
+        requestUserId: userId
+      });
+      if (ticket?.id) await lead.update({ ticketId: ticket.id });
+    }
+    let sent = false;
+    if (ticket) {
+      try {
+        const fullTicket = await Ticket.findByPk(ticket.id, {
+          include: ["contact", "whatsapp"]
+        } as any);
+        if (fullTicket) {
+          await SendWhatsAppMessage({ body: messageBody, ticket: fullTicket as any });
+          sent = true;
+        }
+      } catch {
+        sent = false;
+      }
+    }
+    const cadence = Number(item.cadenceDays) || 7;
+    const next = new Date();
+    next.setDate(next.getDate() + cadence);
+    await item.update({ nextSendAt: next } as any);
+    if (sent) processed += 1;
+    else skipped += 1;
+    results.push({ id: item.id, sent, leadId: lead.id });
+  }
+
+  return res.json({ processed, skipped, count: due.length, results });
+};
 
 const prospeccaoCrud = crudFactory(
   RealtyProspeccao,
@@ -576,10 +735,51 @@ const automacaoCrud = crudFactory(
   ["title", "trigger", "action", "notes"],
   "items"
 );
+
+function coerceAutomacaoBody(body: Record<string, any>) {
+  const data = pick(body || {}, [
+    "title",
+    "trigger",
+    "daysWithoutContact",
+    "fromStatus",
+    "toStatus",
+    "action",
+    "messageTemplate",
+    "active",
+    "notes"
+  ]);
+  if (data.active !== undefined) {
+    data.active = data.active === true || data.active === "true" || data.active === 1 || data.active === "1";
+  }
+  if (data.daysWithoutContact !== undefined && data.daysWithoutContact !== null && data.daysWithoutContact !== "") {
+    data.daysWithoutContact = Number(data.daysWithoutContact) || 3;
+  }
+  return data;
+}
+
 export const listAutomacaoFollowup = automacaoCrud.list;
-export const storeAutomacaoFollowup = automacaoCrud.store;
-export const updateAutomacaoFollowup = automacaoCrud.update;
 export const removeAutomacaoFollowup = automacaoCrud.remove;
+
+export const storeAutomacaoFollowup = async (req: Request, res: Response): Promise<Response> => {
+  const { companyId } = req.user;
+  const data = coerceAutomacaoBody(req.body || {});
+  if (!data.title) return res.status(400).json({ error: "title is required" });
+  if (data.active === undefined) data.active = true;
+  if (!data.action) data.action = "criar_followup";
+  if (data.daysWithoutContact === undefined) data.daysWithoutContact = 3;
+  const record = await RealtyAutomacaoFollowup.create({ ...data, companyId } as any);
+  return res.status(201).json(record);
+};
+
+export const updateAutomacaoFollowup = async (req: Request, res: Response): Promise<Response> => {
+  const { companyId } = req.user;
+  const { id } = req.params;
+  const record = await RealtyAutomacaoFollowup.findOne({ where: { id, companyId } });
+  if (!record) return res.status(404).json({ error: "Not found" });
+  const data = coerceAutomacaoBody(req.body || {});
+  await record.update(data as any);
+  return res.json(record);
+};
 
 export const getFilaConfig = async (req: Request, res: Response): Promise<Response> => {
   const { companyId } = req.user;
@@ -656,6 +856,7 @@ export const runAutomacoesFollowup = async (req: Request, res: Response): Promis
     where: { companyId, active: true }
   });
   const created: any[] = [];
+  const sentMessages: any[] = [];
   const now = Date.now();
 
   for (const rule of rules) {
@@ -676,28 +877,86 @@ export const runAutomacoesFollowup = async (req: Request, res: Response): Promis
     });
 
     for (const lead of leads) {
-      if ((rule as any).action === "criar_followup" || !(rule as any).action) {
-        const scheduledAt = new Date(now + 60 * 60 * 1000);
+      const action = String((rule as any).action || "criar_followup");
+      const scheduledAt = new Date(now + 60 * 60 * 1000);
+
+      if (action === "enviar_mensagem") {
+        const tpl = String((rule as any).messageTemplate || "").trim();
+        const messageBody = tpl
+          ? applyNutricaoVars(tpl, lead)
+          : `Olá ${lead.name || ""}! Passando para retomar nosso contato sobre imóveis. Podemos conversar?`;
+
+        let ticket =
+          lead.ticketId != null
+            ? await Ticket.findOne({ where: { id: lead.ticketId, companyId } })
+            : null;
+        if (!ticket) {
+          ticket = await ResolveTicketForLeadPreviewService({
+            companyId,
+            contactId: lead.contactId,
+            phone: lead.phone,
+            requestUserId: userId
+          });
+          if (ticket?.id) await lead.update({ ticketId: ticket.id });
+        }
+
+        let sent = false;
+        if (ticket) {
+          try {
+            const fullTicket = await Ticket.findByPk(ticket.id, {
+              include: ["contact", "whatsapp"]
+            } as any);
+            if (fullTicket) {
+              await SendWhatsAppMessage({ body: messageBody, ticket: fullTicket as any });
+              sent = true;
+            }
+          } catch {
+            sent = false;
+          }
+        }
+
         const fu = await RealtyFollowup.create({
           type: "whatsapp",
-          scheduledAt,
-          status: "pendente",
-          notes: `Auto: ${(rule as any).title}`,
+          scheduledAt: sent ? new Date() : scheduledAt,
+          completedAt: sent ? new Date() : null,
+          status: sent ? "concluido" : "pendente",
+          notes: `Auto msg: ${(rule as any).title}\n${messageBody}`.slice(0, 4000),
+          result: sent ? "enviado_whatsapp" : "aguardando_envio",
           leadSaleId: lead.id,
           userId: lead.responsibleId || userId,
-          ticketId: lead.ticketId,
+          ticketId: ticket?.id || lead.ticketId,
           companyId
         } as any);
-        await lead.update({ followUpAt: scheduledAt, nextContactAt: scheduledAt } as any);
-        if ((rule as any).toStatus) {
-          await lead.update({ status: (rule as any).toStatus } as any);
-        }
-        created.push({ leadId: lead.id, followupId: fu.id, ruleId: rule.id });
+        await lead.update({
+          followUpAt: scheduledAt,
+          nextContactAt: scheduledAt,
+          ...((rule as any).toStatus ? { status: (rule as any).toStatus } : {})
+        } as any);
+        created.push({ leadId: lead.id, followupId: fu.id, ruleId: rule.id, action });
+        sentMessages.push({ leadId: lead.id, sent, ruleId: rule.id });
+        continue;
       }
+
+      // default: criar_followup
+      const fu = await RealtyFollowup.create({
+        type: "whatsapp",
+        scheduledAt,
+        status: "pendente",
+        notes: `Auto: ${(rule as any).title}`,
+        leadSaleId: lead.id,
+        userId: lead.responsibleId || userId,
+        ticketId: lead.ticketId,
+        companyId
+      } as any);
+      await lead.update({ followUpAt: scheduledAt, nextContactAt: scheduledAt } as any);
+      if ((rule as any).toStatus) {
+        await lead.update({ status: (rule as any).toStatus } as any);
+      }
+      created.push({ leadId: lead.id, followupId: fu.id, ruleId: rule.id, action });
     }
   }
 
-  return res.json({ created, count: created.length });
+  return res.json({ created, sentMessages, count: created.length });
 };
 
 export const sendComparativoWhatsApp = async (req: Request, res: Response): Promise<Response> => {
@@ -709,7 +968,101 @@ export const sendComparativoWhatsApp = async (req: Request, res: Response): Prom
   if (!Number.isFinite(leadId) || imovelIds.length < 2) {
     return res.status(400).json({ error: "leadId e ao menos 2 imovelIds são obrigatórios" });
   }
-  req.body.imovelIds = imovelIds;
-  return sendMatchWhatsApp(req, res);
+
+  const lead = await LeadSale.findOne({ where: { id: leadId, companyId } });
+  if (!lead) return res.status(404).json({ error: "Lead not found" });
+
+  const imoveis = await Imovel.findAll({
+    where: { companyId, id: { [Op.in]: imovelIds } }
+  });
+  // preserve selection order
+  const ordered = imovelIds
+    .map(id => imoveis.find(i => i.id === id))
+    .filter(Boolean) as typeof imoveis;
+  if (ordered.length < 2) {
+    return res.status(400).json({ error: "Informe ao menos 2 imóveis válidos" });
+  }
+
+  const labels = ["A", "B", "C", "D", "E"];
+  const blocks = ordered.map((imov, idx) => {
+    const code = (imov as any).code ? ` [${(imov as any).code}]` : "";
+    const area = imov.areaM2 != null ? `${imov.areaM2} m²` : "—";
+    const vagas = (imov as any).parkingSpots != null ? `${(imov as any).parkingSpots} vagas` : "—";
+    return (
+      `*Opção ${labels[idx] || idx + 1}:* ${imov.title}${code}\n` +
+      `• Tipo: ${imov.type || "—"}\n` +
+      `• Local: ${imov.neighborhood || "—"} / ${imov.city || "—"}\n` +
+      `• ${imov.bedrooms || "?"} qts · ${area} · ${vagas}\n` +
+      `• Preço: R$ ${Number(imov.price || 0).toLocaleString("pt-BR")}`
+    );
+  });
+  const messageBody =
+    `Olá ${lead.name || ""}! Segue o *comparativo* das opções que selecionamos:\n\n` +
+    blocks.join("\n\n") +
+    `\n\nQual opção faz mais sentido para você? Posso agendar visita.`;
+
+  let ticket =
+    lead.ticketId != null
+      ? await Ticket.findOne({ where: { id: lead.ticketId, companyId } })
+      : null;
+
+  if (!ticket) {
+    ticket = await ResolveTicketForLeadPreviewService({
+      companyId,
+      contactId: lead.contactId,
+      phone: lead.phone,
+      requestUserId: userId
+    });
+    if (ticket?.id) {
+      await lead.update({ ticketId: ticket.id });
+    }
+  }
+
+  let sent = false;
+  let sendError: string | null = null;
+  if (ticket) {
+    try {
+      const fullTicket = await Ticket.findByPk(ticket.id, {
+        include: ["contact", "whatsapp"]
+      } as any);
+      if (fullTicket) {
+        await SendWhatsAppMessage({ body: messageBody, ticket: fullTicket as any });
+        sent = true;
+      }
+    } catch (err: any) {
+      sendError = err?.message || String(err);
+    }
+  }
+
+  const now = new Date();
+  const envios = [];
+  for (const imov of ordered) {
+    const row = await RealtyLeadImovelEnvio.create({
+      leadSaleId: lead.id,
+      imovelId: imov.id,
+      ticketId: ticket?.id || null,
+      score: null,
+      messageBody,
+      sentAt: now,
+      userId,
+      companyId
+    } as any);
+    envios.push(row);
+  }
+
+  if (!lead.imovelId && ordered[0]) {
+    await lead.update({ imovelId: ordered[0].id });
+  }
+
+  return res.json({
+    leadId: lead.id,
+    ticketId: ticket?.id || null,
+    sent,
+    sendError,
+    messageBody,
+    envios,
+    imoveis: ordered.map(i => ({ id: i.id, title: i.title })),
+    kind: "comparativo"
+  });
 };
 

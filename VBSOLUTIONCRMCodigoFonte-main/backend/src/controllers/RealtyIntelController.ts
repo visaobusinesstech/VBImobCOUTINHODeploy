@@ -467,25 +467,60 @@ export const avaliarImovel = async (req: Request, res: Response) => {
   let preco = Number(req.body?.preco) || 0;
   let area = Number(req.body?.area) || 0;
   let m2 = Number(req.body?.precoM2Mercado) || 0;
+  let cidade = String(req.body?.cidade || req.body?.city || "").trim();
+  let bairro = String(req.body?.bairro || req.body?.neighborhood || "").trim();
+  let tipo = String(req.body?.tipo || req.body?.type || "").trim();
+  let quartos = req.body?.quartos != null ? Number(req.body.quartos) : null;
+
   if (req.body?.imovelId) {
     const im = await Imovel.findOne({ where: { id: req.body.imovelId, companyId } });
     if (im) {
       preco = preco || Number(im.price) || 0;
       area = area || Number(im.areaM2) || 0;
+      cidade = cidade || String(im.city || "");
+      bairro = bairro || String(im.neighborhood || "");
+      tipo = tipo || String(im.type || "");
+      if (quartos == null || !Number.isFinite(quartos)) {
+        quartos = im.bedrooms != null ? Number(im.bedrooms) : null;
+      }
     }
   }
   if (!m2) {
-    const mercado = await ImovelMercado.findAll({ where: { companyId }, limit: 200 });
-    const vals = mercado
+    const mercado = await ImovelMercado.findAll({ where: { companyId }, limit: 400 });
+    const norm = (s: string) =>
+      s
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim();
+    const cidadeN = cidade ? norm(cidade) : "";
+    const bairroN = bairro ? norm(bairro) : "";
+    const tipoN = tipo ? norm(tipo) : "";
+    const scored = mercado
       .map(m => {
         const a = Number(m.area) || 0;
         const p = Number(m.preco) || 0;
-        return a > 0 && p > 0 ? p / a : 0;
+        if (!(a > 0 && p > 0)) return null;
+        let w = 1;
+        const mc = norm(String((m as any).cidade || (m as any).city || ""));
+        const mb = norm(String((m as any).bairro || (m as any).neighborhood || ""));
+        const mt = norm(String((m as any).tipo || (m as any).type || ""));
+        if (cidadeN && mc && mc === cidadeN) w += 2;
+        if (bairroN && mb && mb === bairroN) w += 3;
+        if (tipoN && mt && mt.includes(tipoN)) w += 1;
+        return { m2: p / a, w };
       })
-      .filter(v => v > 0);
-    if (vals.length) m2 = vals.reduce((a, b) => a + b, 0) / vals.length;
+      .filter(Boolean) as { m2: number; w: number }[];
+    if (scored.length) {
+      const tw = scored.reduce((s, x) => s + x.w, 0);
+      m2 = scored.reduce((s, x) => s + x.m2 * x.w, 0) / tw;
+    }
   }
-  return res.json(estimateAvaliacao(preco, area, m2));
+  const result = estimateAvaliacao(preco, area, m2);
+  return res.json({
+    ...result,
+    inputs: { preco, area, cidade, bairro, tipo, quartos, precoM2Mercado: Math.round(m2) }
+  });
 };
 
 export const jornadaCliente = async (req: Request, res: Response) => {

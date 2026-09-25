@@ -48,6 +48,7 @@ export const CRM_MENU_PATHS = [
   "/radarzap/onboarding",
   "/radarzap/scoring",
   "/radarzap/status",
+  "/radarzap/acessos",
   "/portais",
   "/qcapture",
   "/monitoramento",

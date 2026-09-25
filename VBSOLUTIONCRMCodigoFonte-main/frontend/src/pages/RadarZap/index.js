@@ -5,6 +5,7 @@
  */
 
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import MainContainer from "../../components/MainContainer";
 import realtyIntelService from "../../services/realtyIntelService";
 import toastError from "../../errors/toastError";
@@ -66,6 +67,23 @@ const RadarZap = () => {
             <p className="realty-page__subtitle">
               Cole mensagens de grupos, extraia leads imobiliários e grave tudo no PostgreSQL do VBSolution — sem Supabase.
             </p>
+          </div>
+          <div className="realty-page__header-actions">
+            <Link className="realty-page__btn realty-page__btn--ghost" to="/radarzap/onboarding">
+              Onboarding
+            </Link>
+            <Link className="realty-page__btn realty-page__btn--ghost" to="/radarzap/scoring">
+              Scoring
+            </Link>
+            <Link className="realty-page__btn realty-page__btn--ghost" to="/radarzap/status">
+              Status
+            </Link>
+            <Link className="realty-page__btn realty-page__btn--ghost" to="/radarzap/acessos">
+              Acessos
+            </Link>
+            <Link className="realty-page__btn realty-page__btn--ghost" to="/radarzap-grupos">
+              Grupos
+            </Link>
           </div>
         </div>
         <div className="realty-card realty-form" style={{ marginBottom: 16 }}>

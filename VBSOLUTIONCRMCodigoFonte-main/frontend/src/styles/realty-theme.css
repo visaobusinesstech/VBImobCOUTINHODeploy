@@ -181,3 +181,138 @@
   color: #737d8c;
   font-size: 14px;
 }
+
+.realty-page__header-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.realty-page__select {
+  flex: 0 0 200px;
+  max-width: 240px;
+}
+
+.realty-pipeline-toolbar {
+  flex-wrap: wrap;
+}
+
+.realty-filters-panel {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 14px;
+  background: #fff;
+  border: 1px solid #e2e6ee;
+  border-radius: 14px;
+}
+
+.realty-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: #737d8c;
+}
+
+.realty-filter-field input,
+.realty-filter-field select {
+  height: 38px;
+  border: 1px solid #e2e6ee;
+  border-radius: 10px;
+  padding: 0 10px;
+  font-size: 13px;
+  color: #2b3340;
+  background: #fff;
+}
+
+.realty-pipeline-meta {
+  font-size: 12px;
+  color: #737d8c;
+  margin-bottom: 10px;
+}
+
+.realty-col--drag {
+  outline: 2px dashed #2673d9;
+  outline-offset: 2px;
+}
+
+.realty-lead__interesse {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #4b5563;
+}
+
+.realty-lead__followup {
+  display: block;
+  margin-top: 8px;
+}
+
+.realty-lead__followup span {
+  display: block;
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+.realty-lead__followup input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #e2e6ee;
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+.realty-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35);
+  z-index: 1300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.realty-modal {
+  width: 480px;
+  max-width: 92vw;
+  max-height: 90vh;
+  overflow: auto;
+}
+
+.realty-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.realty-tab {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid #e2e6ee;
+  background: #fff;
+  color: #2b3340;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.realty-tab--active {
+  background: #2673d9;
+  border-color: #2673d9;
+  color: #fff;
+}
+
+.realty-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: #737d8c;
+}

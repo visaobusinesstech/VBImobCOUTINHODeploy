@@ -362,6 +362,11 @@ const RoutesContent = () => {
                 <Route exact path="/projects" component={Projects} isPrivate title="Projetos" />
                 <Route exact path="/leads-sales" component={LeadsSales} isPrivate title="Leads e Vendas" />
                 <Route exact path="/pipeline" component={RealtyPipeline} isPrivate title="CRM Pipeline" />
+                <Route exact path="/portais" component={PortalScraping} isPrivate title="Portais" />
+                <Route exact path="/integracao-portais" component={PortalScraping} isPrivate title="Portais" />
+                <Route exact path="/inteligencia" component={Inteligencia} isPrivate title="Inteligência" />
+                <Route exact path="/configurar-ia" component={ConfigurarIA} isPrivate title="Configuração da IA" />
+                <Route exact path="/seguranca" component={Seguranca} isPrivate title="Segurança" />
                 <Route exact path="/imoveis" component={Imoveis} isPrivate title="Imóveis" />
                 <Route exact path="/proprietarios" component={Proprietarios} isPrivate title="Proprietários" />
                 <Route exact path="/contratos" component={Contratos} isPrivate title="Contratos" />

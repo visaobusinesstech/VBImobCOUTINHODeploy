@@ -134,6 +134,14 @@ const realtyService = {
     const { data } = await api.delete(`/realty-nutricao/${id}`);
     return data;
   },
+  async sendNutricaoWhatsApp(id) {
+    const { data } = await api.post(`/realty-nutricao/${id}/enviar-whatsapp`);
+    return data;
+  },
+  async processNutricao() {
+    const { data } = await api.post("/realty-nutricao/processar");
+    return data;
+  },
   async listProspeccao(params) {
     const { data } = await api.get("/realty-prospeccao", { params });
     return data;

@@ -50,6 +50,8 @@ routes.get("/realty-nutricao", isAuth, RealtyCrmController.listNutricao);
 routes.post("/realty-nutricao", isAuth, RealtyCrmController.storeNutricao);
 routes.put("/realty-nutricao/:id", isAuth, RealtyCrmController.updateNutricao);
 routes.delete("/realty-nutricao/:id", isAuth, RealtyCrmController.removeNutricao);
+routes.post("/realty-nutricao/processar", isAuth, RealtyCrmController.processNutricao);
+routes.post("/realty-nutricao/:id/enviar-whatsapp", isAuth, RealtyCrmController.sendNutricaoWhatsApp);
 
 routes.get("/realty-prospeccao", isAuth, RealtyCrmController.listProspeccao);
 routes.post("/realty-prospeccao", isAuth, RealtyCrmController.storeProspeccao);

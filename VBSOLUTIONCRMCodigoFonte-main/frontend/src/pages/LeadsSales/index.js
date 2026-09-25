@@ -1143,6 +1143,8 @@ const LeadsSales = () => {
   const [contact, setContact] = useState(null);
   const [dateStart, setDateStart] = useState("");
   const [dateEnd, setDateEnd] = useState("");
+  const [filterValorMin, setFilterValorMin] = useState("");
+  const [filterValorMax, setFilterValorMax] = useState("");
   const [leadsState, setLeadsState] = useState([]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -1162,16 +1164,43 @@ const LeadsSales = () => {
     }
     if (searchParam) {
       const term = String(searchParam || "").trim().toLowerCase();
+      const digits = term.replace(/\D/g, "");
       if (term) {
         arr = arr.filter((l) => {
           const n = String(l.name || "").trim().toLowerCase();
           const c = String(l.companyName || "").trim().toLowerCase();
-          return n.includes(term) || c.includes(term);
+          const e = String(l.email || "").trim().toLowerCase();
+          const phone = String(l.phone || "").replace(/\D/g, "");
+          const interesse = [
+            l.description,
+            l.interestType,
+            l.interestNeighborhood,
+            l.interestCity,
+            l.purpose,
+            l.origin
+          ]
+            .filter(Boolean)
+            .join(" ")
+            .toLowerCase();
+          return (
+            n.includes(term) ||
+            c.includes(term) ||
+            e.includes(term) ||
+            interesse.includes(term) ||
+            (digits && phone.includes(digits))
+          );
         });
       }
     }
+    if (status) {
+      arr = arr.filter((l) => String(l.status || "") === String(status));
+    }
+    const min = parseFloat(String(filterValorMin).replace(",", "."));
+    const max = parseFloat(String(filterValorMax).replace(",", "."));
+    if (!Number.isNaN(min)) arr = arr.filter((l) => Number(l.value || 0) >= min);
+    if (!Number.isNaN(max)) arr = arr.filter((l) => Number(l.value || 0) <= max);
     return arr;
-  }, [leadsState, contact, searchParam]);
+  }, [leadsState, contact, searchParam, status, filterValorMin, filterValorMax]);
 
   const companiesFromLeads = useMemo(() => {
     const names = new Set();
@@ -1695,6 +1724,36 @@ const LeadsSales = () => {
         </div>
       </Popover>
 
+      <div className={layout.filterItem} style={{ cursor: "default", gap: 6, minWidth: 220 }}>
+        <Typography className={layout.filterLabel}>Valor (R$) — como no Pipeline Radar</Typography>
+        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          <TextField
+            size="small"
+            variant="outlined"
+            type="number"
+            placeholder="Mín"
+            value={filterValorMin}
+            onChange={(e) => setFilterValorMin(e.target.value)}
+            inputProps={{ min: 0, style: { fontSize: 12, width: 72, padding: "6px 8px" } }}
+          />
+          <span style={{ fontSize: 12, color: "#94a3b8" }}>–</span>
+          <TextField
+            size="small"
+            variant="outlined"
+            type="number"
+            placeholder="Máx"
+            value={filterValorMax}
+            onChange={(e) => setFilterValorMax(e.target.value)}
+            inputProps={{ min: 0, style: { fontSize: 12, width: 72, padding: "6px 8px" } }}
+          />
+          {(filterValorMin || filterValorMax) && (
+            <Button size="small" onClick={() => { setFilterValorMin(""); setFilterValorMax(""); }}>
+              Limpar
+            </Button>
+          )}
+        </div>
+      </div>
+
       <div className={layout.filterItem} onClick={(e) => setAnchorPeriodo(e.currentTarget)}>
         <CalendarIcon className={layout.calendarIcon} style={{ fontSize: 11 }} />
         <Typography className={layout.filterLabel}>
@@ -1765,7 +1824,7 @@ const LeadsSales = () => {
         title={null}
         description="Leads e Vendas"
         onCreateClick={() => { setEditing(null); setDrawerOpen(true); }}
-        searchPlaceholder="Filtrar por nome do lead, empresa..."
+        searchPlaceholder="Filtrar nome, telefone, e-mail, interesse, bairro, canal..."
         searchValue={searchParam}
         onSearchChange={handleSearch}
         stats={[]}
