@@ -333,32 +333,21 @@ const AppThemeRoot = ({ children }) => {
               mode === "light" ? topbarLightEff : topbarDarkEff,
             sidebarMenuBackground:
               mode === "light" ? sidebarLightEff : sidebarDarkEff,
-            /** Menu lateral: textos sempre legíveis; ícones seguem botões. */
-            sidebarMenuTextPrimary: sidebarCx.isDark
-              ? sidebarCx.textPrimary
-              : mode === "light"
-                ? "rgba(0, 0, 0, 0.87)"
-                : "rgba(255, 255, 255, 0.92)",
-            sidebarMenuTextSecondary: sidebarCx.isDark
-              ? sidebarCx.textSecondary
-              : mode === "light"
-                ? "rgba(0, 0, 0, 0.55)"
-                : "rgba(255, 255, 255, 0.65)",
-            sidebarMenuIcon: sidebarCx.isDark
-              ? sidebarCx.icon
-              : mode === "light"
-                ? systemPrimaryLight
-                : systemPrimaryDark,
+            /** Menu lateral: texto/ícones pretos no claro e brancos no escuro. */
+            sidebarMenuTextPrimary:
+              mode === "light" ? "#000000" : "#ffffff",
+            sidebarMenuTextSecondary:
+              mode === "light"
+                ? "rgba(0, 0, 0, 0.65)"
+                : "rgba(255, 255, 255, 0.72)",
+            sidebarMenuIcon:
+              mode === "light" ? "#000000" : "#ffffff",
             sidebarMenuItemHoverBg: sidebarCx.hoverBg,
             sidebarMenuItemActiveBg: sidebarCx.activeBg,
             sidebarMenuHoverAccent:
-              sidebarCx.isDark
-                ? "#ffffff"
-                : mode === "light"
-                  ? systemPrimaryLight
-                  : systemPrimaryDark,
-            /** Menu lateral com fundo escuro (cor custom) → logo branca */
-            sidebarMenuIsDarkLogo: sidebarCx.isDark,
+              mode === "light" ? "#000000" : "#ffffff",
+            /** Menu lateral: logo branca só no modo escuro */
+            sidebarMenuIsDarkLogo: mode === "dark",
             /** Navbar secundária, faixa de filtros e cabeçalho Activities — alinhado ao menu lateral no escuro */
             chromeSurface:
               mode === "light" ? LIGHT_BG_PAPER : DARK_BG_DEFAULT,

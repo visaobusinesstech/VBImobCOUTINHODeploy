@@ -178,16 +178,10 @@ const useStyles = makeStyles((theme) => ({
       alignItems: "center",
     },
     "&:hover $iconSlot": {
-      color:
-        theme.mode === "dark"
-          ? theme.palette.sidebarMenuHoverAccent
-          : "rgba(0, 0, 0, 0.72)",
+      color: theme.mode === "dark" ? "#ffffff" : "#000000",
     },
     "&:hover $listItemText": {
-      color:
-        theme.mode === "dark"
-          ? "rgba(245, 245, 250, 0.92)"
-          : "rgba(0, 0, 0, 0.72)",
+      color: theme.mode === "dark" ? "#ffffff" : "#000000",
       fontWeight: 300,
     },
     "&:hover": {
@@ -230,17 +224,11 @@ const useStyles = makeStyles((theme) => ({
     boxShadow: "none",
     borderRadius: 8,
     "& $listItemText": {
-      color:
-        theme.mode === "dark"
-          ? "rgba(248, 248, 252, 0.98)"
-          : "rgba(0, 0, 0, 0.78)",
+      color: theme.mode === "dark" ? "#ffffff" : "#000000",
       fontWeight: theme.mode === "dark" ? 400 : 500,
     },
     "& $iconSlot": {
-      color:
-        theme.mode === "dark"
-          ? "rgba(248, 248, 252, 0.98)"
-          : "rgba(0, 0, 0, 0.78)",
+      color: theme.mode === "dark" ? "#ffffff" : "#000000",
     },
   },
 
