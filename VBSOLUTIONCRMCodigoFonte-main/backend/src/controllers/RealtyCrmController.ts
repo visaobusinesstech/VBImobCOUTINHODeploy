@@ -54,7 +54,6 @@ import RealtyMensagemTemplate from "../models/RealtyMensagemTemplate";
 import RealtyCaptacao from "../models/RealtyCaptacao";
 import { composerAssistTransform } from "../services/PromptServices/ComposerAssistOpenAiService";
 import {
-  digitsOnly,
   getDefaultTemplate,
   isValidTemplateTipo,
   normalizeClienteRelacionamentoPayload,
